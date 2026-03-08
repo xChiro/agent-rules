@@ -1,39 +1,297 @@
-# Workflow: /create-use-case
+---
+description: Create use case following Clean Architecture and DDD principles
+---
 
-This workflow guides the creation of a new application use case. When the user issues `/create-use-case <operation>`, follow the full sequence described below.
+# Use Case Creation Workflow
 
-## Description
+Create application use cases following Clean Architecture, DDD, and TDD principles with proper orchestration.
 
-Implement a new use case named `<operation>` using the Clean Architecture layers. The workflow ensures that you start with requirements analysis, create failing tests, define ports, implement the orchestration, and finalise with refactoring. This mirrors the phased approach from the Onnodo use-case instructions.
+## Phase 1: Requirements Analysis
+- Identify **Actor**: Who initiates the use case
+- Define **Responsibility**: What the use case accomplishes
+- Specify **Dependencies**: Required ports and services
+- Confirm **File Size**: ≤150 lines limit
 
-## Steps
+## Phase 2: Failing ATDD Test (Red)
+Create failing test following `given_when_then` pattern:
 
-1. **Phase 1: Requirements Analysis**
-   - Identify the **Actor** initiating `<operation>` and the core **Responsibility**. Document these details at the top of the test or in a `README` for future reference.
-   - Check the 150‑line file limit; plan to split the work across files if necessary.
+```go
+func Test_given_valid_request_when_[use_case]_then_success(t *testing.T) {
+    // Arrange: Setup manual mocks and test data
+    // Act: Execute use case
+    // Assert: Verify expected behavior
+}
+```
 
-2. **Phase 2: Failing ATDD Test**
-   - Use the `/create-tdd-add-test` workflow to generate the initial failing test for `<operation>` in the appropriate test package (`internal/<module>/_test.go`).
-   - Use manual mocks for ports and follow the Arrange‑Act‑Assert structure.
+## Phase 3: Port Definition
+Define interfaces in application layer:
 
-3. **Phase 3: Port Definition**
-   - Define any new interfaces (ports) required by `<operation>` in the application layer under `internal/application/<module>/`. Keep interfaces small and specific.
+```go
+// internal/application/[module]/ports/[repository].go
+package ports
 
-4. **Phase 4: Use Case Implementation**
-   - Create request/response structs if needed.
-   - Implement the use case struct or function in the application layer. Inject ports via constructor functions.
-   - The use case should orchestrate domain logic but **not contain** business rules itself; delegate to domain entities or domain services.
+import "context"
 
-5. **Phase 5: Manual Mock Implementation**
-   - Create or update manual mock structs in your test/mocks directory to implement the new port interfaces.
-   - Ensure mocks capture inputs and expose configurable outputs.
+type [Repository] interface {
+    Save(ctx context.Context, entity [Entity]) error
+    FindByID(ctx context.Context, id string) (*[Entity], error)
+}
 
-6. **Phase 6: Refactoring**
-   - Once tests pass, refactor for readability. Respect file and function length limits.
-   - Ensure names are clear and align with the guidelines in `go-clean-code.rules.md`.
+type [Service] interface {
+    Execute(ctx context.Context, request [Request]) (*[Response], error)
+}
+```
 
-## Guidelines
+## Phase 4: Request/Response DTOs
+Define data transfer objects:
 
-- Follow the phased structure outlined in `use-case-instruction.md`.
-- Keep the use case free of direct infrastructure dependencies; depend only on interfaces.
-- Use the DI setup functions defined in `go-di.rules.md` to wire concrete implementations in `cmd/<binary>/main.go`.
+```go
+// internal/application/[module]/requests.go
+package application
+
+type [UseCase]Request struct {
+    Field1 string
+    Field2 int
+}
+
+type [UseCase]Response struct {
+    Result  string
+    Success bool
+    Events  []DomainEvent
+}
+```
+
+## Phase 5: Use Case Implementation (Green)
+Create use case with dependency injection:
+
+```go
+// internal/application/[module]/usecases/[use_case].go
+package usecases
+
+import (
+    "context"
+    "errors"
+)
+
+type [UseCase] struct {
+    repo    ports.[Repository]
+    service ports.[Service]
+}
+
+func New[UseCase](repo ports.[Repository], service ports.[Service]) *[UseCase] {
+    return &[UseCase]{
+        repo:    repo,
+        service: service,
+    }
+}
+
+func (uc *[UseCase]) Execute(ctx context.Context, req requests.[UseCase]Request) (requests.[UseCase]Response, error) {
+    // 1. Validate request
+    if err := uc.validateRequest(req); err != nil {
+        return requests.[UseCase]Response{}, err
+    }
+    
+    // 2. Fetch existing data if needed
+    existing, err := uc.repo.FindByID(ctx, req.Field1)
+    if err != nil && !errors.Is(err, domain.ErrNotFound) {
+        return requests.[UseCase]Response{}, err
+    }
+    
+    // 3. Create domain entity
+    entity := domain.New[Entity](req.Field1, req.Field2)
+    
+    // 4. Execute business logic (delegate to domain)
+    if err := entity.[BusinessMethod](); err != nil {
+        return requests.[UseCase]Response{}, err
+    }
+    
+    // 5. Persist entity
+    if err := uc.repo.Save(ctx, entity); err != nil {
+        return requests.[UseCase]Response{}, err
+    }
+    
+    // 6. Return response
+    return requests.[UseCase]Response{
+        Result:  entity.GetResult(),
+        Success: true,
+        Events:  entity.GetEvents(),
+    }, nil
+}
+
+func (uc *[UseCase]) validateRequest(req requests.[UseCase]Request) error {
+    if req.Field1 == "" {
+        return errors.New("field1 is required")
+    }
+    if req.Field2 <= 0 {
+        return errors.New("field2 must be positive")
+    }
+    return nil
+}
+```
+
+## Phase 6: Manual Mock Implementation
+Create mocks for testing:
+
+```go
+// tests/application/mocks/[repository]_mock.go
+package mocks
+
+import "context"
+
+type [Repository]Mock struct {
+    SavedEntities []domain.[Entity]
+    FindByIDResult *domain.[Entity]
+    FindByIDError  error
+    SaveError     error
+}
+
+func (m *[Repository]Mock) Save(ctx context.Context, entity domain.[Entity]) error {
+    m.SavedEntities = append(m.SavedEntities, entity)
+    return m.SaveError
+}
+
+func (m *[Repository]Mock) FindByID(ctx context.Context, id string) (*domain.[Entity], error) {
+    if m.FindByIDError != nil {
+        return nil, m.FindByIDError
+    }
+    return m.FindByIDResult, nil
+}
+```
+
+## Phase 7: Test Implementation
+Complete the failing test:
+
+```go
+func Test_given_valid_request_when_[use_case]_then_success(t *testing.T) {
+    // Arrange: Setup mocks and test data
+    mockRepo := &mocks.[Repository]Mock{}
+    mockService := &mocks.[Service]Mock{}
+    
+    sut := usecases.New[UseCase](mockRepo, mockService)
+    
+    request := requests.[UseCase]Request{
+        Field1: "test-value",
+        Field2: 42,
+    }
+    
+    // Act: Execute use case
+    result, err := sut.Execute(context.Background(), request)
+    
+    // Assert: Verify expected behavior
+    assertNoError(t, err, "use case execution should succeed")
+    assertEqual(t, result.Success, true, "should indicate success")
+    assertEqual(t, len(mockRepo.SavedEntities), 1, "should save exactly one entity")
+    assertEqual(t, mockRepo.SavedEntities[0].GetField1(), "test-value", "should save correct field1")
+}
+```
+
+## Phase 8: Refactoring (Blue)
+- Verify file ≤150 lines, functions ≤20 lines
+- Ensure business logic in domain, not use case
+- Check proper dependency injection
+- Validate all tests pass
+
+## File Organization
+```
+internal/application/[module]/
+├── ports/
+│   └── [repository].go
+├── usecases/
+│   └── [use_case].go
+└── requests.go
+
+tests/application/[module]/
+├── [use_case]_test.go
+└── mocks/
+    └── [repository]_mock.go
+```
+
+## Complete Example
+
+### User Registration Use Case
+```go
+// internal/application/users/usecases/register_user.go
+package usecases
+
+type RegisterUser struct {
+    userRepo ports.UserRepository
+    emailSvc ports.EmailService
+}
+
+func NewRegisterUser(userRepo ports.UserRepository, emailSvc ports.EmailService) *RegisterUser {
+    return &RegisterUser{
+        userRepo: userRepo,
+        emailSvc: emailSvc,
+    }
+}
+
+func (ru *RegisterUser) Execute(ctx context.Context, req requests.RegisterUserRequest) (requests.RegisterUserResponse, error) {
+    // Validate request
+    if req.Email == "" {
+        return requests.RegisterUserResponse{}, errors.New("email required")
+    }
+    
+    // Check if user exists
+    existing, err := ru.userRepo.FindByEmail(ctx, req.Email)
+    if err != nil && !errors.Is(err, domain.ErrNotFound) {
+        return requests.RegisterUserResponse{}, err
+    }
+    if existing != nil {
+        return requests.RegisterUserResponse{}, errors.New("user already exists")
+    }
+    
+    // Create domain entity
+    email, err := domain.NewEmail(req.Email)
+    if err != nil {
+        return requests.RegisterUserResponse{}, err
+    }
+    
+    user := domain.NewUser(email, req.Name)
+    
+    // Persist user
+    if err := ru.userRepo.Save(ctx, user); err != nil {
+        return requests.RegisterUserResponse{}, err
+    }
+    
+    // Send welcome email
+    if err := ru.emailSvc.SendWelcomeEmail(ctx, user.Email()); err != nil {
+        // Log error but don't fail registration
+        log.Printf("failed to send welcome email: %v", err)
+    }
+    
+    return requests.RegisterUserResponse{
+        UserID: user.ID(),
+        Success: true,
+    }, nil
+}
+```
+
+## Key Principles
+
+### Use Case Responsibilities
+- **Orchestration only**: Coordinate domain objects and services
+- **No business logic**: Delegate to domain entities
+- **Transaction management**: Ensure data consistency
+- **Error handling**: Wrap and contextually enrich errors
+
+### Clean Architecture Compliance
+- **Depends on ports**: Interfaces defined in application layer
+- **No infrastructure concerns**: No database, HTTP, or external APIs
+- **Request/response pattern**: Clear input/output contracts
+- **Dependency injection**: All dependencies passed via constructor
+
+### TDD Integration
+- **Test first**: Write failing test before implementation
+- **Manual mocks**: Simple, explicit test doubles
+- **Edge cases first**: Test validation before happy path
+- **Behavior verification**: Focus on outcomes, not implementation
+
+## Success Criteria
+- All tests pass
+- File size ≤150 lines
+- Business logic in domain layer
+- Proper error handling
+- Clean architecture compliance
+- Manual mocks for testing
+
+Use cases provide application-level orchestration while maintaining clean separation of concerns and testability.

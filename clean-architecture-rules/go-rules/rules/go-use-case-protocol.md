@@ -1,19 +1,29 @@
 ---
-description: Create a new Use Case following Go Clean Architecture and DDD principles
+trigger: always_on
+description: 
+globs: 
 ---
 
 # Go Use Case Implementation Protocol
 
 When instructed to create a new Use Case, follow this exact sequence without deviation.
 
-## PHASE 1: Requirements Analysis
-- Identify the **Actor** requesting the change.
-- Define the **Responsibility** of the new component.
-- Confirm it adheres to the 150-line file limit.
+## Phase 1: Requirements Analysis
+- Identify the **Actor** requesting the change
+- Define the **Responsibility** of the new component
+- Confirm it adheres to the 150-line file limit
 
-## PHASE 2: Failing ATDD Test (Red)
+## Phase 2: Failing ATDD Test (Red)
 Create a test file in `tests/` using **snake_case** for the function names. Use **Manual Mocks** from the `mocks/` folder.
 
+### Test Quality Guidelines
+- **Avoid repeated assertions across tests**: Don't assert the same condition in multiple test methods
+- **Test behavior, not implementation**: Focus on observable outcomes, not internal details
+- **Use stable test data**: Avoid hardcoded timestamps, IDs, or values that might change
+- **Clear failure messages**: Provide descriptive error messages that explain expected vs actual
+- **One assertion per concept**: Group related assertions but avoid multiple unrelated checks
+
+### Test Structure Template
 ```go
 func Test_given_[condition]_when_[action]_then_[expected_result](t *testing.T) {
     // Arrange (Setup manual mocks)
@@ -22,35 +32,33 @@ func Test_given_[condition]_when_[action]_then_[expected_result](t *testing.T) {
 }
 ```
 
-## PHASE 3: Port Definition
+## Phase 3: Port Definition
 Define necessary interfaces (Ports) in the **Application** layer (`internal/application/[module]/ports/`).
 
-## PHASE 4: Use Case Implementation (Green)
-1. Define the Request/Response structs (Application layer).
-2. Implement the Use Case struct.
-3. **Important**: Business logic belongs in the **Domain Entity**, the Use Case only orchestrates.
+## Phase 4: Use Case Implementation (Green)
+1. Define the Request/Response structs (Application layer)
+2. Implement the Use Case struct
+3. **Important**: Business logic belongs in the **Domain Entity**, the Use Case only orchestrates
 
-## PHASE 5: Manual Mock Implementation
+## Phase 5: Manual Mock Implementation
 Update or create Manual Mocks in the test project to support the new Port.
 
-## PHASE 6: Refactoring (Blue)
+## Phase 6: Refactoring (Blue)
 Check for:
-- 150-line limit.
-- 20-line function limit.
-- Meaningful names.
-- Layered dependency rules.
+- 150-line limit
+- 20-line function limit
+- Meaningful names
+- Layered dependency rules
 
----
+## Example Workflow: Process Device Telemetry
 
-### Example Workflow for AI:
-If the task is "Process device telemetry":
+### Phase 1: Analysis
+- **Actor**: IoT Device
+- **Responsibility**: Validate, evaluate and persist incoming telemetry
 
-#### 1. Analysis (Phase 1)
-- **Actor**: IoT Device.
-- **Responsibility**: Validate, evaluate and persist incoming telemetry.
-
-#### 2. Red Test (Phase 2)
+### Phase 2: Red Test
 File: `tests/telemetry/processing/telemetry_processing_test.go`
+
 ```go
 func Test_given_valid_telemetry_when_processed_then_record_data_successfully(t *testing.T) {
     // Arrange
@@ -65,7 +73,7 @@ func Test_given_valid_telemetry_when_processed_then_record_data_successfully(t *
     }
     
     saveTelemetryMock := &SaveTelemetryMock{}
-    getDeviceMock := &GetDeviceSettingMock{} // Another manual mock
+    getDeviceMock := &GetDeviceSettingMock{}
     sut := NewTelemetryProcessor(saveTelemetryMock, getDeviceMock, []TrackingEventEvaluator{})
 
     // Act
@@ -87,8 +95,9 @@ func Test_given_valid_telemetry_when_processed_then_record_data_successfully(t *
 }
 ```
 
-#### 3. Port Definition (Phase 3)
+### Phase 3: Port Definition
 File: `internal/application/telemetry/ports/telemetry_repository.go`
+
 ```go
 package ports
 
@@ -99,14 +108,13 @@ type TelemetryRepository interface {
 }
 ```
 
-#### 4. Implementation (Phase 4)
+### Phase 4: Implementation
 File: `internal/application/telemetry/usecases/telemetry_processor.go`
+
 ```go
 package usecases
 
-import (
-    "context"
-)
+import "context"
 
 type TelemetryProcessor struct {
     saveTelemetry    ports.TelemetryRepository
@@ -162,8 +170,9 @@ func (tp *TelemetryProcessor) Process(ctx context.Context, data TelemetryProcess
 }
 ```
 
-#### 5. Manual Mock (Phase 5)
+### Phase 5: Manual Mock
 File: `tests/telemetry/mocks/save_telemetry_mock.go`
+
 ```go
 package mocks
 
@@ -243,3 +252,16 @@ tests/
     mocks/
       mock_repository.go
 ```
+
+## Protocol Summary
+
+This protocol ensures:
+
+1. **TDD-First Development**: Always start with failing tests
+2. **Clean Architecture Compliance**: Proper layer separation
+3. **Domain-Driven Design**: Business logic in domain entities
+4. **Manual Testing**: Simple, explicit mocks
+5. **Code Quality**: Size limits and naming conventions
+6. **Maintainability**: Clear structure and responsibilities
+
+Follow this sequence exactly for consistent, high-quality use case implementations.

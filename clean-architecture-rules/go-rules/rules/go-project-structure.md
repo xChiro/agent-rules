@@ -1,20 +1,20 @@
 ---
 trigger: always_on
-description: Go project structure following Clean Architecture, DDD and TDD with mirrored test architecture
+description: 
 globs: 
 ---
 
 # Go Project Structure Template
 
-This template outlines a recommended directory layout for Go projects following Clean Architecture, DDD and TDD principles. Use it as a starting point for new services or when restructuring existing codebases.
+Project structure following Clean Architecture, DDD and TDD principles with mirrored test architecture.
 
-## Root
+## Core Principle
 
-Tests MUST mirror the structure of the production code.
+**Tests MUST mirror the structure of the production code.**
 
 This rule makes navigation, maintenance and AI-generated code easier.
 
-Example test structure:
+## Directory Layout
 
 ```
 your-service/
@@ -84,13 +84,11 @@ tests/
         └── handler_integration_test.go
 ```
 
-
-# Mirror Rules
+## Mirror Rules
 
 Tests MUST mirror the production layer structure.
 
-Example:
-
+### Example 1: Domain Layer
 **Production**
 ```
 internal/domain/orders/order.go
@@ -101,9 +99,7 @@ internal/domain/orders/order.go
 tests/domain/orders/order_test.go
 ```
 
-
-Example:
-
+### Example 2: Application Layer
 **Production**
 ```
 internal/application/orders/create_order.go
@@ -114,25 +110,17 @@ internal/application/orders/create_order.go
 tests/application/orders/create_order_test.go
 ```
 
-
-This ensures:
+## Benefits of Mirrored Structure
 
 - Clear mapping between code and tests
 - Faster navigation
 - AI agents can locate tests automatically
 - Clean Architecture boundaries remain visible
 
+## Test Layer Responsibilities
 
----
-
-# Test Layer Responsibilities
-
-## Domain Tests
-
-**Location**
-```
-tests/domain/<subdomain>
-```
+### Domain Tests
+**Location**: `tests/domain/<subdomain>`
 
 **Purpose**
 - Validate Entities
@@ -145,15 +133,8 @@ tests/domain/<subdomain>
 - No infrastructure
 - Pure business logic
 
-
----
-
-## Application Tests
-
-**Location**
-```
-tests/application/<subdomain>
-```
+### Application Tests
+**Location**: `tests/application/<subdomain>`
 
 **Purpose**
 - Test use case orchestration
@@ -163,20 +144,10 @@ tests/application/<subdomain>
 - Follow ATDD
 - Only one SUT call in Act
 
-**Mocks live in**
-```
-tests/application/<subdomain>/mocks
-```
+**Mocks live in**: `tests/application/<subdomain>/mocks`
 
-
----
-
-## Infrastructure Tests
-
-**Location**
-```
-tests/infrastructure/
-```
+### Infrastructure Tests
+**Location**: `tests/infrastructure/`
 
 **Purpose**
 - Integration tests
@@ -188,62 +159,55 @@ tests/infrastructure/
 - No mocks
 - Validate mapping
 
-
----
-
-## Interface Tests
-
-**Location**
-```
-tests/interfaces/http
-tests/interfaces/grpc
-```
+### Interface Tests
+**Location**: `tests/interfaces/http` and `tests/interfaces/grpc`
 
 **Purpose**
 - API contract verification
 - End-to-end behavior
 
----
+## Naming Conventions
 
-# Naming Conventions
-
-**Test files must follow Go conventions**
+### Test Files
+Follow Go conventions:
 ```
 order_test.go
 create_order_test.go
 email_value_object_test.go
 ```
 
-**Test names MUST follow ATDD**
+### Test Functions
+MUST follow ATDD pattern:
 ```
 Test_given_invalid_email_when_creating_email_then_return_error
-
 Test_given_existing_user_when_registering_then_return_duplicate_error
 ```
 
+## Architectural Rules
 
----
-
-# Architectural Rules
-
-**Follow Clean Architecture dependency direction**
+### Dependency Direction
+Follow Clean Architecture dependency direction:
 ```
 Infrastructure → Application → Domain
 ```
 
-**Domain must never import**
+### Domain Layer Restrictions
+**Domain must never import**:
 - infrastructure
 - interfaces
 - frameworks
 
-**Application must depend only on domain interfaces.**
+### Application Layer Rules
+- Must depend only on domain interfaces
+- Use dependency injection
+- Keep use cases focused
 
-**Interfaces and infrastructure depend on application.**
+### Infrastructure Layer
+- Implements domain/application interfaces
+- Contains external dependencies
+- No business logic
 
-
----
-
-# Code Size Rules
+## Code Size Rules
 
 **Files MUST NOT exceed 150 lines.**
 
@@ -251,10 +215,7 @@ Infrastructure → Application → Domain
 
 **If a file approaches the limit, split it into smaller components.**
 
-
----
-
-# Key Principles
+## Key Principles
 
 The structure enforces:
 
@@ -263,3 +224,21 @@ The structure enforces:
 - Test Driven Development
 - Deterministic test organization
 - AI-friendly code navigation
+
+## File Organization Best Practices
+
+### One Type Per File
+When reasonable, define one high-level type or concept per file.
+
+### Package Organization
+- **Domain packages**: Pure business logic
+- **Application packages**: Use cases and orchestration
+- **Infrastructure packages**: External implementations
+- **Interface packages**: Transport layer
+
+### Import Organization
+1. Standard library
+2. External packages
+3. Internal packages (in dependency order)
+
+This structure ensures maintainable, testable, and scalable Go applications following industry best practices.

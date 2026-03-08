@@ -1,30 +1,30 @@
 ---
-description: Refactor production code following Go Clean Architecture and Fowler's principles
+description: Refactor production code following Clean Architecture and Fowler's principles
 ---
 
 # Production Code Refactoring Workflow
 
-## Prerequisites
-- All tests passing
-- Clear target identification
-- Test coverage verified
+Improve production code maintainability while preserving behavior and Clean Architecture compliance.
 
-## Phase 1: Analysis
-- Identify code smells (long functions >20 lines, files >150 lines)
-- Check Clean Architecture violations
-- Find SOLID principle violations
+## Phase 1: Prerequisites
+- **All tests passing**: Ensure safety net before refactoring
+- **Clear target identification**: Know what to improve and why
+- **Test coverage verified**: Sufficient coverage for behavior preservation
+- **Baseline committed**: Save working state before changes
 
-## Phase 2: Safety Net Setup
-- Ensure existing tests pass
-- Create characterization tests if coverage insufficient
-- Commit baseline before refactoring
+## Phase 2: Code Analysis
+- **Identify code smells**: Functions >20 lines, files >150 lines
+- **Check architecture violations**: Layer dependencies, SOLID principles
+- **Find duplication**: Repeated logic, similar patterns
+- **Locate complexity**: Nested conditionals, long parameter lists
 
 ## Phase 3: Apply Fowler Refactoring Patterns
 
 ### Extract Method (Split Method)
 Break down long methods into smaller, focused ones:
+
+#### Before
 ```go
-// Before: Long method with multiple responsibilities
 func (t *Telemetry) ProcessData() error {
     // Validation logic
     if t.DeviceID == "" { return errors.New("device ID required") }
@@ -46,8 +46,10 @@ func (t *Telemetry) ProcessData() error {
     t.eventBus.Publish("data.processed", transformed)
     return nil
 }
+```
 
-// After: Split into focused methods
+#### After
+```go
 func (t *Telemetry) ProcessData() error {
     if err := t.validate(); err != nil { return err }
     transformed := t.transform()
@@ -69,20 +71,13 @@ func (t *Telemetry) transform() Data {
         Timestamp: time.Now(),
     }
 }
-
-func (t *Telemetry) persist(data Data) error {
-    return t.repo.Save(data)
-}
-
-func (t *Telemetry) publishEvent(data Data) {
-    t.eventBus.Publish("data.processed", data)
-}
 ```
 
 ### Extract Function (Shared Logic)
 Move duplicated code to shared functions:
+
+#### Before
 ```go
-// Before: Duplicated validation across multiple structs
 func (t *Telemetry) Validate() error {
     if t.DeviceID == "" { return errors.New("device ID required") }
     if t.Speed < 0 { return errors.New("speed cannot be negative") }
@@ -94,8 +89,10 @@ func (s *Sensor) Validate() error {
     if s.Reading < 0 { return errors.New("reading cannot be negative") }
     return nil
 }
+```
 
-// After: Extract shared validation function
+#### After
+```go
 func ValidateDeviceData(deviceID string, value float64, fieldName string) error {
     if deviceID == "" { return errors.New("device ID required") }
     if value < 0 { return fmt.Errorf("%s cannot be negative", fieldName) }
@@ -113,8 +110,9 @@ func (s *Sensor) Validate() error {
 
 ### Replace Conditional with Polymorphism
 Eliminate complex conditional logic:
+
+#### Before
 ```go
-// Before: Complex conditional based on type
 func (p *Processor) Process(deviceType string, data Data) error {
     switch deviceType {
     case "GPS":
@@ -127,8 +125,10 @@ func (p *Processor) Process(deviceType string, data Data) error {
         return fmt.Errorf("unsupported device type: %s", deviceType)
     }
 }
+```
 
-// After: Polymorphic approach
+#### After
+```go
 type DeviceProcessor interface {
     Process(data Data) error
 }
@@ -139,13 +139,6 @@ func (g *GPSProcessor) Process(data Data) error {
     return g.saveGPSData(data)
 }
 
-type AccelerometerProcessor struct{ validator AccValidator }
-func (a *AccelerometerProcessor) Process(data Data) error {
-    if err := a.validator.Validate(data); err != nil { return err }
-    return a.saveAccData(data)
-}
-
-// Processor becomes simple
 func (p *Processor) Process(processor DeviceProcessor, data Data) error {
     return processor.Process(data)
 }
@@ -153,8 +146,9 @@ func (p *Processor) Process(processor DeviceProcessor, data Data) error {
 
 ### Extract Class (Split Large Struct)
 Break down large structs into focused ones:
+
+#### Before
 ```go
-// Before: Large struct with multiple responsibilities
 type TelemetryService struct {
     repo          TelemetryRepository
     validator     TelemetryValidator
@@ -164,8 +158,10 @@ type TelemetryService struct {
     logger        Logger
     metrics       MetricsCollector
 }
+```
 
-// After: Split into focused structs
+#### After
+```go
 type TelemetryService struct {
     processor *DataProcessor
     publisher *EventPublisher
@@ -182,78 +178,13 @@ type EventPublisher struct {
     eventBus EventBus
     logger   Logger
 }
-
-type CacheManager struct {
-    cache   Cache
-    metrics MetricsCollector
-}
-```
-
-### Move Method/Field
-Reorganize methods to appropriate classes:
-```go
-// Before: Method in wrong class
-type Order struct {
-    ID     string
-    Amount float64
-}
-
-func (o *Order) CalculateDiscount(customer Customer) float64 {
-    if customer.IsPremium() {
-        return o.Amount * 0.1
-    }
-    return 0
-}
-
-// After: Move method to appropriate class
-type Order struct {
-    ID     string
-    Amount float64
-}
-
-type Customer struct {
-    ID      string
-    Premium bool
-}
-
-func (c *Customer) CalculateDiscount(order Order) float64 {
-    if c.Premium {
-        return order.Amount * 0.1
-    }
-    return 0
-}
-```
-
-### Replace Parameter with Explicit Methods
-Replace methods with boolean parameters:
-```go
-// Before: Boolean parameter obscuring intent
-func (u *User) SetPermission(admin bool) {
-    if admin {
-        u.role = "admin"
-        u.permissions = []string{"read", "write", "delete"}
-    } else {
-        u.role = "user"
-        u.permissions = []string{"read"}
-    }
-}
-
-// After: Explicit methods revealing intent
-func (u *User) MakeAdmin() {
-    u.role = "admin"
-    u.permissions = []string{"read", "write", "delete"}
-}
-
-func (u *User) MakeUser() {
-    u.role = "user"
-    u.permissions = []string{"read"}
-}
 ```
 
 ### Decompose Conditional
 Break down complex conditionals:
+
+#### Before
 ```go
-// Before: Complex conditional
 func (c *Customer) CanPurchase(product Product) bool {
     if c.AccountStatus == "active" && c.Balance >= product.Price && 
        c.Age >= 18 && !c.HasPendingPayments() && product.InStock {
@@ -261,8 +192,10 @@ func (c *Customer) CanPurchase(product Product) bool {
     }
     return false
 }
+```
 
-// After: Decomposed into meaningful methods
+#### After
+```go
 func (c *Customer) CanPurchase(product Product) bool {
     return c.isActive() && c.hasSufficientBalance(product.Price) && 
            c.isAdult() && c.hasNoPendingPayments() && product.isAvailable()
@@ -271,50 +204,121 @@ func (c *Customer) CanPurchase(product Product) bool {
 func (c *Customer) isActive() bool { return c.AccountStatus == "active" }
 func (c *Customer) hasSufficientBalance(price float64) bool { return c.Balance >= price }
 func (c *Customer) isAdult() bool { return c.Age >= 18 }
-func (c *Customer) hasNoPendingPayments() bool { return !c.HasPendingPayments() }
-func (p *Product) isAvailable() bool { return p.InStock }
-```
-
-### Replace Magic Number with Symbolic Constant
-```go
-// Before: Magic numbers
-func (t *Telemetry) IsHighSpeed() bool {
-    return t.Speed > 120.0 // What does 120 mean?
-}
-
-// After: Symbolic constants
-const (
-    SpeedThresholdHigh = 120.0
-    SpeedThresholdLow  = 30.0
-)
-
-func (t *Telemetry) IsHighSpeed() bool {
-    return t.Speed > SpeedThresholdHigh
-}
-
-func (t *Telemetry) IsLowSpeed() bool {
-    return t.Speed < SpeedThresholdLow
-}
 ```
 
 ## Phase 4: Clean Architecture Compliance
-- **Domain**: Technology-agnostic, no infrastructure
-- **Application**: Orchestration only, no business logic  
-- **Infrastructure**: Implement ports, no domain rules
-- **Interface**: HTTP handlers, composition root
 
-## Phase 5: Dependency Injection
+### Domain Layer Purity
 ```go
-// Extract interfaces in application layer
-type TelemetryRepository interface { Save(ctx context.Context, t Telemetry) error }
+// ✅ Pure domain logic
+type Money struct {
+    amount   int64
+    currency string
+}
 
-// Inject dependencies via constructors
-func NewProcessor(repo TelemetryRepository) *Processor {
-    return &Processor{repo: repo}
+func (m Money) Add(other Money) (Money, error) {
+    if m.currency != other.currency {
+        return Money{}, errors.New("currency mismatch")
+    }
+    return Money{amount: m.amount + other.amount, currency: m.currency}, nil
+}
+
+// ❌ Infrastructure concerns in domain
+type Money struct {
+    amount   int64 `json:"amount"`  // No JSON tags in domain
+    currency string `db:"currency"` // No DB tags in domain
 }
 ```
 
-## Phase 6: Validation & Testing
+### Application Layer Orchestration
+```go
+// ✅ Pure orchestration
+func (uc *ProcessOrder) Execute(ctx context.Context, req ProcessOrderRequest) error {
+    order, err := uc.repo.FindByID(ctx, req.OrderID)
+    if err != nil { return err }
+    
+    if err := order.Process(); err != nil { return err }
+    
+    return uc.repo.Save(ctx, order)
+}
+
+// ❌ Business logic in use case
+func (uc *ProcessOrder) Execute(ctx context.Context, req ProcessOrderRequest) error {
+    // Complex business rules should be in domain
+    if order.Total > 1000 && order.Customer.IsPremium {
+        // This belongs in domain entity
+    }
+}
+```
+
+## Phase 5: Dependency Injection Improvements
+
+### Interface Extraction
+```go
+// Define interfaces in application layer
+type OrderRepository interface {
+    Save(ctx context.Context, order Order) error
+    FindByID(ctx context.Context, id string) (*Order, error)
+}
+
+// Implement in infrastructure
+type SQLOrderRepository struct {
+    db *sql.DB
+}
+
+func (r *SQLOrderRepository) Save(ctx context.Context, order Order) error {
+    // Implementation
+}
+```
+
+### Constructor Injection
+```go
+func NewOrderProcessor(
+    repo OrderRepository,
+    publisher EventPublisher,
+    validator OrderValidator,
+) *OrderProcessor {
+    return &OrderProcessor{
+        repo:      repo,
+        publisher: publisher,
+        validator: validator,
+    }
+}
+```
+
+## Phase 6: Error Handling Enhancement
+
+### Structured Error Handling
+```go
+// Define domain errors
+var (
+    ErrOrderNotFound = errors.New("order not found")
+    ErrInvalidStatus = errors.New("invalid order status")
+)
+
+// Wrap with context
+func (r *OrderRepository) Save(ctx context.Context, order Order) error {
+    if err := r.db.Save(order); err != nil {
+        return fmt.Errorf("failed to save order %s: %w", order.ID, err)
+    }
+    return nil
+}
+```
+
+## Phase 7: Testing and Validation
+
+### Behavior Preservation Tests
+```go
+func Test_given_refactored_code_when_executed_then_same_behavior(t *testing.T) {
+    // Characterization test to ensure behavior preservation
+    originalResult := originalImplementation(input)
+    refactoredResult := refactoredImplementation(input)
+    
+    assertEqual(t, originalResult, refactoredResult, "behavior should be preserved")
+}
+```
+
+### Quality Checks
 ```bash
 # Run tests to verify behavior preservation
 go test ./...
@@ -322,60 +326,77 @@ go test ./...
 # Code quality checks
 go fmt ./...
 go vet ./...
+
+# Check file sizes
+find . -name "*.go" -exec wc -l {} \; | awk '$1 > 150'
 ```
 
-## Phase 7: Final Verification
-- All tests passing
-- No behavior changes
-- Architecture compliance verified
-- Performance maintained
+## Phase 8: Performance Considerations
 
-## Safety Checks
-- Tests pass before each change
-- Small incremental refactors
-- Commit after successful changes
-- Verify behavior preservation
-
-## Common Scenarios
-
-### Long Function Split (Extract Method)
+### Algorithm Optimization
 ```go
-// Identify methods >20 lines with multiple responsibilities
-// Extract validation, transformation, persistence into separate methods
-// Keep each method under 20 lines with descriptive names
-// Use composition to maintain original workflow
+// Before: O(n²) nested loop
+func findDuplicates(items []string) []string {
+    var duplicates []string
+    for i, item1 := range items {
+        for j, item2 := range items {
+            if i != j && item1 == item2 {
+                duplicates = append(duplicates, item1)
+            }
+        }
+    }
+    return duplicates
+}
+
+// After: O(n) with map
+func findDuplicates(items []string) []string {
+    seen := make(map[string]bool)
+    var duplicates []string
+    
+    for _, item := range items {
+        if seen[item] {
+            duplicates = append(duplicates, item)
+        } else {
+            seen[item] = true
+        }
+    }
+    return duplicates
+}
 ```
 
-### Conditional to Polymorphism  
-```go
-// Find switch/if-else chains based on type or state
-// Create interface defining the behavior
-// Implement concrete types for each condition
-// Replace conditional with polymorphic calls
-// Use DI to inject appropriate implementation
-```
+## Common Refactoring Scenarios
 
-### Large Struct Decomposition (Extract Class)
-```go
-// Identify structs with >7 fields or multiple responsibilities
-// Group related fields into focused structs
-// Move methods to appropriate new structs
-// Use composition to maintain original functionality
-```
+### Long Function Split
+- Identify methods >20 lines with multiple responsibilities
+- Extract validation, transformation, persistence into separate methods
+- Keep each method under 20 lines with descriptive names
+- Use composition to maintain original workflow
+
+### Large File Split
+- Split files >150 lines by responsibility or feature
+- Group related functionality together
+- Maintain clear import dependencies
+- Update test files accordingly
 
 ### Magic Number Elimination
-```go
-// Replace hardcoded numbers with named constants
-// Group related constants in iota blocks when appropriate
-// Use descriptive names revealing business meaning
-// Consider configuration for values that may change
+- Replace hardcoded numbers with named constants
+- Group related constants in iota blocks
+- Use descriptive names revealing business meaning
+- Consider configuration for variable values
+
+## Success Criteria
+- **All tests pass**: Behavior preserved
+- **File size compliance**: ≤150 lines per file
+- **Function size compliance**: ≤20 lines per function
+- **Architecture compliance**: Clean layer boundaries
+- **SOLID principles**: Single responsibility, dependency inversion
+- **Performance maintained**: No degradation in execution time
 
 ## Stop When
-- Functions ≤20 lines, files ≤150 lines
-- SOLID principles followed
-- Clean Architecture boundaries respected
-- All tests passing, behavior preserved
+- Code is clean and maintainable
+- All quality metrics met
+- Tests pass consistently
+- Architecture boundaries clear
+- No further obvious improvements
 
----
-
-**Note**: For detailed test refactoring techniques, see the separate **Test Code Refactoring Workflow**. This workflow focuses only on production code improvements.
+Refactoring improves code maintainability while preserving behavior and architectural integrity.

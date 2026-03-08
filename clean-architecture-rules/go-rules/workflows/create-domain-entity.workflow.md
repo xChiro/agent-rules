@@ -1,26 +1,155 @@
-# Workflow: /create-domain-entity
+---
+description: Create domain entity or value object following DDD principles
+---
 
-Use this workflow to create a new domain entity or value object. When the user issues `/create-domain-entity <entity_name>`, perform the following steps:
+# Domain Entity Creation Workflow
 
-## Description
+Create domain entities or value objects following Clean Architecture and DDD principles with TDD-first approach.
 
-Define a new **Entity** or **Value Object** in the domain layer with clear responsibilities and protected invariants. Ensure the design aligns with Clean Architecture and DDD principles, and write tests first following the TDD guidelines.
+## Phase 1: Requirements Analysis
+- Identify **Domain Concept**: Entity (with identity) or Value Object (immutable)
+- Define **Invariants**: Business rules that must always hold
+- Specify **Attributes**: Core properties and their validation rules
+- Confirm **File Size**: ≤150 lines limit
 
-## Steps
+## Phase 2: Failing TDD Test (Red)
+Create failing tests following `given_when_then` pattern:
 
-1. **Clarify the domain concept** represented by `<entity_name>`: Is it an aggregate root, an entity with identity, or a value object without identity? Identify the invariants and constraints.
-2. **Write tests first**: Use the `/create-tdd-add-test` workflow to generate failing tests that capture the entity’s expected behaviour and validation (e.g., invalid inputs, equality semantics).
-3. **Create the type** in `internal/domain/<bounded_context>/<entity_name>.go`:
-   - For value objects, define a struct with unexported fields and an exported constructor function (`New<entity_name>`) that validates inputs and returns `(entity, error)`.
-   - For entities, define a struct with unexported fields and methods enforcing invariants. Provide an exported constructor or factory function.
-4. **Do not add infrastructure concerns**: Avoid tags (`json`, `db`) or framework imports. Keep the type pure.
-5. **Implement equality and behaviour**:
-   - For value objects, implement methods such as `Equal(other <type>) bool` as needed.
-   - For entities, expose domain actions (`Confirm()`, `Cancel()`) that modify state while maintaining invariants.
-6. **Refactor**: After tests pass, ensure the file and functions respect the 150/20 line limits and follow the naming conventions in `go-clean-code.rules.md`.
+```go
+func Test_given_invalid_[attribute]_when_creating_[entity]_then_return_error(t *testing.T) {
+    // Arrange: Prepare invalid input
+    // Act: Attempt entity creation
+    // Assert: Verify error returned
+}
 
-## Guidelines
+func Test_given_valid_[attributes]_when_creating_[entity]_then_success(t *testing.T) {
+    // Arrange: Prepare valid input
+    // Act: Create entity
+    // Assert: Verify entity created correctly
+}
+```
 
-- Follow DDD patterns described in `go-clean-architecture-ddd.rules.md`.
-- Enforce validations within constructors to maintain invariants.
-- Write unit tests first and use manual mocks only for outgoing interfaces (not needed for pure value objects).
+## Phase 3: Domain Implementation (Green)
+
+### Value Object Pattern
+```go
+type [ValueObject] struct {
+    field1 type1
+    field2 type2
+}
+
+func New[ValueObject](field1 type1, field2 type2) ([ValueObject], error) {
+    // Validation logic
+    if field1 == "" {
+        return [ValueObject]{}, errors.New("field1 required")
+    }
+    return [ValueObject]{field1: field1, field2: field2}, nil
+}
+```
+
+### Entity Pattern
+```go
+type [Entity] struct {
+    id    [EntityID]
+    field1 type1
+    field2 type2
+}
+
+func New[Entity](id [EntityID], field1 type1, field2 type2) *[Entity] {
+    return &[Entity]{
+        id:    id,
+        field1: field1,
+        field2: field2,
+    }
+}
+```
+
+## Phase 4: Behavior Implementation
+Add domain methods that maintain invariants:
+
+```go
+// For Entities: State-changing methods
+func (e *[Entity]) [Action]() error {
+    // Business logic with invariant validation
+    if e.field1 == "" {
+        return errors.New("cannot [action] without field1")
+    }
+    // Modify state
+    return nil
+}
+
+// For Value Objects: Computation methods
+func (v [ValueObject]) [Method]() [ReturnType] {
+    // Pure computation
+    return [result]
+}
+```
+
+## Phase 5: Refactoring (Blue)
+- Verify file ≤150 lines, functions ≤20 lines
+- Ensure no infrastructure dependencies
+- Check naming conventions compliance
+- Validate all tests pass
+
+## File Location
+```
+internal/domain/[bounded_context]/[entity].go
+tests/domain/[bounded_context]/[entity]_test.go
+```
+
+## Key Rules
+- **No infrastructure**: No database tags, HTTP clients, etc.
+- **Pure domain logic**: Business rules only
+- **Immutable value objects**: Copy semantics
+- **Entity identity**: Unique ID with lifecycle
+- **Validation in constructors**: Maintain invariants
+
+## Examples
+
+### Email Value Object
+```go
+type Email struct {
+    value string
+}
+
+func NewEmail(email string) (Email, error) {
+    if email == "" || !strings.Contains(email, "@") {
+        return Email{}, errors.New("invalid email format")
+    }
+    return Email{value: email}, nil
+}
+
+func (e Email) String() string { return e.value }
+```
+
+### User Entity
+```go
+type User struct {
+    id    UserID
+    email Email
+    name  string
+}
+
+func NewUser(id UserID, email Email, name string) *User {
+    return &User{
+        id:    id,
+        email: email,
+        name:  name,
+    }
+}
+
+func (u *User) ChangeName(newName string) error {
+    if newName == "" {
+        return errors.New("name cannot be empty")
+    }
+    u.name = newName
+    return nil
+}
+```
+
+## Success Criteria
+- All tests pass
+- File size ≤150 lines
+- No infrastructure imports
+- Clear business intent
+- Proper invariant enforcement
