@@ -12,6 +12,9 @@ Create integration tests that verify real infrastructure behavior while maintain
 - List **Critical Edge Cases**: Infrastructure-specific failures
 - Confirm **File Size**: ≤150 lines limit
 
+## Mandatory Requirements (Non-Negotiable)
+- **Assertion library**: MUST use `github.com/stretchr/testify/assert` library instead of `if` statements for all assertions - this is non-negotiable
+
 ## Phase 2: Test Environment Setup
 Create reusable test environment:
 
@@ -60,19 +63,19 @@ func Test_given_valid_setup_when_[component]_executed_then_[expected](t *testing
     
     testData := fixtures.NewTest[Entity]()
     err := seedTestData(env.Database, testData)
-    assertNoError(t, err, "failed to seed test data")
+    assert.True(t, err == nil, "failed to seed test data: %v", err)
     
     // Act: Execute the actual workflow
     result, err := systemUnderTest.Execute(context.Background(), request)
     
     // Assert: Verify real infrastructure state
-    assertNoError(t, err, "workflow execution failed")
-    assertEqual(t, result.Status, "expected_status", "unexpected status")
+    assert.True(t, err == nil, "workflow execution failed: %v", err)
+    assert.Equal(t, result.Status, "expected_status", "unexpected status")
     
     // Verify database state
     saved, err := repository.FindByID(context.Background(), testData.ID)
-    assertNoError(t, err, "failed to retrieve saved data")
-    assertEqual(t, saved.Field, expectedValue, "saved data mismatch")
+    assert.True(t, err == nil, "failed to retrieve saved data: %v", err)
+    assert.Equal(t, saved.Field, expectedValue, "saved data mismatch")
 }
 ```
 
@@ -89,14 +92,14 @@ func Test_given_[constraint]_when_duplicate_insert_then_error(t *testing.T) {
     
     entity := fixtures.NewTest[Entity]()
     err := repository.Save(context.Background(), entity)
-    assertNoError(t, err, "failed to save initial entity")
+    assert.True(t, err == nil, "failed to save initial entity: %v", err)
     
     // Act: Attempt duplicate operation
     err = repository.Save(context.Background(), entity)
     
     // Assert: Verify infrastructure constraint
-    assertError(t, err, "expected constraint violation")
-    assertErrorContains(t, err, "unique constraint")
+    assert.True(t, err != nil, "expected constraint violation")
+    assert.True(t, strings.Contains(err.Error(), "unique constraint"), "error should contain 'unique constraint'")
 }
 ```
 
@@ -136,14 +139,14 @@ package testutils
 func AssertDatabaseState(t *testing.T, db *sql.DB, expectedCount int) {
     var count int
     err := db.QueryRow("SELECT COUNT(*) FROM [table]").Scan(&count)
-    assertNoError(t, err, "failed to query database")
-    assertEqual(t, count, expectedCount, "record count mismatch")
+    assert.True(t, err == nil, "failed to query database: %v", err)
+    assert.Equal(t, count, expectedCount, "record count mismatch")
 }
 
 func AssertMessageInQueue(t *testing.T, client redis.Client, queue, content string) {
     result, err := client.LPop(queue).Result()
-    assertNoError(t, err, "failed to pop message")
-    assertEqual(t, result, content, "message content mismatch")
+    assert.True(t, err == nil, "failed to pop message: %v", err)
+    assert.Equal(t, result, content, "message content mismatch")
 }
 ```
 

@@ -12,6 +12,9 @@ Create failing tests that drive development using TDD and ATDD principles with m
 - Specify **Edge Case**: Smallest failing scenario first
 - Confirm **File Size**: ≤150 lines limit
 
+## Mandatory Requirements (Non-Negotiable)
+- **Assertion library**: MUST use `github.com/stretchr/testify/assert` library instead of `if` statements for all assertions - this is non-negotiable
+
 ## Phase 2: Test Structure
 Create test following `given_when_then` pattern:
 
@@ -55,9 +58,9 @@ Verify expected failure:
 
 ```go
 // Assert: Verify expected error
-assertError(t, err, "should return error for invalid user ID")
-assertErrorContains(t, err, "user not found")
-assertEqual(t, result, User{}, "should return zero value on error")
+assert.True(t, err != nil, "should return error for invalid user ID")
+assert.True(t, strings.Contains(err.Error(), "user not found"), "error should contain 'user not found'")
+assert.Equal(t, result, User{}, "should return zero value on error")
 ```
 
 ## Phase 6: Follow-up Tests
@@ -76,8 +79,8 @@ func Test_given_valid_user_id_when_getting_user_then_success(t *testing.T) {
     result, err := sut.GetUser(context.Background(), expectedUser.ID)
     
     // Assert
-    assertNoError(t, err, "should not return error for valid user")
-    assertEqual(t, result.ID, expectedUser.ID, "should return correct user")
+    assert.True(t, err == nil, "should not return error for valid user: %v", err)
+    assert.Equal(t, result.ID, expectedUser.ID, "should return correct user")
     mockRepo.VerifyFindByIDCalled(t, 1)
 }
 ```
@@ -106,9 +109,9 @@ func Test_given_empty_user_id_when_getting_user_then_error(t *testing.T) {
     result, err := sut.GetUser(context.Background(), "")
     
     // Assert: Verify failure behavior
-    assertError(t, err, "should return error for empty user ID")
-    assertErrorContains(t, err, "user not found")
-    assertEqual(t, result, User{}, "should return zero value on error")
+    assert.True(t, err != nil, "should return error for empty user ID")
+    assert.True(t, strings.Contains(err.Error(), "user not found"), "error should contain 'user not found'")
+    assert.Equal(t, result, User{}, "should return zero value on error")
 }
 
 func Test_given_valid_user_id_when_getting_user_then_success(t *testing.T) {
@@ -123,9 +126,9 @@ func Test_given_valid_user_id_when_getting_user_then_success(t *testing.T) {
     result, err := sut.GetUser(context.Background(), expectedUser.ID)
     
     // Assert: Verify success behavior
-    assertNoError(t, err, "should not return error for valid user")
-    assertEqual(t, result.ID, expectedUser.ID, "should return correct user")
-    assertEqual(t, result.Name, expectedUser.Name, "should return correct name")
+    assert.True(t, err == nil, "should not return error for valid user: %v", err)
+    assert.Equal(t, result.ID, expectedUser.ID, "should return correct user")
+    assert.Equal(t, result.Name, expectedUser.Name, "should return correct name")
     userRepo.VerifyFindByIDCalled(t, 1)
     userRepo.VerifyFindByIDCalledWith(t, expectedUser.ID)
 }

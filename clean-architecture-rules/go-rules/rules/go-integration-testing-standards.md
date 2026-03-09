@@ -16,6 +16,11 @@ Integration testing guidelines for testing real infrastructure and component int
 - **Environment Isolation**: Each test runs in isolated environment with cleanup
 - **Deterministic Results**: Use seeded data and controlled external dependencies
 
+## Mandatory Requirements (Non-Negotiable)
+
+- **File size limit**: ≤150 lines per test file
+- **Assertion library**: MUST use `github.com/stretchr/testify/assert` library instead of `if` statements for all assertions - this is non-negotiable
+
 ## Test Structure
 
 ### Naming Convention

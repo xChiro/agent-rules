@@ -19,6 +19,7 @@ Comprehensive coding standards for writing idiomatic, maintainable Go code follo
 
 - **File size limit**: ≤150 lines per file (including imports and comments)
 - **Function size limit**: ≤20 lines per function
+- **Assertion library**: MUST use `github.com/stretchr/testify/assert` library instead of `if` statements for all assertions - this is non-negotiable
 - **No unused code**: Every function, variable, import, and type must be used
   - Remove unused imports, variables, and functions
   - Avoid "just in case" code or dead code paths

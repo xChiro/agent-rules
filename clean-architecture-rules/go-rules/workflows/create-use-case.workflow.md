@@ -12,6 +12,9 @@ Create application use cases following Clean Architecture, DDD, and TDD principl
 - Specify **Dependencies**: Required ports and services
 - Confirm **File Size**: ≤150 lines limit
 
+## Mandatory Requirements (Non-Negotiable)
+- **Assertion library**: MUST use `github.com/stretchr/testify/assert` library instead of `if` statements for all assertions - this is non-negotiable
+
 ## Phase 2: Failing ATDD Test (Red)
 Create failing test following `given_when_then` pattern:
 
@@ -178,10 +181,10 @@ func Test_given_valid_request_when_[use_case]_then_success(t *testing.T) {
     result, err := sut.Execute(context.Background(), request)
     
     // Assert: Verify expected behavior
-    assertNoError(t, err, "use case execution should succeed")
-    assertEqual(t, result.Success, true, "should indicate success")
-    assertEqual(t, len(mockRepo.SavedEntities), 1, "should save exactly one entity")
-    assertEqual(t, mockRepo.SavedEntities[0].GetField1(), "test-value", "should save correct field1")
+    assert.True(t, err == nil, "use case execution should succeed: %v", err)
+    assert.Equal(t, result.Success, true, "should indicate success")
+    assert.Equal(t, len(mockRepo.SavedEntities), 1, "should save exactly one entity")
+    assert.Equal(t, mockRepo.SavedEntities[0].GetField1(), "test-value", "should save correct field1")
 }
 ```
 

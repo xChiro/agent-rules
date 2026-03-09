@@ -16,6 +16,9 @@ When instructed to create a new Use Case, follow this exact sequence without dev
 ## Phase 2: Failing ATDD Test (Red)
 Create a test file in `tests/` using **snake_case** for the function names. Use **Manual Mocks** from the `mocks/` folder.
 
+### Mandatory Requirements (Non-Negotiable)
+- **Assertion library**: MUST use `github.com/stretchr/testify/assert` library instead of `if` statements for all assertions - this is non-negotiable
+
 ### Test Quality Guidelines
 - **Avoid repeated assertions across tests**: Don't assert the same condition in multiple test methods
 - **Test behavior, not implementation**: Focus on observable outcomes, not internal details
@@ -80,18 +83,10 @@ func Test_given_valid_telemetry_when_processed_then_record_data_successfully(t *
     result, err := sut.Process(context.Background(), telemetryData)
 
     // Assert
-    if err != nil {
-        t.Fatalf("unexpected error: %v", err)
-    }
-    if !result.Success {
-        t.Fatalf("expected success, got failure")
-    }
-    if saveTelemetryMock.TelemetryRecorded.MessageID != messageID {
-        t.Fatalf("expected message ID %s, got %s", messageID, saveTelemetryMock.TelemetryRecorded.MessageID)
-    }
-    if saveTelemetryMock.TelemetryRecorded.DeviceID != "device-123" {
-        t.Fatalf("expected device ID device-123, got %s", saveTelemetryMock.TelemetryRecorded.DeviceID)
-    }
+    asserts.True(t, err == nil, "unexpected error: %v", err)
+    asserts.True(t, result.Success, "expected success, got failure")
+    asserts.Equal(t, saveTelemetryMock.TelemetryRecorded.MessageID, messageID, "expected message ID %s, got %s", messageID, saveTelemetryMock.TelemetryRecorded.MessageID)
+    asserts.Equal(t, saveTelemetryMock.TelemetryRecorded.DeviceID, "device-123", "expected device ID device-123, got %s", saveTelemetryMock.TelemetryRecorded.DeviceID)
 }
 ```
 

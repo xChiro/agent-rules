@@ -14,8 +14,12 @@ Improve test code maintainability while preserving behavior and following our un
 - **Unclear names**: Non-descriptive test functions
 - **Missing edge cases**: Only happy path testing
 - **File size violations**: Files >150 lines (MANDATORY)
+- **Assertion library violations**: Using `if` instead of `github.com/stretchr/testify/assert` (MANDATORY)
 - **Manual assertions**: Using proper assertion helpers
 - **Repeated assertions**: Same condition checked across tests
+
+## Mandatory Requirements (Non-Negotiable)
+- **Assertion library**: MUST use `github.com/stretchr/testify/assert` library instead of `if` statements for all assertions - this is non-negotiable
 
 ## Phase 2: Extract Test Setup
 
@@ -150,14 +154,14 @@ func Test_given_invalid_input_when_processing_then_error(t *testing.T) {
 }
 ```
 
-### After: Manual Assertions
+### After: Manual Assertions with github.com/stretchr/testify/assert
 ```go
 func Test_given_invalid_input_when_processing_then_error(t *testing.T) {
     sut, _ := setupProcessor(t)
     _, err := sut.Process(context.Background(), request)
     
-    assertError(t, err, "should return error for invalid input")
-    assertErrorContains(t, err, "invalid")
+    assert.True(t, err != nil, "should return error for invalid input")
+    assert.True(t, strings.Contains(err.Error(), "invalid"), "error should contain 'invalid'")
 }
 ```
 
@@ -192,8 +196,8 @@ func Test_given_invalid_input_when_processing_then_returns_error(t *testing.T) {
             sut, _ := setupProcessor(t)
             _, err := sut.Process(context.Background(), tc.setup())
             
-            assertError(t, err, "should return error for "+tc.name)
-            assertErrorContains(t, err, tc.expectedError)
+            assert.True(t, err != nil, "should return error for "+tc.name)
+            assert.True(t, strings.Contains(err.Error(), tc.expectedError), "error should contain '"+tc.expectedError+"'")
         })
     }
 }
@@ -217,14 +221,14 @@ func (m *SaveTelemetryMock) Save(ctx context.Context, t Telemetry) error {
 }
 
 func (m *SaveTelemetryMock) VerifyCalledWith(t *testing.T, expected Telemetry) {
-    assertEqual(t, len(m.Saved), 1, "expected exactly one call")
+    assert.Equal(t, len(m.Saved), 1, "expected exactly one call")
     if len(m.Saved) > 0 {
-        assertEqual(t, m.Saved[0], expected, "call parameters mismatch")
+        assert.Equal(t, m.Saved[0], expected, "call parameters mismatch")
     }
 }
 
 func (m *SaveTelemetryMock) VerifyCallCount(t *testing.T, expected int) {
-    assertEqual(t, m.CallCount, expected, "call count mismatch")
+    assert.Equal(t, m.CallCount, expected, "call count mismatch")
 }
 
 func (m *SaveTelemetryMock) Reset() {
@@ -320,7 +324,7 @@ func Test_given_valid_data_when_processing_then_persists_successfully(t *testing
     err := sut.Process(context.Background(), data)
     
     // Assert
-    assertNoError(t, err, "processing should succeed")
+    assert.True(t, err == nil, "processing should succeed: %v", err)
     mocks.Repo.VerifyCallCount(t, 1)
     mocks.Repo.VerifyCalledWith(t, data)
 }
@@ -344,16 +348,16 @@ func Test_given_empty_id_when_validating_then_returns_error(t *testing.T) {
     data := fixtures.NewTelemetryRequestBuilder().WithMessageID("").Build()
     err := validate(data)
     
-    assertError(t, err, "should return error for empty message ID")
-    assertErrorContains(t, err, "message ID")
+    assert.True(t, err != nil, "should return error for empty message ID")
+    assert.True(t, strings.Contains(err.Error(), "message ID"), "error should contain 'message ID'")
 }
 
 func Test_given_negative_speed_when_validating_then_returns_error(t *testing.T) {
     data := fixtures.NewTelemetryRequestBuilder().WithSpeed(-1).Build()
     err := validate(data)
     
-    assertError(t, err, "should return error for negative speed")
-    assertErrorContains(t, err, "speed")
+    assert.True(t, err != nil, "should return error for negative speed")
+    assert.True(t, strings.Contains(err.Error(), "speed"), "error should contain 'speed'")
 }
 ```
 
@@ -373,7 +377,7 @@ func Test_given_negative_speed_when_validating_then_returns_error(t *testing.T) 
 ### Test Quality Standards
 - ✅ Tests use `given_when_then` naming in snake_case
 - ✅ Test data uses builders with stable defaults
-- ✅ Manual assertion helpers (no testify)
+- ✅ Manual assertion helpers using `github.com/stretchr/testify/assert` library (MANDATORY - no `if` statements)
 - ✅ All test files ≤150 lines (MANDATORY)
 - ✅ No repeated assertions across tests
 - ✅ Edge cases covered before happy path

@@ -60,6 +60,7 @@ tests/
 
 ### Mandatory Requirements
 - **File size limit**: ≤150 lines per test file
+- **Assertion library**: MUST use `github.com/stretchr/testify/assert` library instead of `if` statements for all assertions - this is non-negotiable
 - **Single assertion concept**: Each test verifies one behavioral aspect
 - **No repeated assertions**: Don't assert same condition in multiple tests
 - **Clear failure messages**: Descriptive error messages explaining expected vs actual
