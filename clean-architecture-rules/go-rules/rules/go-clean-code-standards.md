@@ -15,6 +15,40 @@ Comprehensive coding standards for writing idiomatic, maintainable Go code follo
 - **Encapsulation**: Hide data and behavior; expose minimum API needed
 - **Consistency**: Apply same conventions across the project
 
+## SOLID Principles
+
+### Single Responsibility Principle (SRP) - Clean Architecture Definition
+**New Definition (Uncle Bob, Clean Architecture)**: A module should be responsible to one, and only one, actor.
+
+- **Actor**: A single person or group of people who need the system to change for some reason
+- **Module**: Any cohesive unit of code (function, class, package, microservice)
+- **One Actor**: Each module should serve the needs of only one stakeholder group
+- **Change Reasons**: A module should have only one reason to change, driven by one actor
+
+**Examples**:
+- **Violation**: `Employee` class with `calculatePay()` (accounting actor) and `reportHours()` (management actor)
+- **Correct**: Separate `PayCalculator` (accounting) and `HoursReporter` (management) modules
+
+### Open/Closed Principle (OCP)
+- Software entities should be open for extension but closed for modification
+- Use interfaces and abstractions to allow behavior extension without changing existing code
+- Prefer composition over inheritance for extending functionality
+
+### Liskov Substitution Principle (LSP)
+- Subtypes must be substitutable for their base types without altering correctness
+- Interface contracts must be honored by all implementations
+- Avoid breaking expected behavior when using polymorphism
+
+### Interface Segregation Principle (ISP)
+- Clients should not depend on interfaces they don't use
+- Keep interfaces small and focused on specific needs
+- Prefer multiple specific interfaces over one large interface
+
+### Dependency Inversion Principle (DIP)
+- High-level modules should not depend on low-level modules
+- Both should depend on abstractions (interfaces)
+- Abstractions should not depend on details; details should depend on abstractions
+
 ## Mandatory Requirements (Non-Negotiable)
 
 - **File size limit**: ≤150 lines per file (including imports and comments)
@@ -47,10 +81,12 @@ Comprehensive coding standards for writing idiomatic, maintainable Go code follo
 
 ## Function Design
 
-### Single Responsibility
-- Each function performs one operation
-- If description contains "and", split it
+### Single Responsibility Principle (SRP) in Functions
+- Each function should serve only one actor's needs
+- Functions should have only one reason to change
+- If description contains "and", split it (indicates multiple actors/responsibilities)
 - Prefer small, well-named functions over monolithic ones
+- Group functions by actor responsibility, not by technical layer
 
 ### Parameters
 - Pass only what function needs
@@ -224,5 +260,3 @@ func NewEmail(val string) (Email, error) {
     return Email{value: val}, nil
 }
 ```
-
-This standard ensures consistent, maintainable, and readable Go code that follows Clean Architecture principles and industry best practices.
