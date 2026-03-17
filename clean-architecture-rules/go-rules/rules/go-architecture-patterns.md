@@ -1,458 +1,130 @@
 ---
 trigger: always_on
-description: Clean Architecture, DDD, CQRS, and Dependency Injection patterns
-globs: ["**/*.go"]
+description: 
+globs: 
 ---
 
 # Go Architecture Patterns
 
-Comprehensive guide for Clean Architecture, Domain-Driven Design, CQRS, and Dependency Injection in Go applications.
+Clean Architecture, DDD, CQRS, YAGNI, and Screaming Architecture for Go.
 
-## Architecture Overview
+## Layer Structure
 
-### Layer Structure
+**Dependency Rule**: Infrastructure → Application → Domain
 
-**Dependency Rule**: Dependencies flow inward → Domain knows nothing about outer layers
+**Domain**: Pure business logic, entities, value objects, errors, port interfaces
+**Application**: Use cases, DTOs, orchestration via interfaces
+**Infrastructure**: Adapters implementing ports (DB, APIs, messaging)
+**Interface**: HTTP/gRPC handlers, composition root
 
-#### Domain Layer (Core)
-- **Purpose**: Pure business logic (entities, value objects)
-- **Technology-agnostic**: No external dependencies, framework references, or infrastructure concerns
-- **Independence**: Must remain completely independent of specific technologies
-- **Contents**: Entities, value objects, domain services, events, repository interfaces
+## YAGNI Principle
 
-#### Application Layer
-- **Purpose**: Use cases, ports/interfaces, orchestration
-- **Responsibility**: Coordinates domain objects via interfaces
-- **Contents**: Use cases, DTOs, application services, port definitions
-
-#### Infrastructure Layer
-- **Purpose**: Adapters implementing ports
-- **Implementation**: Database, APIs, messaging, external services
-- **Contents**: Repository implementations, external service clients
-
-#### Interface Layer
-- **Purpose**: HTTP/gRPC handlers, composition root
-- **Responsibility**: Translate transport requests to application calls
-- **Contents**: Handlers, middleware, server setup
-
-## Domain-Driven Design (DDD)
-
-### Core Concepts
-
-#### Entities
-- Objects with identity (ID)
-- Enforce invariants through methods
-- Mutable with lifecycle management
-- Use pointers for identity-based objects
-
-#### Value Objects
-- Immutable, equality by value
-- Validate inputs in constructors
-- Use values (not pointers) for copy semantics
-- No identity, only attributes
-
-#### Repositories
-- Domain interfaces for data access
-- Defined in domain, implemented in infrastructure
-- Return aggregates, not individual entities
-- Handle persistence abstraction
-
-#### Domain Services
-- Stateless operations
-- Business logic that doesn't fit in entities
-- Coordinate between multiple aggregates
-- Emit domain events
-
-### DDD Implementation Example
-
-```go
-// Domain Entity
-type Order struct {
-    id     OrderID
-    items  []OrderItem
-    status OrderStatus
-}
-
-func NewOrder(id OrderID) *Order {
-    return &Order{
-        id:     id,
-        status: StatusPending,
-    }
-}
-
-func (o *Order) AddItem(product ProductID, quantity int) error {
-    if quantity <= 0 {
-        return errors.New("quantity must be positive")
-    }
-    o.items = append(o.items, OrderItem{
-        ProductID: product,
-        Quantity:  quantity,
-    })
-    return nil
-}
-
-// Domain Repository Interface
-type OrderRepository interface {
-    Save(ctx context.Context, order *Order) error
-    FindByID(ctx context.Context, id OrderID) (*Order, error)
-}
-
-// Domain Service
-type OrderPricingService struct {
-    productRepo ProductRepository
-}
-
-func (s *OrderPricingService) CalculateTotal(order *Order) (Money, error) {
-    var total Money
-    for _, item := range order.items {
-        product, err := s.productRepo.FindByID(item.ProductID)
-        if err != nil {
-            return Money{}, err
-        }
-        total = total.Add(product.Price.Multiply(item.Quantity))
-    }
-    return total, nil
-}
-```
+**Core**: Create only what's needed now, delete unused code, focus on current use cases
+**CQRS**: One port per use case, delete unused ports, minimal interfaces
+**Apply**: When refactoring/adding features, prefer simplicity, no "just in case" code
 
 ## CQRS Pattern
 
-### When to Use CQRS
-- Different read/write performance requirements
-- Independent scaling of reads and writes
-- Event-driven workflows
-- Complex query requirements
+**Use when**: Different read/write performance, independent scaling, event-driven, complex queries
 
-### Implementation Strategy
+**Structure**: `ports/{commands|queries|validation}/{action}_{entity}_{type}.go`
 
-#### Command Side (Writes)
-- Enforce business invariants
-- Update aggregates
-- Publish domain events
-- Return simple results (ID, status)
+**Naming**:
+- Commands: `{Action}{Entity}Command` → `CreateMemberCommand`
+- Queries: `{Get/List/Search}{Entity}By{Criteria}` → `GetMemberByID`
+- Validation: `Validate{Entity}{Property}Uniqueness`
+- Files: `snake_case.go`
 
-#### Query Side (Reads)
-- Denormalized data models
-- Optimized for specific queries
-- No business logic
-- Return DTOs/projections
-
-#### Port Separation
+**YAGNI Ports**:
 ```go
-// Command Port
-type SaveOrder interface {
-    Execute(ctx context.Context, cmd SaveOrderCommand) (OrderID, error)
-}
+// ❌ Generic repository with unused methods
+type MemberRepository interface { Save(); FindByID(); FindByHandlerName(); ListByStatus(); Delete(); UpdateStatus() }
 
-// Query Port
-type GetOrderQuery interface {
-    FindByID(ctx context.Context, id OrderID) (*OrderDTO, error)
-    ListByCustomer(ctx context.Context, customerID CustomerID) ([]OrderDTO, error)
-}
-
-// Command Model (Domain)
-type SaveOrderCommand struct {
-    CustomerID CustomerID
-    Items      []OrderItemCommand
-}
-
-// Query Model (Read)
-type OrderDTO struct {
-    ID         string
-    CustomerID string
-    Status     string
-    Total      float64
-    Items      []OrderItemDTO
-}
+// ✅ Specific ports for actual use
+type CreateMemberCommand interface { Execute(ctx context.Context, member Member) error }
+type GetMemberByHandlerName interface { Execute(ctx context.Context, name HandlerName) (*Member, error) }
+type ValidateHandlerNameUniqueness interface { Execute(ctx context.Context, name HandlerName) (bool, error) }
 ```
 
-### CQRS Use Case Example
+## Screaming Architecture
+
+**Principle**: Directory structure communicates business purpose
+
+**Structure**: `internal/{domain}/domain/{entity}/{entity.go, value_objects/, errors.go, ports/}`
+
+**Rules**: One type per file (snake_case), folder structure communicates purpose
+
+**Good**: `internal/membership/domain/member/` with separate files
+**Bad**: `internal/domain/entities.go` mixing multiple entities
+
+## Domain-Driven Design
+
+**Entities**: Identity (ID), enforce invariants, mutable, one per file
+**Value Objects**: Immutable, equality by value, validate in constructors, one per file
+**Domain Errors**: Separate `errors.go`, sentinel errors, grouped by concept
+**Domain Services**: Stateless, business logic, coordinate aggregates, emit events
+
+**Structure**: `{entity}/{entity.go, value_objects/, errors.go, ports/{commands|queries|validation}/}`
+
+## Dependency Injection
+
+**Principles**: Manual wiring, depend on abstractions, define interfaces near consumers, small focused interfaces
+**Setup**: Pure construction, return errors, ≤150 lines, clear naming
 
 ```go
-// Command Use Case
-type CreateOrderUseCase struct {
-    orderRepo    OrderRepository
-    eventBus     EventBus
-    pricingSvc   OrderPricingService
-}
-
-func (uc *CreateOrderUseCase) Execute(ctx context.Context, cmd CreateOrderCommand) (OrderID, error) {
-    // Create domain entity
-    order := NewOrder(OrderID(uuid.New()))
-    
-    // Add items
-    for _, item := range cmd.Items {
-        if err := order.AddItem(item.ProductID, item.Quantity); err != nil {
-            return "", err
-        }
-    }
-    
-    // Calculate total
-    total, err := uc.pricingSvc.CalculateTotal(order)
-    if err != nil {
-        return "", err
-    }
-    
-    // Persist
-    if err := uc.orderRepo.Save(ctx, order); err != nil {
-        return "", err
-    }
-    
-    // Publish event
-    uc.eventBus.Publish(OrderCreated{OrderID: order.ID()})
-    
-    return order.ID(), nil
-}
-
-// Query Use Case
-type GetOrderUseCase struct {
-    orderQuery GetOrderQuery
-}
-
-func (uc *GetOrderUseCase) Execute(ctx context.Context, id OrderID) (*OrderDTO, error) {
-    return uc.orderQuery.FindByID(ctx, id)
+func NewEnrollMemberUseCase(
+    createCmd commands.CreateMemberCommand,
+    validateName validation.ValidateHandlerNameUniqueness,
+) *EnrollMemberUseCase {
+    return &EnrollMemberUseCase{createCmd: createCmd, validateName: validateName}
 }
 ```
 
-## Dependency Injection (DI)
-
-### Core Principles
-
-#### Manual Wiring
-- Prefer explicit construction over reflection
-- Use constructor functions for clarity
-- Keep dependency graph visible
-- Avoid heavy DI frameworks
-
-#### Dependency Inversion
-- Depend on abstractions, not concrete types
-- Define interfaces near consumers
-- Implement interfaces in infrastructure
-- Keep interfaces small and focused
-
-#### Setup Functions
-- Pure construction, no side effects
-- Return errors, don't panic
-- Keep under 150 lines per file
-- Use clear naming conventions
-
-### Layer Setup Pattern
+## Configuration
 
 ```go
-// Domain Setup
-func SetupDomain(
-    orderRepo OrderRepository,
-    productRepo ProductRepository,
-    eventBus EventBus,
-) *Domain {
-    pricingSvc := NewOrderPricingService(productRepo)
-    return &Domain{
-        OrderService:   NewOrderService(orderRepo, eventBus, pricingSvc),
-        ProductService:  NewProductService(productRepo),
-    }
-}
-
-// Infrastructure Setup
-func SetupInfrastructure(cfg Config) (*Infrastructure, error) {
-    db, err := sql.Open("postgres", cfg.DatabaseURL)
-    if err != nil {
-        return nil, fmt.Errorf("database connection: %w", err)
-    }
-    
-    orderRepo := NewSQLOrderRepository(db)
-    productRepo := NewSQLProductRepository(db)
-    eventBus := NewRedisEventBus(cfg.RedisURL)
-    
-    return &Infrastructure{
-        OrderRepository:   orderRepo,
-        ProductRepository:  productRepo,
-        EventBus:         eventBus,
-    }, nil
-}
-
-// Application Setup
-func SetupApplication(cfg Config) (*Application, error) {
-    infra, err := SetupInfrastructure(cfg)
-    if err != nil {
-        return nil, err
-    }
-    
-    domain := SetupDomain(
-        infra.OrderRepository,
-        infra.ProductRepository,
-        infra.EventBus,
-    )
-    
-    return &Application{
-        CreateOrder: NewCreateOrderUseCase(domain.OrderService),
-        GetOrder:    NewGetOrderUseCase(infra.OrderQuery),
-    }, nil
-}
+type Config struct { Database DatabaseConfig; Redis RedisConfig; HTTP HTTPConfig }
+func LoadConfig() (*Config, error) { /* load from env, validate, return */ }
 ```
 
-### Interface Design Guidelines
+**Rules**: Centralize in main, use env vars/files, validate at startup, pass to setup functions
 
-#### Small Interfaces
-- Focus on single responsibility
-- Consumer should need only methods it uses
-- Avoid "god interfaces"
+## Error Flow
 
-#### Interface Location
-- Define in domain or application layer
-- Implement in infrastructure
-- Keep close to consumer
+**Mapping**: Domain → Application → Interface
+**Types**: Domain (business rules), Application (use case failures), Infrastructure (technical), Interface (transport)
 
-#### Example Interfaces
 ```go
-// Good: Small, focused interface
-type OrderSaver interface {
-    Save(ctx context.Context, order *Order) error
-}
-
-// Bad: Large, unfocused interface
-type OrderRepository interface {
-    Save(ctx context.Context, order *Order) error
-    FindByID(ctx context.Context, id OrderID) (*Order, error)
-    ListByCustomer(ctx context.Context, id CustomerID) ([]*Order, error)
-    Delete(ctx context.Context, id OrderID) error
-    UpdateStatus(ctx context.Context, id OrderID, status OrderStatus) error
-}
+// Domain: var ErrInvalidQuantity = errors.New("quantity must be positive")
+// Application: return "", fmt.Errorf("failed to create: %w", err)
+// Interface: http.Error(w, "invalid request", http.StatusBadRequest)
 ```
 
-## Configuration Management
+## Interface Design
 
-### Configuration Structure
+**Guidelines**: One per file, single method, consumer-focused, no god interfaces
+**Location**: Define in application (near consumer), implement in infrastructure
+**Group**: commands/queries/validation
+
 ```go
-type Config struct {
-    Database DatabaseConfig
-    Redis    RedisConfig
-    HTTP     HTTPConfig
-}
+// ✅ Small focused interfaces
+type CreateOrderCommand interface { Execute(ctx context.Context, cmd CreateOrderRequest) (OrderID, error) }
+type GetOrderByID interface { Execute(ctx context.Context, id OrderID) (*OrderDTO, error) }
 
-type DatabaseConfig struct {
-    URL             string
-    MaxConnections  int
-    ConnectionTimeout time.Duration
-}
-
-func LoadConfig() (*Config, error) {
-    cfg := &Config{
-        Database: DatabaseConfig{
-            URL:            os.Getenv("DATABASE_URL"),
-            MaxConnections: 10,
-            ConnectionTimeout: 5 * time.Second,
-        },
-        // ... other config
-    }
-    
-    if err := cfg.Validate(); err != nil {
-        return nil, err
-    }
-    
-    return cfg, nil
-}
+// ❌ Large unfocused interface
+type OrderRepository interface { Save(); FindByID(); ListByCustomer(); Delete(); UpdateStatus() }
 ```
 
-### Configuration Rules
-- Centralize loading in main package
-- Use environment variables or config files
-- Validate configuration at startup
-- Pass configuration to setup functions
-- Don't read environment variables deep in packages
+## File Organization
 
-## Error Flow in Architecture
+**Rules**: One type per file, single responsibility, snake_case.go, ≤150 lines
+**Structure**: `{entity}/{entity.go, value_objects/, errors.go, ports/}` and `{use_case}/{usecase.go, requests.go, ports/}`
 
-### Error Mapping
-```
-Infrastructure Layer
-    ↓ (map to domain errors)
-Repository Layer
-    ↓ (wrap with context)
-Domain Layer
-    ↓ (preserve domain errors)
-Application Layer
-    ↓ (map to HTTP status codes)
-Interface Layer
-```
+## Summary
 
-### Error Translation
-```go
-// Infrastructure → Domain
-func (r *sqlOrderRepo) Save(ctx context.Context, order *Order) error {
-    if err := r.db.Save(order); err != nil {
-        if errors.Is(err, sql.ErrNoRows) {
-            return domain.ErrOrderNotFound
-        }
-        return fmt.Errorf("save order: %w", err)
-    }
-    return nil
-}
+**Principles**: YAGNI, single responsibility, dependency inversion, Clean Architecture, Screaming Architecture
+**CQRS**: One interface per file, small interfaces, delete unused ports, consumer-focused
+**Organization**: One type per file, clear naming, logical grouping, no unused code
+**Apply**: always_on (new code/refactors), context (features/bugs), manual (small adjustments)
 
-// Application → Interface
-func (h *OrderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
-    order, err := h.createOrderUC.Execute(ctx, cmd)
-    if err != nil {
-        switch {
-        case errors.Is(err, domain.ErrInvalidOrder):
-            http.Error(w, err.Error(), http.StatusBadRequest)
-        case errors.Is(err, domain.ErrOrderNotFound):
-            http.Error(w, err.Error(), http.StatusNotFound)
-        default:
-            http.Error(w, "internal error", http.StatusInternalServerError)
-        }
-        return
-    }
-    // ... success response
-}
-```
-
-## Testing Architecture
-
-### Unit Tests
-- Test domain logic in isolation
-- Mock external dependencies
-- Focus on business rules
-- Fast and deterministic
-
-### Integration Tests
-- Test real infrastructure
-- Verify layer interactions
-- Use test databases/queues
-- Focus on happy path
-
-### Test Organization
-```
-tests/
-  units/
-    domain/
-      entity_test.go
-    application/
-      usecase_test.go
-  integration/
-    infrastructure/
-      repository_test.go
-  mocks/
-    mock_repository.go
-```
-
-## Best Practices Summary
-
-### Architecture Rules
-- Dependencies flow inward only
-- Domain stays pure and technology-agnostic
-- Use ports and adapters pattern
-- Separate command and query responsibilities
-
-### DI Guidelines
-- Manual wiring preferred
-- Constructor injection pattern
-- Small, focused interfaces
-- Pure setup functions
-
-### DDD Principles
-- Ubiquitous language in code
-- Rich domain models
-- Aggregate consistency boundaries
-- Domain events for integration
-
-This architecture ensures maintainable, testable, and scalable Go applications that follow industry best practices.
+Ensures maintainable, testable, scalable Go applications following Clean Architecture, DDD, CQRS, YAGNI, and Screaming Architecture.

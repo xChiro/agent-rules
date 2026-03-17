@@ -1,64 +1,57 @@
 ---
 trigger: always_on
-description: Core Go coding standards and conventions
-globs: ["**/*.go"]
+description: 
+globs: 
 ---
 
 # Go Clean Code Standards
 
-Comprehensive coding standards for writing idiomatic, maintainable Go code following Clean Architecture principles.
+Clean coding standards for writing idiomatic, maintainable Go code following Clean Architecture, YAGNI, and Screaming Architecture principles.
 
 ## Core Principles
 
-- **Expressive code**: Names and structures clearly describe purpose without redundant comments
-- **Small units**: Functions do one thing, are short (≤20 lines), avoid deep nesting
-- **Encapsulation**: Hide data and behavior; expose minimum API needed
+- **Expressive code**: Names and structures clearly describe purpose
+- **Small units**: Functions do one thing, are short, avoid deep nesting
+- **Single Responsibility**: Each method must have exactly ONE functionality/responsibility
+- **Encapsulation**: Hide data and behavior, expose minimum API needed
 - **Consistency**: Apply same conventions across the project
+- **YAGNI**: Only create what you need now
+- **One type per file**: Each type in its own file
 
 ## SOLID Principles
 
-### Single Responsibility Principle (SRP) - Clean Architecture Definition
-**New Definition (Uncle Bob, Clean Architecture)**: A module should be responsible to one, and only one, actor.
+**See**: `go-solid-principles.md` for detailed explanations and examples.
 
-- **Actor**: A single person or group of people who need the system to change for some reason
-- **Module**: Any cohesive unit of code (function, class, package, microservice)
-- **One Actor**: Each module should serve the needs of only one stakeholder group
-- **Change Reasons**: A module should have only one reason to change, driven by one actor
+**Summary**:
+- **SRP**: One module, one actor (one reason to change) - **STRICT: Each method has exactly ONE responsibility**
+- **OCP**: Open for extension, closed for modification
+- **LSP**: Subtypes substitutable for base types
+- **ISP**: Small, focused interfaces (CQRS pattern)
+- **DIP**: Depend on abstractions, not concrete types
 
-**Examples**:
-- **Violation**: `Employee` class with `calculatePay()` (accounting actor) and `reportHours()` (management actor)
-- **Correct**: Separate `PayCalculator` (accounting) and `HoursReporter` (management) modules
+## Mandatory Requirements
 
-### Open/Closed Principle (OCP)
-- Software entities should be open for extension but closed for modification
-- Use interfaces and abstractions to allow behavior extension without changing existing code
-- Prefer composition over inheritance for extending functionality
-
-### Liskov Substitution Principle (LSP)
-- Subtypes must be substitutable for their base types without altering correctness
-- Interface contracts must be honored by all implementations
-- Avoid breaking expected behavior when using polymorphism
-
-### Interface Segregation Principle (ISP)
-- Clients should not depend on interfaces they don't use
-- Keep interfaces small and focused on specific needs
-- Prefer multiple specific interfaces over one large interface
-
-### Dependency Inversion Principle (DIP)
-- High-level modules should not depend on low-level modules
-- Both should depend on abstractions (interfaces)
-- Abstractions should not depend on details; details should depend on abstractions
-
-## Mandatory Requirements (Non-Negotiable)
-
+### File Size Limits
 - **File size limit**: ≤150 lines per file (including imports and comments)
 - **Function size limit**: ≤20 lines per function
-- **Assertion library**: MUST use `github.com/stretchr/testify/assert` library instead of `if` statements for all assertions - this is non-negotiable
+- **One type per file**: Each type (struct, interface, etc.) in its own file
+
+### Method Responsibility Rule (CRITICAL)
+- **Single Functionality**: Each method must perform exactly ONE operation
+- **No Mixed Responsibilities**: Methods cannot combine validation + extraction, creation + persistence, etc.
+- **Examples**:
+  - ❌ `validateAndExtractData()` - Does two things
+  - ✅ `validateData()` - Does one thing
+  - ✅ `extractData()` - Does one thing
+  - ❌ `createAndSaveEntity()` - Does two things  
+  - ✅ `createEntity()` - Does one thing
+  - ✅ `saveEntity()` - Does one thing
+
+### Testing Standards
+- **Assertion library**: MUST use `github.com/stretchr/testify/assert` library instead of `if` statements for all assertions
 - **No unused code**: Every function, variable, import, and type must be used
-  - Remove unused imports, variables, and functions
-  - Avoid "just in case" code or dead code paths
-  - Use compiler warnings and static analysis tools
-  - Write code only when actually needed
+- **Remove unused imports**: Use compiler warnings and static analysis tools
+- **Write code only when actually needed**: Avoid "just in case" code or dead code paths
 
 ## Naming Conventions
 
@@ -70,10 +63,18 @@ Comprehensive coding standards for writing idiomatic, maintainable Go code follo
 - **Variables**: `lowerCamelCase` (e.g., `deviceID`, `dbPool`, `ctx`)
 - **Constants**: `PascalCase`, group related constants in iota blocks
 
-### Interface Naming
-- Name interfaces by behavior they represent (e.g., `TelemetryRepository`)
-- Avoid `Manager`/`Processor` unless role is clear
-- Use descriptive names over generic ones
+### Screaming Architecture Naming
+- **Folder names**: Should communicate business purpose
+- **File names**: Should match the type they contain
+- **Value objects**: In `value_objects/` folder, one per file
+- **Entities**: One per file, named after the entity
+- **Errors**: In `errors.go` file, grouped by domain
+
+### CQRS Naming Standards
+- **Commands**: `{Action}{Entity}Command` → `CreateMemberCommand`
+- **Queries**: `{Get/List/Search}{Entity}By{Criteria}` → `GetMemberByID`
+- **Validation**: `Validate{Entity}{Property}Uniqueness` → `ValidateMemberEmailUniqueness`
+- **Files**: `snake_case.go` matching interface name
 
 ### Abbreviations
 - Avoid abbreviations unless ubiquitous (e.g., `ID`, `URL`)
@@ -81,154 +82,60 @@ Comprehensive coding standards for writing idiomatic, maintainable Go code follo
 
 ## Function Design
 
-### Single Responsibility Principle (SRP) in Functions
-- Each function should serve only one actor's needs
-- Functions should have only one reason to change
-- If description contains "and", split it (indicates multiple actors/responsibilities)
-- Prefer small, well-named functions over monolithic ones
-- Group functions by actor responsibility, not by technical layer
-
-### Parameters
-- Pass only what function needs
-- Avoid long parameter lists (>3 parameters → use struct)
-- Use structs for related parameters
-
-### Error Handling
-- Return `error` as last return value
-- Handle errors immediately (guard clauses)
-- Wrap errors with context using `fmt.Errorf("operation: %w", err)`
-- Never ignore errors (`_ = foo()` is forbidden)
+**SRP**: One actor, one reason to change, split if description contains "and"
+**Parameters**: Pass only what's needed, >3 params → use struct
+**Error Handling**: Return error as last value, handle immediately, wrap with context, never ignore
+**YAGNI**: Don't create "just in case", delete unused, ≤20 lines, single purpose
 
 ## Code Organization
 
-### File Structure
-Order top-level declarations as:
-1. Package documentation/comment
-2. Imports (standard library, then external)
-3. Constants
-4. Types
-5. Variables
-6. Functions/methods
-
-### One Type Per File
-- Define one high-level type per file when reasonable
-- Group related small types (e.g., value objects) if tightly coupled
+**File Order**: Package doc → Imports (stdlib, then external) → Constants → Types → Variables → Functions
+**One Type Per File**: One interface/struct per file, snake_case.go, delete unused
+**Structure**: `internal/{domain}/domain/{entity}/{entity.go, value_objects/, errors.go, ports/}`
 
 ## Data Structures
 
-### Value Objects
-- Immutable domain concepts
-- Unexported fields with exported constructor functions
-- Validate input in constructors
+**Value Objects**: Immutable, unexported fields, validate in constructors, one per file
+**Entities**: Mutable with identity, export methods that maintain invariants, private state
+**Collections**: Don't expose directly, Items() returns copy, use methods
+**Context**: First argument for I/O, don't store in structs, use only when needed
 
-### Entities
-- Mutable objects with identity
-- Export only methods that maintain invariants
-- Keep internal state private
+## Error Handling
 
-### Collections
-- Do not expose slices/maps directly
-- Provide methods that copy or encapsulate collections
-- `Items()` should return a copy
+**Types**: Sentinel errors (`var ErrNotFound = errors.New(...)`), custom errors for structured data
+**Patterns**: Return zero value with error, use errors.Is/As, lowercase messages
+**YAGNI**: Don't create hypothetical error types, use sentinel errors when possible
+**Panic**: Only for unrecoverable programmer errors, never for business failures, recover() at boundaries
 
-### Context Usage
-- Pass `context.Context` as first argument for I/O or cancellable operations
-- Do not store context in structs
+## Formatting
 
-## Error Handling Standards
+**Code**: Always run `go fmt`, let tools handle spacing
+**Imports**: Group stdlib separately, remove unused
+**Comments**: Full sentences, package-level above declaration, exported identifiers, remove obvious ones
 
-### Error Types
-- **Sentinel errors**: Package-level variables for common conditions
-  ```go
-  var ErrNotFound = errors.New("entity not found")
-  ```
-- **Custom errors**: For structured error data
-  ```go
-  type ValidationError struct {
-      Field string
-      Msg   string
-  }
-  ```
+## YAGNI Principles
 
-### Error Patterns
-- Always return zero value with error
-- Use `errors.Is()` for sentinel errors
-- Use `errors.As()` for custom error types
-- Error messages: lowercase, no punctuation, concise
+**Core**: Create only what's needed now, delete unused code, simple over complex
+**Practice**: Functions/types/interfaces only if currently used, test current functionality
+**Exceptions**: Core domain concepts, public APIs, security (defensive programming)
 
-### Panic Usage
-- Reserve `panic` for unrecoverable programmer errors
-- Never panic for expected business failures
-- Use `recover()` only at application boundaries
+## Refactoring
 
-## Formatting and Style
-
-### Code Formatting
-- Always run `go fmt` on code
-- Let automated tools handle spacing and alignment
-
-### Import Management
-- Group standard library imports separately from external packages
-- Avoid unnecessary imports
-- Remove unused imports
-
-### Comments
-- Use full sentences with proper punctuation
-- Package-level comments above package declaration
-- Exported identifiers should have comments
-- Remove "obvious" comments - let code document itself
-
-## Refactoring Guidelines
-
-### Process
-- Refactor only when tests are passing
-- Make one small change at a time
-- Run tests frequently
-
-### Techniques
-- Eliminate duplication by extracting common logic
-- Prefer composition over inheritance (embedding in Go)
-- Use interfaces to assemble behaviors
-
-## Dependency Management
-
-### Interface Design
-- Keep interfaces small and focused
-- Consumer should depend only on methods it needs
-- Define interfaces in domain/application layer
-- Implementations live in infrastructure
-
-### Constructor Pattern
-```go
-func NewUseCase(dep1 Port1, dep2 Port2) *UseCase {
-    return &UseCase{
-        port1: dep1,
-        port2: dep2,
-    }
-}
-```
-
-## Pointer Semantics
-
-### Rules
-- **Entities**: Use pointers (`*Entity`) - identity-based, mutable
-- **Value Objects**: Use values (`ValueObject`) - immutable, copy semantics
-- **Pointer receivers**: Only for methods that modify state
-- **Value receivers**: Default for immutable types
+**Process**: Only when tests pass, one small change at a time, run tests frequently
+**Techniques**: Eliminate duplication, prefer composition (embedding), use interfaces
+**YAGNI**: Delete before adding, simplify before extending, focus on current needs
 
 ## Static Analysis
 
-### Required Tools
-- `go fmt` for formatting
-- `go vet` for static analysis
-- `golangci-lint` for comprehensive linting
-- Use compiler warnings to identify unused code
+**Tools**: `go fmt`, `go vet`, `golangci-lint`, compiler warnings
+**Quality Gates**: All tests pass, ≥80% coverage, no race conditions, static analysis passes
 
-### Quality Gates
-- All code must pass static analysis
-- No unused imports, variables, or functions
-- All functions must be ≤20 lines
-- All files must be ≤150 lines
+## CQRS Standards
+
+**Interface Design**: Small (single responsibility), one per file, consumer-focused, no god interfaces
+**Location**: Define in domain/application (near consumer), implement in infrastructure
+**Naming**: Commands (`CreateMemberCommand`), Queries (`GetMemberByID`), Validation (`ValidateMemberEmailUniqueness`)
+**Files**: `snake_case.go` matching interface name
 
 ## Examples
 
@@ -240,23 +147,77 @@ func (p *Processor) ProcessMessage(ctx context.Context, msg Message) error {
     }
     
     if err := p.validator.Validate(msg); err != nil {
-        return fmt.Errorf("validation failed: %w", err)
+        return fmt.Errorf("validations failed: %w", err)
     }
     
     return p.repository.Save(ctx, msg)
 }
 ```
 
-### Value Object Example
+### Value Object Example - One Per File
 ```go
-type Email struct {
+// handler_name.go
+package value_objects
+
+import (
+    "fmt"
+    "regexp"
+    "strings"
+)
+
+type HandlerName struct {
     value string
 }
 
-func NewEmail(val string) (Email, error) {
+func NewHandlerName(val string) (HandlerName, error) {
     if val == "" || !strings.Contains(val, "@") {
-        return Email{}, errors.New("invalid email")
+        return HandlerName{}, errors.New("invalid email")
     }
-    return Email{value: val}, nil
+    return HandlerName{value: val}, nil
 }
 ```
+
+### YAGNI Example
+```go
+// ❌ DON'T DO THIS - Creating unused functions
+func (p *Processor) ProcessBatch(ctx context.Context, msgs []Message) error {
+    // This function is never used but was created "just in case"
+    return nil
+}
+
+func (p *Processor) ProcessSingle(ctx context.Context, msg Message) error {
+    // This is all that's actually needed
+    if msg.ID == "" {
+        return errors.New("message ID required")
+    }
+    return p.repository.Save(ctx, msg)
+}
+```
+
+## Best Practices Summary
+
+### Test Design
+- **Write failing test first**: TDD approach
+- **Test behavior**: Not implementation
+- **Use descriptive names**: Following ATDD pattern
+- **Keep tests simple**: One assertion per concept
+
+### CQRS Testing Standards
+- **Command tests**: Verify write operations and side effects
+- **Query tests**: Verify read operations and data transformation
+- **Validation tests**: Verify business rule enforcement
+- **Integration tests**: Verify real infrastructure interactions
+
+### Code Organization
+- **Group by business concept**: Not technical layer
+- **One type per file**: Following Screaming Architecture
+- **Clear folder structure**: That communicates purpose
+- **YAGNI compliance**: Only what's needed now
+
+### YAGNI Compliance
+- **Delete unused code**: Regular cleanup
+- **Simple solutions**: Over complex ones
+- **Current needs focus**: Not hypothetical futures
+- **Regular refactoring**: To maintain simplicity
+
+These standards ensure comprehensive, maintainable, and reliable unit test coverage for Go applications following Clean Architecture, YAGNI, and Screaming Architecture principles.

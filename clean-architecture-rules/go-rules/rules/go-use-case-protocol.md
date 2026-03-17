@@ -1,203 +1,205 @@
 ---
-trigger: always_on
-description: 
+trigger: model_decision
+description: when working on uses cases in production code
 globs: 
 ---
 
-# Go Use Case Implementation Protocol
+# Go Use Case Implementation Protocol - CQRS Enhanced with YAGNI
 
-When instructed to create a new Use Case, follow this exact sequence without deviation.
+When creating a new Use Case, follow this exact sequence for CQRS and Clean Architecture compliance with YAGNI principles.
 
 ## Phase 1: Requirements Analysis
 - Identify the **Actor** requesting the change
 - Define the **Responsibility** of the new component
 - Confirm it adheres to the 150-line file limit
+- Determine CQRS operations (commands/queries/validation)
+- **YAGNI Check**: Only create what's actually needed now
 
 ## Phase 2: Failing ATDD Test (Red)
-Create a test file in `tests/` using **snake_case** for the function names. Use **Manual Mocks** from the `mocks/` folder.
+Create test file in `tests/{domain}/application/{use_case}/` using snake_case function names.
 
-### Mandatory Requirements (Non-Negotiable)
-- **Assertion library**: MUST use `github.com/stretchr/testify/assert` library instead of `if` statements for all assertions - this is non-negotiable
+### Mandatory Requirements
+- **Assertion library**: MUST use `github.com/stretchr/testify/assert`
+- **File size limit**: ≤150 lines per test file
+- **Function size limit**: ≤20 lines per test function
+- **Single Responsibility**: Each test function must test exactly ONE scenario
+- **YAGNI**: Only test current functionality
 
 ### Test Quality Guidelines
-- **Avoid repeated assertions across tests**: Don't assert the same condition in multiple test methods
-- **Test behavior, not implementation**: Focus on observable outcomes, not internal details
-- **Use stable test data**: Avoid hardcoded timestamps, IDs, or values that might change
-- **Clear failure messages**: Provide descriptive error messages that explain expected vs actual
-- **One assertion per concept**: Group related assertions but avoid multiple unrelated checks
+- **One assertion per concept**: Group related assertions only
+- **Test behavior**: Not implementation
+- **Use stable test data**: Avoid hardcoded timestamps/IDs
+- **Clear failure messages**: Descriptive expected vs actual
 
 ### Test Structure Template
 ```go
-func Test_given_[condition]_when_[action]_then_[expected_result](t *testing.T) {
-    // Arrange (Setup manual mocks)
-    // Act (Execute Use Case)
-    // Assert (Verify behavior)
+func Test_given_[condition]_when_[action]_then_[expected](t *testing.T) {
+    // Arrange: Setup CQRS mocks and request
+    // Act: Execute single use case call
+    // Assert: Verify behavior and mock interactions
 }
 ```
 
-## Phase 3: Port Definition
-Define necessary interfaces (Ports) in the **Application** layer (`internal/application/[module]/ports/`).
+## Phase 3: CQRS Port Definition
+Define granular interfaces in `internal/{domain}/application/{use_case}/ports/`:
+
+### Port Separation - One Interface Per File
+```
+ports/
+├── commands/
+│   ├── create_{entity}_command.go
+│   └── update_{entity}_{property}_command.go
+├── queries/
+│   ├── get_{entity}_by_{criteria}.go
+│   └── list_{entities}_by_{criteria}.go
+└── validation/
+    └── validate_{entity}_{property}_uniqueness.go
+```
+
+### Interface Naming Standards
+- **Commands**: `{Action}{Entity}Command` → `CreateMemberCommand`
+- **Queries**: `{Get/List/Search}{Entity}By{Criteria}` → `GetMemberByID`
+- **Validation**: `Validate{Entity}{Property}Uniqueness` → `ValidateMemberEmailUniqueness`
+- **Files**: `snake_case.go` matching interface name
+
+### YAGNI Port Creation
+- **Only create ports**: That are actually used by the use case
+- **Delete unused ports**: Remove interfaces without implementations
+- **Keep interfaces small**: Single responsibility per interface
+- **One interface per file**: Following CQRS standards
 
 ## Phase 4: Use Case Implementation (Green)
-1. Define the Request/Response structs (Application layer)
-2. Implement the Use Case struct
-3. **Important**: Business logic belongs in the **Domain Entity**, the Use Case only orchestrates
 
-## Phase 5: Manual Mock Implementation
-Update or create Manual Mocks in the test project to support the new Port.
-
-## Phase 6: Refactoring (Blue)
-Check for:
-- 150-line limit
-- 20-line function limit
-- Meaningful names
-- Layered dependency rules
-
-## Example Workflow: Process Device Telemetry
-
-### Phase 1: Analysis
-- **Actor**: IoT Device
-- **Responsibility**: Validate, evaluate and persist incoming telemetry
-
-### Phase 2: Red Test
-File: `tests/telemetry/processing/telemetry_processing_test.go`
-
+### Request/Response Structs
 ```go
-func Test_given_valid_telemetry_when_processed_then_record_data_successfully(t *testing.T) {
-    // Arrange
-    messageID := uuid.New().String()
-    telemetryData := TelemetryProcessorRequest{
-        MessageID:      messageID,
-        DeviceID:       "device-123",
-        Speed:          80,
-        Position:       Position{Latitude: 45, Longitude: 90},
-        GPSFixed:       true,
-        DeviceTimestamp: time.Now(),
-    }
-    
-    saveTelemetryMock := &SaveTelemetryMock{}
-    getDeviceMock := &GetDeviceSettingMock{}
-    sut := NewTelemetryProcessor(saveTelemetryMock, getDeviceMock, []TrackingEventEvaluator{})
+// requests.go
+type CreateMemberRequest struct {
+    ExternalID  string
+    Provider    string
+    HandlerName string
+}
 
-    // Act
-    result, err := sut.Process(context.Background(), telemetryData)
-
-    // Assert
-    asserts.True(t, err == nil, "unexpected error: %v", err)
-    asserts.True(t, result.Success, "expected success, got failure")
-    asserts.Equal(t, saveTelemetryMock.TelemetryRecorded.MessageID, messageID, "expected message ID %s, got %s", messageID, saveTelemetryMock.TelemetryRecorded.MessageID)
-    asserts.Equal(t, saveTelemetryMock.TelemetryRecorded.DeviceID, "device-123", "expected device ID device-123, got %s", saveTelemetryMock.TelemetryRecorded.DeviceID)
+type CreateMemberResponse struct {
+    MemberID string
+    Status   string
 }
 ```
 
-### Phase 3: Port Definition
-File: `internal/application/telemetry/ports/telemetry_repository.go`
-
+### Use Case Struct
 ```go
-package ports
+// usecase.go
+type CreateMemberUseCase struct {
+    // CQRS Dependencies - interfaces defined in ports/ directory
+    createCmd        CreateMemberCommand
+    validateEmail    ValidateMemberEmailUniqueness
+    validateHandler  ValidateHandlerNameUniqueness
+}
 
-import "context"
-
-type TelemetryRepository interface {
-    Save(ctx context.Context, telemetry Telemetry) (ID, error)
+func NewCreateMemberUseCase(
+    createCmd CreateMemberCommand,
+    validateEmail ValidateMemberEmailUniqueness,
+    validateHandler ValidateHandlerNameUniqueness,
+) *CreateMemberUseCase {
+    return &CreateMemberUseCase{
+        createCmd:       createCmd,
+        validateEmail:   validateEmail,
+        validateHandler: validateHandler,
+    }
 }
 ```
 
-### Phase 4: Implementation
-File: `internal/application/telemetry/usecases/telemetry_processor.go`
-
+### Use Case Logic
 ```go
-package usecases
-
-import "context"
-
-type TelemetryProcessor struct {
-    saveTelemetry    ports.TelemetryRepository
-    getDeviceSetting ports.GetDeviceSettingByDeviceID
-    strategies       []TrackingEventEvaluator
-}
-
-func NewTelemetryProcessor(
-    saveTelemetry ports.TelemetryRepository,
-    getDeviceSetting ports.GetDeviceSettingByDeviceID,
-    strategies []TrackingEventEvaluator,
-) *TelemetryProcessor {
-    return &TelemetryProcessor{
-        saveTelemetry:    saveTelemetry,
-        getDeviceSetting: getDeviceSetting,
-        strategies:       strategies,
-    }
-}
-
-func (tp *TelemetryProcessor) Process(ctx context.Context, data TelemetryProcessorRequest) (TelemetryProcessorResponse, error) {
-    // 1. Fetch dependencies
-    device, err := tp.getDeviceSetting.Execute(ctx, data.DeviceID)
+func (uc *CreateMemberUseCase) Execute(ctx context.Context, req CreateMemberRequest) (CreateMemberResponse, error) {
+    // 1. Validate input (domain validations)
+    handlerName, err := domain.NewHandlerName(req.HandlerName)
     if err != nil {
-        return TelemetryProcessorResponse{}, err
+        return CreateMemberResponse{}, fmt.Errorf("invalid handler name: %w", err)
     }
     
-    // 2. Create Domain Entity
-    telemetry := NewTelemetry(
-        data.MessageID,
-        data.DeviceID,
-        data.Speed,
-        data.Position,
-        data.GPSFixed,
-        data.DeviceTimestamp,
-    )
-
-    // 3. Delegate logic to Entity (SRP)
-    err = telemetry.Evaluate(device, tp.strategies)
+    // 2. Validate uniqueness using CQRS queries
+    externalID := domain.NewExternalIdentifier(req.ExternalID, req.Provider)
+    isUnique, err := uc.validateEmail.Execute(ctx, externalID)
     if err != nil {
-        return TelemetryProcessorResponse{}, err
+        return CreateMemberResponse{}, fmt.Errorf("validations failed: %w", err)
     }
-
-    // 4. Persist via Port
-    _, err = tp.saveTelemetry.Save(ctx, telemetry)
-    if err != nil {
-        return TelemetryProcessorResponse{}, err
+    if !isUnique {
+        return CreateMemberResponse{}, domain.ErrEmailAlreadyExists
     }
-
-    return TelemetryProcessorResponse{
-        Success: true,
-        Events:  telemetry.Events(),
+    
+    // 3. Create domain entity (business logic in domain)
+    member := domain.NewMember(handlerName, externalID)
+    
+    // 4. Persist using CQRS command
+    if err := uc.createCmd.Execute(ctx, member); err != nil {
+        return CreateMemberResponse{}, fmt.Errorf("failed to create member: %w", err)
+    }
+    
+    return CreateMemberResponse{
+        MemberID: member.ID().String(),
+        Status:   member.Status().String(),
     }, nil
 }
 ```
 
-### Phase 5: Manual Mock
-File: `tests/telemetry/mocks/save_telemetry_mock.go`
+## Phase 5: Manual Mock Implementation
 
+### Mock File Structure
+```
+tests/{domain}/application/{use_case}/mocks/
+├── types.go                              # Shared verification types
+├── mock_create_member_command.go         # Command mock
+├── mock_validate_member_email_uniqueness.go # Validation mock
+└── README.go                             # Mock index
+```
+
+### Mock Implementation Pattern
 ```go
-package mocks
-
-import "context"
-
-type SaveTelemetryMock struct {
-    TelemetryRecorded Telemetry
-    SaveError         error
+// mock_create_member_command.go
+type MockCreateMemberCommand struct {
+    // Configuration
+    Error error
+    
+    // Verification
+    Calls []CreateMemberCall
 }
 
-func (m *SaveTelemetryMock) Save(ctx context.Context, telemetry Telemetry) (ID, error) {
-    m.TelemetryRecorded = telemetry
-    if m.SaveError != nil {
-        return ID{}, m.SaveError
-    }
-    return NewID(), nil
+type CreateMemberCall struct {
+    Member domain.Member
+}
+
+func (m *MockCreateMemberCommand) Execute(ctx context.Context, member domain.Member) error {
+    m.Calls = append(m.Calls, CreateMemberCall{Member: member})
+    return m.Error
 }
 ```
+
+### YAGNI Mock Guidelines
+- **Only mock ports**: That are actually used by the use case
+- **Keep mocks simple**: Manual mocks preferred
+- **Delete unused mocks**: Remove mocks for unused ports
+- **One mock per interface**: Following CQRS standards
+
+## Phase 6: Refactoring (Blue)
+Check for:
+- **File size limits**: ≤150 lines per file
+- **Function size limits**: ≤20 lines per function
+- **Single responsibility**: Each file has one purpose, each method has ONE responsibility
+- **CQRS compliance**: Commands vs queries separated
+- **Naming conventions**: Following standards
+- **YAGNI compliance**: Delete unused code
 
 ## Go-Specific Best Practices
 
 ### Naming Conventions
 - **Files**: `snake_case.go` for implementation, `snake_case_test.go` for tests
-- **Functions**: `CamelCase` for exported, `camelCase` for unexported
+- **Functions**: `CamelCase` (exported), `camelCase` (private)
 - **Test Functions**: `Test_given_condition_when_action_then_expected`
 - **Structs**: `PascalCase` for exported types
-- **Interfaces**: `PascalCase` describing behavior (e.g., `TelemetryRepository`)
+- **Interfaces**: `PascalCase` describing behavior (e.g., `CreateMemberCommand`)
 
 ### Error Handling
-- Always return `error` as the last return value
+- Always return `error` as last return value
 - Use explicit error checking with `if err != nil`
 - Wrap errors with context using `fmt.Errorf("operation: %w", err)`
 - Define sentinel errors for common conditions
@@ -219,34 +221,23 @@ func (m *SaveTelemetryMock) Save(ctx context.Context, telemetry Telemetry) (ID, 
 - **Infrastructure**: Implementation of ports
 - **Interfaces**: HTTP handlers, CLI commands
 
-### File Organization
-```
-internal/
-  domain/
-    [module]/
-      entity.go
-      value_object.go
-      repository.go  # Port interfaces
-  application/
-    [module]/
-      usecases/
-        use_case.go
-      ports/
-        repository.go
-      requests.go    # DTOs
-  infrastructure/
-    [module]/
-      repository_impl.go
-  interfaces/
-    http/
-      handler.go
+## YAGNI Protocol Enhancements
 
-tests/
-  [module]/
-    usecase_test.go
-    mocks/
-      mock_repository.go
-```
+### Phase 0: YAGNI Assessment
+Before starting any phase, ask:
+- **Is this needed now?** Or for a hypothetical future?
+- **Can I simplify?** Remove unnecessary complexity
+- **Can I delete?** Remove unused code or tests
+
+### During Implementation
+- **Stop when green**: Don't over-engineer
+- **Delete before adding**: Remove unused code first
+- **Simple over complex**: Prefer straightforward solutions
+
+### After Implementation
+- **Review for YAGNI**: Remove any "just in case" code
+- **Delete unused dependencies**: Remove imports without usage
+- **Simplify structure**: Remove unnecessary complexity
 
 ## Protocol Summary
 
@@ -254,9 +245,11 @@ This protocol ensures:
 
 1. **TDD-First Development**: Always start with failing tests
 2. **Clean Architecture Compliance**: Proper layer separation
-3. **Domain-Driven Design**: Business logic in domain entities
-4. **Manual Testing**: Simple, explicit mocks
-5. **Code Quality**: Size limits and naming conventions
-6. **Maintainability**: Clear structure and responsibilities
+3. **CQRS Implementation**: Commands vs queries vs validation
+4. **Domain-Driven Design**: Business logic in domain entities
+5. **Manual Testing**: Simple, explicit mocks
+6. **Code Quality**: Size limits and naming conventions
+7. **YAGNI Compliance**: Only what's needed now
+8. **Screaming Architecture**: Structure communicates purpose
 
-Follow this sequence exactly for consistent, high-quality use case implementations.
+Follow this sequence exactly for consistent, high-quality use case implementations that are maintainable, testable, and follow all architectural principles.

@@ -1,205 +1,173 @@
 ---
 trigger: always_on
-description: Dependency Injection guidelines for Go applications
-globs: ["**/*.go"]
+description: 
+globs: 
 ---
 
-# Dependency Injection (DI) Guidelines
+# Go Dependency Injection Guidelines
 
-Guidelines for structuring dependencies in Go projects using manual injection for modular, testable systems.
-
-## Core Principles
-
-- **Separation of concerns**: Each layer manages its own dependencies
-- **Explicit dependencies**: Pass collaborators via constructors, not global lookups
-- **Testability**: Use interfaces to enable test doubles
-- **Minimal side-effects**: Setup functions should only construct objects
+**Principles**: Separation of concerns, explicit dependencies via constructors, testability with interfaces, minimal side-effects, YAGNI
 
 ## Layer Structure
 
-Each layer exposes a `Setup` function that takes dependencies and returns constructed objects.
+Each layer exposes `Setup` function taking dependencies and returning constructed objects.
 
-### Domain Layer
 ```go
-func SetupDomain(repo OrderRepository, bus EventBus) *Domain {
-    return &Domain{
-        OrderService: NewOrderService(repo, bus),
-    }
+// Domain
+func SetupDomain(orderRepo OrderRepository, bus EventBus) *Domain {
+    return &Domain{OrderService: NewOrderService(orderRepo, bus)}
 }
-```
 
-### Infrastructure Layer
-```go
-func SetupDataAccess(cfg Config) (*DataAccess, error) {
+// Infrastructure
+func SetupInfrastructure(cfg Config) (*Infrastructure, error) {
     db, err := sql.Open("postgres", cfg.DatabaseURL)
-    if err != nil {
-        return nil, fmt.Errorf("database connection: %w", err)
-    }
-    
-    return &DataAccess{
-        OrderRepo: NewSQLOrderRepository(db),
-    }, nil
+    if err != nil { return nil, fmt.Errorf("database connection: %w", err) }
+    return &Infrastructure{OrderRepository: NewSQLOrderRepository(db), EventBus: NewRedisEventBus(cfg.RedisURL)}, nil
 }
-```
 
-### Application Layer
-```go
+// Application
 func SetupApplication(cfg Config) (*Application, error) {
-    dataAccess, err := SetupDataAccess(cfg)
-    if err != nil {
-        return nil, err
-    }
-    
-    domain := SetupDomain(dataAccess.OrderRepo, dataAccess.EventBus)
-    
-    return &Application{Domain: domain}, nil
+    infra, err := SetupInfrastructure(cfg)
+    if err != nil { return nil, err }
+    domain := SetupDomain(infra.OrderRepository, infra.EventBus)
+    return &Application{CreateOrder: NewCreateOrderUseCase(domain.OrderService)}, nil
 }
 ```
 
-### Interface Layer
+## Setup Guidelines
+
+**Pattern**: `func SetupX(args ...) (*X, error)`
+**Rules**: Validate config, return descriptive errors, no side effects, ≤150 lines, `Setup<Layer>` naming
+
+## Interface Design (CQRS)
+
+**Guidelines**: Single responsibility, one per file, consumer-focused, no god interfaces
+**Location**: Define in domain/application (near consumer), implement in infrastructure
+**Naming**: Commands (`CreateOrderCommand`), Queries (`GetOrderByID`), Validation (`ValidateOrderUniqueness`)
+**Files**: `snake_case.go`
+
 ```go
-func SetupServer(app *Application) *http.Server {
-    mux := http.NewServeMux()
-    handler := NewOrderHandler(app.Domain.OrderService)
-    mux.HandleFunc("/orders", handler.Create)
-    
-    return &http.Server{
-        Addr:    ":8080",
-        Handler: mux,
-    }
+// ✅ Small focused interfaces
+type CreateOrderCommand interface { Execute(ctx context.Context, cmd CreateOrderRequest) (OrderID, error) }
+type GetOrderByID interface { Execute(ctx context.Context, id OrderID) (*OrderDTO, error) }
+
+// ❌ Large unfocused interface
+type OrderRepository interface { Save(); FindByID(); ListByCustomer(); Delete(); UpdateStatus() }
+```
+
+## Constructor Pattern
+
+```go
+func NewCreateOrderUseCase(createCmd CreateOrderCommand, validateCmd ValidateOrderUniqueness, eventBus EventBus) *CreateOrderUseCase {
+    return &CreateOrderUseCase{createCmd: createCmd, validateCmd: validateCmd, eventBus: eventBus}
+}
+
+func NewGetOrderUseCase(getQuery GetOrderByID) *GetOrderUseCase {
+    return &GetOrderUseCase{getQuery: getQuery}
 }
 ```
 
-## Setup Function Guidelines
+## YAGNI in DI
 
-- **Pattern**: `func SetupX(args ...) (*X, error)`
-- **Validation**: Check required config values, return descriptive errors
-- **No side effects**: Don't start goroutines or block in setup
-- **File size**: Keep under 150 lines
-- **Naming**: Use `Setup<Layer>` pattern, camelCase variables
-
-## Interface Design
-
-- Keep interfaces small and focused
-- Consumer should depend only on methods it needs
-- Define interfaces in domain/application layer
-- Implement in infrastructure layer
+**Philosophy**: Only inject what's used, delete unused dependencies, simple constructors, avoid over-engineering
 
 ```go
-// Interface in application
-type OrderRepository interface {
-    Save(ctx context.Context, order Order) error
-    FindByID(ctx context.Context, id string) (*Order, error)
+// ❌ Unused dependencies
+func NewOrderService(repo OrderRepository, eventBus EventBus, notificationService NotificationService, auditLogger AuditLogger) *OrderService {
+    return &OrderService{repo: repo, eventBus: eventBus} // Others unused
 }
 
-// Implementation in infrastructure
-func NewSQLOrderRepository(db *sql.DB) OrderRepository {
-    return &sqlOrderRepository{db: db}
+// ✅ Only what's used
+func NewOrderService(repo OrderRepository, eventBus EventBus) *OrderService {
+    return &OrderService{repo: repo, eventBus: eventBus}
 }
 ```
 
-## Configuration Management
+## Configuration
 
 ```go
-type Config struct {
-    DatabaseURL string
-    RedisURL    string
-    HTTPPort    int
-}
+type Config struct { Database DatabaseConfig; Redis RedisConfig; HTTP HTTPConfig }
+type DatabaseConfig struct { URL string; MaxConnections int; ConnectionTimeout time.Duration }
 
 func LoadConfig() (*Config, error) {
-    cfg := &Config{
-        DatabaseURL: os.Getenv("DATABASE_URL"),
-        RedisURL:    os.Getenv("REDIS_URL"),
-        HTTPPort:    8080,
-    }
-    
-    if err := cfg.Validate(); err != nil {
-        return nil, err
-    }
-    
+    cfg := &Config{Database: DatabaseConfig{URL: os.Getenv("DATABASE_URL"), MaxConnections: 10, ConnectionTimeout: 5 * time.Second}}
+    if err := cfg.Validate(); err != nil { return nil, err }
     return cfg, nil
 }
 ```
 
-## Testing with DI
-
-### Mock Guidelines
-1. Mock only outgoing ports (repositories, external APIs)
-2. Don't mock domain logic
-3. Implement manual mocks with exported fields
-4. Place mocks in test packages
-5. Inject via setup functions
-
-### Mock Example
-```go
-type OrderRepositoryMock struct {
-    SavedOrders []Order
-    Error       error
-}
-
-func (m *OrderRepositoryMock) Save(ctx context.Context, order Order) error {
-    m.SavedOrders = append(m.SavedOrders, order)
-    return m.Error
-}
-
-func (m *OrderRepositoryMock) FindByID(ctx context.Context, id string) (*Order, error) {
-    return &Order{}, nil
-}
-```
-
-### Test Setup
-```go
-func TestOrderService(t *testing.T) {
-    // Arrange
-    mockRepo := &OrderRepositoryMock{}
-    domain := SetupDomain(mockRepo, &EventBusMock{})
-    
-    // Act
-    order := fixtures.NewTestOrder()
-    err := domain.OrderService.CreateOrder(context.Background(), order)
-    
-    // Assert
-    assertNoError(t, err)
-    assertEqual(t, len(mockRepo.SavedOrders), 1)
-}
-```
+**Rules**: Centralize in main, use env vars/files, validate at startup, pass to setup functions
 
 ## Lifetime Management
 
-- **Singletons**: Create once at startup (connections, servers)
-- **Request-scoped**: Pass context, create per request (transactions)
-- **Avoid globals**: Keep dependencies explicit
+**Types**: Singletons (connections, servers), Request-scoped (transactions), avoid globals
+**YAGNI**: Simple lifetimes, explicit creation, avoid containers, manual DI
 
 ## Composition Root
 
 ```go
 func main() {
     cfg, err := LoadConfig()
-    if err != nil {
-        log.Fatalf("failed to load config: %v", err)
-    }
+    if err != nil { log.Fatalf("failed to load config: %v", err) }
     
     app, err := SetupApplication(cfg)
-    if err != nil {
-        log.Fatalf("failed to setup application: %v", err)
-    }
+    if err != nil { log.Fatalf("failed to setup application: %v", err) }
     
     server := SetupServer(app)
     log.Printf("Starting server on port %d", cfg.HTTPPort)
-    
-    if err := server.ListenAndServe(); err != nil {
-        log.Fatalf("server failed: %v", err)
-    }
+    if err := server.ListenAndServe(); err != nil { log.Fatalf("server failed: %v", err) }
 }
 ```
 
-## Best Practices Summary
+## Testing with DI
 
-1. Define interfaces in domain/application layer
-2. Implement in infrastructure packages
-3. Provide Setup functions per layer
-4. Wire explicitly in entrypoint
-5. Avoid side effects in setup
-6. Keep files under 150 lines
-7. Use manual mocks for testing
+**Mock Guidelines**: One per interface, mock only outgoing ports, manual mocks with exported fields, verification capabilities
+**Structure**: `tests/{use_case}/mocks/mock_{interface}.go`
+
+```go
+type MockCreateOrderCommand struct {
+    Error error
+    Calls []CreateOrderCall
+}
+
+func (m *MockCreateOrderCommand) Execute(ctx context.Context, order Order) error {
+    m.Calls = append(m.Calls, CreateOrderCall{Order: order})
+    return m.Error
+}
+
+// Test
+func TestCreateOrderUseCase(t *testing.T) {
+    createCmd := &MockCreateOrderCommand{}
+    validateCmd := &MockValidateOrderUniqueness{}
+    useCase := NewCreateOrderUseCase(createCmd, validateCmd)
+    result, err := useCase.Execute(ctx, request)
+    assert.NoError(t, err)
+    assert.Len(t, createCmd.Calls, 1)
+}
+```
+
+## YAGNI Testing
+
+**Philosophy**: Test current functionality, simple mocks, delete unused tests, focus on behavior
+
+```go
+// ❌ Over-engineered
+type MockOrderService struct { mu sync.RWMutex; calls map[string][]interface{}; config MockConfig; hooks []MockHook }
+
+// ✅ Simple
+type MockOrderService struct { Error error; Calls []CreateOrderCall }
+func (m *MockOrderService) CreateOrder(ctx context.Context, order Order) error {
+    m.Calls = append(m.Calls, CreateOrderCall{Order: order})
+    return m.Error
+}
+```
+
+## Summary
+
+**Test Design**: TDD (failing test first), test behavior not implementation, descriptive names (ATDD), simple tests
+**CQRS DI**: One interface per file, implement in infrastructure, setup functions (pure construction), explicit wiring, manual mocks
+**YAGNI DI**: Simple constructors, delete unused dependencies, avoid frameworks, focus on current needs
+**Lifetime**: Singletons (shared resources), request-scoped (per-request), avoid globals, simple lifetimes
+**Principles**: CQRS interfaces, infrastructure implements, setup functions (no side effects), explicit wiring, YAGNI compliance
+
+Ensures maintainable, testable, scalable Go applications following Clean Architecture, CQRS, and YAGNI.

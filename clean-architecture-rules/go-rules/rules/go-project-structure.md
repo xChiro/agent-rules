@@ -4,241 +4,116 @@ description:
 globs: 
 ---
 
-# Go Project Structure Template
+# Go Project Structure - Screaming Architecture with CQRS
 
-Project structure following Clean Architecture, DDD and TDD principles with mirrored test architecture.
-
-## Core Principle
-
-**Tests MUST mirror the structure of the production code.**
-
-This rule makes navigation, maintenance and AI-generated code easier.
+**Core Principles**: Tests mirror production, structure screams business purpose, YAGNI compliance
 
 ## Directory Layout
 
 ```
-your-service/
-
-cmd/
-├── api/
-│   └── main.go        # Composition root: load configuration, wire dependencies and start HTTP server
-└── worker/
-    └── main.go        # Background workers / async processors
-
-internal/
-
-├── domain/
-│   └── <subdomain>/
-│       ├── entity.go        # Entities and Value Objects
-│       ├── repository.go    # Domain ports (interfaces)
-│       └── service.go       # Domain services if required
-
-├── application/
-│   └── <subdomain>/
-│       ├── usecase.go       # Application use case orchestration
-│       ├── requests.go      # Request / Response DTOs
-│       └── ports.go         # Interfaces used by the use case
-
-├── infrastructure/
-│   ├── persistence/
-│   │   └── <subdomain>/
-│   │       └── repository.go
-│   ├── messaging/
-│   │   └── <subdomain>/
-│   │       └── publisher.go
-│   └── config.go           # Configuration loading
-
-└── interfaces/
-    ├── http/
-    │   ├── handler.go
-    │   └── routes.go
-    └── grpc/
-        └── handler.go
-
-pkg/
-└── util/                    # Shared utilities
-
-scripts/
-└── generate.sh
-
-tests/
-├──domain/
-│   └── <subdomain>/
-│       ├── entity_test.go
-│       └── value_object_test.go
-
-├── application/
-│   └── <subdomain>/
-│       ├── usecase_test.go
-│       └── mocks/
-│           ├── repository_mock.go
-│           └── service_mock.go
-
-├── infrastructure/
-│   └── persistence/
-│       └── <subdomain>/
-│           └── repository_integration_test.go
-
-└── interfaces/
-    └── http/
-        └── handler_integration_test.go
+{service}/
+cmd/{api|worker}/main.go
+internal/{domain}/
+  ├── domain/{entity}/{entity.go, value_objects/, errors.go, ports/}
+  ├── application/{use_case}/{usecase.go, requests.go, ports/}
+  ├── infrastructure/{persistence|messaging|external}/
+  └── interfaces/{http|grpc}/{entity}/
+pkg/util/
+tests/{domain}/  # Mirrors production
+  ├── domain/{entity}/
+  ├── application/{use_case}/{usecase_test.go, mocks/}
+  ├── infrastructure/{entity}/
+  └── interfaces/{http|grpc}/
 ```
 
 ## Mirror Rules
 
-Tests MUST mirror the production layer structure.
+Tests mirror production structure exactly:
+- `internal/{domain}/domain/{entity}/entity.go` → `tests/{domain}/domain/{entity}/entity_test.go`
+- `internal/{domain}/application/{use_case}/usecase.go` → `tests/{domain}/application/{use_case}/usecase_test.go`
+- `internal/{domain}/infrastructure/persistence/{entity}/` → `tests/{domain}/infrastructure/{entity}/`
 
-### Example 1: Domain Layer
-**Production**
+## Benefits
+
+Immediate business understanding, navigation by concept, clear boundaries, stakeholder alignment, fast onboarding
+
+## One Type Per File
+
+**Domain**: `{entity}.go`, `value_objects/{type}.go`, `errors.go`, `ports/{commands|queries|validation}/`
+**Application**: `{use_case}.go`, `requests.go`, `ports/{commands|queries|validation}/`
+**Rule**: One interface per file, ≤150 lines per file
+
+## CQRS Ports
+
 ```
-internal/domain/orders/order.go
-```
-
-**Test**
-```
-tests/domain/orders/order_test.go
-```
-
-### Example 2: Application Layer
-**Production**
-```
-internal/application/orders/create_order.go
-```
-
-**Test**
-```
-tests/application/orders/create_order_test.go
-```
-
-## Benefits of Mirrored Structure
-
-- Clear mapping between code and tests
-- Faster navigation
-- AI agents can locate tests automatically
-- Clean Architecture boundaries remain visible
-
-## Test Layer Responsibilities
-
-### Domain Tests
-**Location**: `tests/domain/<subdomain>`
-
-**Purpose**
-- Validate Entities
-- Validate Value Objects
-- Enforce domain invariants
-- Test business behavior
-
-**Rules**
-- No mocks
-- No infrastructure
-- Pure business logic
-
-### Application Tests
-**Location**: `tests/application/<subdomain>`
-
-**Purpose**
-- Test use case orchestration
-
-**Rules**
-- Mock outgoing dependencies (repositories, message buses)
-- Follow ATDD
-- Only one SUT call in Act
-
-**Mocks live in**: `tests/application/<subdomain>/mocks`
-
-### Infrastructure Tests
-**Location**: `tests/infrastructure/`
-
-**Purpose**
-- Integration tests
-- Persistence verification
-- External system verification
-
-**Rules**
-- Real DB or test container
-- No mocks
-- Validate mapping
-
-### Interface Tests
-**Location**: `tests/interfaces/http` and `tests/interfaces/grpc`
-
-**Purpose**
-- API contract verification
-- End-to-end behavior
-
-## Naming Conventions
-
-### Test Files
-Follow Go conventions:
-```
-order_test.go
-create_order_test.go
-email_value_object_test.go
+ports/
+├── commands/create_{entity}_command.go
+├── queries/get_{entity}_by_{criteria}.go
+└── validation/validate_{entity}_{property}_uniqueness.go
 ```
 
-### Test Functions
-MUST follow ATDD pattern:
-```
-Test_given_invalid_email_when_creating_email_then_return_error
-Test_given_existing_user_when_registering_then_return_duplicate_error
-```
+## YAGNI Structure
+
+**Do**: Create only what exists now, delete unused folders, keep simple
+**Don't**: Create hypothetical future domains/use cases, empty directories
+
+## Test Layers
+
+**Domain** (`tests/{domain}/domain/`): Pure business logic, no mocks/infrastructure
+**Application** (`tests/{domain}/application/{use_case}/`): Use case orchestration, mock dependencies, ATDD naming
+**Infrastructure** (`tests/{domain}/infrastructure/`): Real DB/containers, verify mapping/integration
+**Interface** (`tests/{domain}/interfaces/`): API contracts, e2e workflows
+
+## Naming
+
+**Files**: `{entity}_test.go`, `{use_case}_test.go` (snake_case)
+**Functions**: `Test_given_{scenario}_when_{action}_then_{expected}` (ATDD pattern)
 
 ## Architectural Rules
 
-### Dependency Direction
-Follow Clean Architecture dependency direction:
-```
-Infrastructure → Application → Domain
-```
+**Dependency Flow**: Infrastructure → Application → Domain
+**Domain**: No infrastructure/interfaces/frameworks imports, pure business only
+**Application**: Depend on domain interfaces, DI, CQRS pattern
+**Infrastructure**: Implements interfaces, external dependencies, no business logic
+**Interface**: Transport-specific, organized by business concept, no business logic
 
-### Domain Layer Restrictions
-**Domain must never import**:
-- infrastructure
-- interfaces
-- frameworks
+## Screaming Architecture
 
-### Application Layer Rules
-- Must depend only on domain interfaces
-- Use dependency injection
-- Keep use cases focused
+**Business-Driven**: Top-level = business domains (`membership/`), use cases = business names (`enroll_member/`)
+**Technical Support**: Clean Architecture/DDD within business domains, technical concerns secondary
+**Navigation**: By business feature, not technical layer
 
-### Infrastructure Layer
-- Implements domain/application interfaces
-- Contains external dependencies
-- No business logic
+## Size Rules
 
-## Code Size Rules
+**Files**: ≤150 lines
+**Functions**: ≤20 lines
+**Split**: When approaching limits
 
-**Files MUST NOT exceed 150 lines.**
+## CQRS Organization
 
-**Functions should remain under 20 lines when possible.**
-
-**If a file approaches the limit, split it into smaller components.**
-
-## Key Principles
-
-The structure enforces:
-
-- Clean Architecture
-- Domain Driven Design
-- Test Driven Development
-- Deterministic test organization
-- AI-friendly code navigation
+**Ports**: `ports/{commands|queries|validation}/{action}_{entity}_{type}.go`
+**Mocks**: `tests/{domain}/application/{use_case}/mocks/mock_{port}.go`
 
 ## File Organization Best Practices
 
 ### One Type Per File
-When reasonable, define one high-level type or concept per file.
+- **One interface per file**: Each CQRS port in its own file
+- **One mock per file**: Each mock implementation in its own file
+- **File naming**: `snake_case.go` matching the interface name
+- **Group related types**: Value objects can be grouped if tightly coupled
 
-### Package Organization
-- **Domain packages**: Pure business logic
-- **Application packages**: Use cases and orchestration
-- **Infrastructure packages**: External implementations
-- **Interface packages**: Transport layer
+### Maximum File Sizes
+- **Production files**: ≤150 lines
+- **Test files**: ≤150 lines
+- **Functions**: ≤20 lines preferred
 
-### Import Organization
-1. Standard library
-2. External packages
-3. Internal packages (in dependency order)
+## YAGNI Management
 
-This structure ensures maintainable, testable, and scalable Go applications following industry best practices.
+**Add**: When domain/use case/entity actually exists
+**Remove**: Empty folders, unused files/tests, hypothetical features, over-engineered structures
+**Regular cleanup**: Delete unused code, simplify complexity
+
+## Summary
+
+Enforces: Screaming Architecture, Clean Architecture, DDD, TDD, CQRS, YAGNI, one type per file
+Ensures: Maintainable, testable, scalable applications that communicate business purpose
