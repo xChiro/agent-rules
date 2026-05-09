@@ -56,12 +56,15 @@ func (m *MockCreateMemberCommand) Execute(ctx context.Context, member domain.Mem
 ```go
 // Use Case Test
 func Test_given_valid_data_when_enrolling_member_then_success(t *testing.T) {
+    // Arrange
     createCmd := &MockCreateMemberCommand{}
     validateCmd := &MockValidateMemberUniqueness{Result: true}
     useCase := NewEnrollMemberUseCase(createCmd, validateCmd)
     
+    // Act
     response, err := useCase.Execute(ctx, request)
     
+    // Arrange
     assert.NoError(t, err)
     assert.NotEmpty(t, response.MemberID)
     assert.Len(t, createCmd.Calls, 1)
