@@ -51,6 +51,25 @@ description: Full TDD cycle - Red → Green → Refactor
 
 **Rule**: No production code yet
 
+## Phase 2.5: Test Review
+
+**Goal**: User review and approval before implementation
+
+**Action**: Present created tests to user for review
+
+**Review Checklist**:
+- Test names clearly describe scenarios
+- Edge cases are comprehensive
+- Happy paths are covered
+- Test assertions are correct
+- Mock dependencies are appropriate
+- Tests follow ATDD naming convention
+- No fragile test patterns
+
+**User Approval Required**: Wait for user confirmation before proceeding to Green phase
+
+**Rule**: No production code until user approves tests
+
 ## Phase 3: Green (Minimal Code)
 
 **Goal**: Minimum code to pass tests
