@@ -83,7 +83,7 @@ description: Test-Driven TDD - Analyze Tests → Make Pass → Refactor with Con
 
 **Goal**: User review and approval before implementation
 
-**Action**: Present created/modified tests to user for review
+**Action**: Present created tests to user for review
 
 **Review Checklist**:
 - Test names clearly describe scenarios
@@ -93,8 +93,6 @@ description: Test-Driven TDD - Analyze Tests → Make Pass → Refactor with Con
 - Mock dependencies are appropriate
 - Tests follow ATDD naming convention
 - No fragile test patterns
-- Modified tests fix identified issues
-- Test plan from Phase 1 is addressed
 
 **User Approval Required**: Wait for user confirmation before proceeding to Phase 3
 
