@@ -44,6 +44,7 @@ description: Full TDD cycle - Red → Green → Refactor
 - Use `testify/assert` (MANDATORY)
 - One behavior per test
 - Manual mocks only
+- **MANDATORY**: Use comment separators `// Arrange`, `// Act`, `// Assert` to divide test sections
 
 **Test Order**: Invalid input → dependency failures → business rule violations → happy path
 

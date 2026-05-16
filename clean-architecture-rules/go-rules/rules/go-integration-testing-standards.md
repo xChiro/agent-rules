@@ -42,6 +42,7 @@ globs:
 - **Assertions**: `github.com/stretchr/testify/assert`
 - **YAGNI**: Test only existing features
 - **Cleanup**: Always cleanup test data and resources
+- **Comment separators**: MUST use `// Arrange`, `// Act`, `// Assert` to divide test sections
 
 ## Test Structure
 
@@ -61,6 +62,9 @@ tests/{domain}/integration/
 ```
 
 ### Test Structure Template
+
+**MANDATORY**: MUST use comment separators `// Arrange`, `// Act`, `// Assert` to divide test sections
+
 ```go
 func Test_given_scenario_when_action_then_expected(t *testing.T) {
     t.Parallel()

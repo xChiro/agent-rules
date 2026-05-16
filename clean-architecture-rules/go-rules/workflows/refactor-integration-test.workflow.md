@@ -128,6 +128,7 @@ func Test_isolated_with_real_infrastructure(t *testing.T) {
 ## Phase 7: Error Handling
 
 **Use `testify/assert`** (MANDATORY):
+**Use comment separators** (MANDATORY): `// Arrange`, `// Act`, `// Assert` to divide test sections
 ```go
 assert.NoError(t, err, "failed to setup REAL infrastructure")
 assert.Error(t, err, "expected error from REAL infrastructure")

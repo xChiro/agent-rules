@@ -13,6 +13,7 @@ globs:
 **Naming**: `Test_given_[scenario]_when_[action]_then_[expected]` (snake_case)
 **Template**: Arrange → Act → Assert
 **Organization**: `tests/{domain}/application/{use_case}/{usecase_test.go, mocks/}`
+**MANDATORY**: MUST use comment separators `// Arrange`, `// Act`, `// Assert` to divide test sections
 
 ## Anti-Patterns
 

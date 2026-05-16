@@ -20,6 +20,7 @@ Improve test maintainability while preserving behavior (see `go-unit-testing-sta
 - SRP violations (test functions doing multiple things)
 
 **MANDATORY**: MUST use `github.com/stretchr/testify/assert` for ALL assertions
+**MANDATORY**: MUST use comment separators `// Arrange`, `// Act`, `// Assert` to divide test sections
 
 ## Phase 2: Extract Setup
 
