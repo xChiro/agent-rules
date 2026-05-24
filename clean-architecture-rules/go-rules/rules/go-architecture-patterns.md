@@ -115,6 +115,65 @@ type GetOrderByID interface { Execute(ctx context.Context, id OrderID) (*OrderDT
 type OrderRepository interface { Save(); FindByID(); ListByCustomer(); Delete(); UpdateStatus() }
 ```
 
+## DTO Pattern (DIP Compliance)
+
+**Principle**: Interface layer DTOs with translation methods to convert between domain and interface representations
+
+**Structure**:
+- **Application Layer**: Pure domain DTOs (no infrastructure tags like `json`, `dynamodbav`)
+- **Interface Layer**: Transport-specific DTOs with translation methods
+
+```go
+// ✅ Application layer - pure domain DTO
+// internal/inventory/application/category_catalog_retriever/requests/get_categories_catalog_response.go
+package requests
+
+type CategoryDTO struct {
+	CategoryID string
+	Path       string
+}
+
+type GetCategoriesCatalogResponse struct {
+	Categories []CategoryDTO
+}
+
+// ✅ Interface layer - transport DTO with translation methods
+// internal/inventory/interfaces/lambda/handlers/category_dto.go
+package handlers
+
+type CategoryDTO struct {
+	CategoryID string `json:"categoryID"`
+	Path       string `json:"path"`
+}
+
+func (dto CategoryDTO) ToDomain() interface{} {
+	return map[string]interface{}{
+		"categoryID": dto.CategoryID,
+		"path":       dto.Path,
+	}
+}
+
+func CategoryDTOFromDomain(categoryID string, path string) CategoryDTO {
+	return CategoryDTO{
+		CategoryID: categoryID,
+		Path:       path,
+	}
+}
+
+// ✅ Handler uses translation method
+appResponse, err := h.catalogRetriever.Execute(ctx, request)
+categories := make([]CategoryDTO, len(appResponse.Categories))
+for i, cat := range appResponse.Categories {
+	categories[i] = CategoryDTOFromDomain(cat.CategoryID, cat.Path)
+}
+```
+
+**Rules**:
+- Application DTOs: No infrastructure tags, pure domain data
+- Interface DTOs: Transport tags (`json`, `dynamodbav`), translation methods
+- Translation: `FromDomain` and `ToDomain` methods in interface layer
+- Separation: Interface layer depends on application, not vice versa
+
 ## File Organization
 
 **Rules**: One type per file, single responsibility, snake_case.go, ≤150 lines

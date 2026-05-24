@@ -139,6 +139,32 @@ func Execute(ctx context.Context, req Request) error {
 }
 ```
 
+**DTO Pattern (DIP Compliance)**:
+```go
+// ✅ Application layer - pure domain DTO (no infrastructure tags)
+type CategoryDTO struct {
+	CategoryID string
+	Path       string
+}
+
+// ✅ Interface layer - transport DTO with translation methods
+type CategoryDTO struct {
+	CategoryID string `json:"categoryID"`
+	Path       string `json:"path"`
+}
+
+func CategoryDTOFromDomain(categoryID string, path string) CategoryDTO {
+	return CategoryDTO{CategoryID: categoryID, Path: path}
+}
+
+// ✅ Handler uses translation method
+appResponse, err := h.catalogRetriever.Execute(ctx, request)
+categories := make([]CategoryDTO, len(appResponse.Categories))
+for i, cat := range appResponse.Categories {
+	categories[i] = CategoryDTOFromDomain(cat.CategoryID, cat.Path)
+}
+```
+
 ## Phase 5: Dependency Injection
 
 **CQRS Interfaces** (see `go-dependency-injection.md`):
