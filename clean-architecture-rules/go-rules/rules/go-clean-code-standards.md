@@ -100,6 +100,18 @@ Clean coding standards for writing idiomatic, maintainable Go code following Cle
 **Collections**: Don't expose directly, Items() returns copy, use methods
 **Context**: First argument for I/O, don't store in structs, use only when needed
 
+### DTO Organization (CRITICAL)
+**One Type Per File**: Each DTO struct must be in its own file
+- **Request DTOs**: `{entity}_request_dto.go` (e.g., `create_inventory_item_request_dto.go`)
+- **Response DTOs**: `{entity}_response_dto.go` (e.g., `create_inventory_item_response_dto.go`)
+- **Naming**: File name must match the struct name in snake_case
+- **Package**: DTOs belong to their handler's package (e.g., `package create_invetory`)
+
+**Examples**:
+- ❌ `create_inventory_item_dto.go` containing both request and response structs
+- ✅ `create_inventory_item_request_dto.go` containing only `CreateInventoryItemRequestDTO`
+- ✅ `create_inventory_item_response_dto.go` containing only `CreateInventoryItemResponseDTO`
+
 ## Error Handling
 
 **Types**: Sentinel errors (`var ErrNotFound = errors.New(...)`), custom errors for structured data
