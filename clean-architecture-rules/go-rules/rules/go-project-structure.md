@@ -66,8 +66,13 @@ ports/
 
 ## Naming
 
-**Files**: `{entity}_test.go`, `{use_case}_test.go` (snake_case)
+**Files**: `{entity}_test.go`, `{use_case}_test.go` (snake_case for shared setup)
+**Per-Behavior Files**: `{action_or_concern}_test.go` describing the business concern (e.g., `quantity_validation_test.go`, `item_existence_test.go`, `transfer_success_test.go`)
 **Functions**: `Test_given_{scenario}_when_{action}_then_{expected}` (ATDD pattern)
+
+**MANDATORY**: Test file names MUST be domain-oriented, NOT type-oriented:
+- ❌ AVOID: `happy_path_test.go`, `error_cases_test.go`, `edge_cases_test.go`, `infrastructure_errors_test.go` (generic types)
+- ✅ PREFER: `quantity_validation_test.go`, `member_enrollment_success_test.go`, `category_uniqueness_test.go` (business behavior)
 
 ## Architectural Rules
 

@@ -135,20 +135,38 @@ func (m *MockCommand) VerifyCalledWith(t *testing.T, expected Data) {
 }
 ```
 
-## Phase 7: File Organization
+## Phase 7: File Organization (Domain-Oriented)
 
 **MANDATORY**: Test files ≤150 lines
+**MANDATORY**: Split test files by **business concern/action**, NOT by test type
 
 **Structure**:
 ```
 tests/{domain}/application/{use_case}/
-  usecase_test.go          # ≤150 lines
-  usecase_edge_cases_test.go
+  {use_case}_test.go                   # Shared setup helpers only
+  {action_or_concern}_test.go          # One business behavior per file
+  {validation_concern}_test.go         # One validation rule per file
   mocks/mock_{interface}.go
   fixtures/builders.go
 ```
 
-**Split by**: Scenario (happy/edge/errors), method, test type
+**Real example** (transfer use case):
+```
+tests/inventory/application/organization_inventory_item_transfer/
+  organization_inventory_item_transfer_test.go    # Setup helpers
+  item_existence_test.go                          # Item must exist
+  quantity_validation_test.go                     # Sufficient quantity required
+  transfer_success_test.go                        # Successful flow
+  infrastructure_errors_test.go                   # Persistence failures
+```
+
+**Split by**: Business concern/action being validated (NOT by happy/edge/error type)
+
+**File naming rules**:
+- ❌ AVOID: `{use_case}_happy_path_test.go`, `{use_case}_error_cases_test.go`, `{use_case}_edge_cases_test.go`
+- ✅ PREFER: `{action_or_concern}_test.go` where the name describes WHAT business rule/behavior is verified
+- One concern per file (single business rule, validation, or workflow path)
+- File name should communicate the domain concept being tested
 
 ## Phase 8: Performance
 
@@ -190,6 +208,7 @@ find tests/ -name "*_test.go" -exec wc -l {} \; | awk '$1 > 150' # File sizes
 - ✅ Test data builders (stable defaults)
 - ✅ `testify/assert` used (MANDATORY - no `if` statements)
 - ✅ Files ≤150 lines (MANDATORY)
+- ✅ Test files organized by **domain concern/action** (MANDATORY - NOT by test type like happy_path/error_cases)
 - ✅ No repeated assertions
 - ✅ Edge cases before happy path
 - ✅ Tests isolated and deterministic
