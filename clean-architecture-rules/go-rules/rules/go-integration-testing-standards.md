@@ -154,6 +154,14 @@ services:
 
 ## Infrastructure Testing Guidelines
 
+### HTTP Endpoint/Handler Integration (E2E)
+- **Use REAL infrastructure**: Handler + Use Case + Database (DynamoDB with Docker)
+- **NO unit tests for handlers**: Do not create unit tests with mocks for HTTP handlers
+- **Test complete flow**: Request parsing → Use case execution → Database query → Response construction
+- **Location**: `tests/end2end/{domain}/` with setup.go and test_session.go
+- **Test scenarios**: Success path, empty results, pagination, error handling
+- **Example**: Handler calls real use case, which calls real DynamoDB query adapter
+
 ### Database Integration
 - **Use real database instances**: PostgreSQL, MongoDB, etc.
 - **Test actual repository implementations**: Verify mapping and constraints

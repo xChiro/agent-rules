@@ -73,15 +73,24 @@ Use this workflow whenever creating or changing an endpoint in `hbk-inventory-se
 
 ## Phase 6: Tests
 
-**Goal**: Verify the public contract.
+**Goal**: Verify the public contract with REAL infrastructure.
+
+**CRITICAL**: HTTP handler tests MUST be E2E integration tests using REAL infrastructure (DynamoDB with Docker). NO unit tests with mocks for handlers.
+
+**Test type**: E2E integration tests in `tests/end2end/{domain}/`
 
 **Minimum coverage**:
-- Success path
-- Invalid request
-- Authentication failure
-- Authorization or ownership failure when applicable
-- Not found or conflict
+- Success path with REAL DynamoDB
+- Empty results with REAL DynamoDB
+- Pagination with REAL DynamoDB
 - Expected response shape and status code
+- Request parsing (limit/offset params)
+
+**Test structure**:
+- Handler + Use Case + DynamoDB query adapter (all real)
+- Setup with `setup.go` and `test_session.go`
+- Seed test data in REAL DynamoDB
+- Cleanup after each test
 
 ## Phase 7: Consistency Review
 

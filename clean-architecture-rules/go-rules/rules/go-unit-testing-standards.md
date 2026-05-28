@@ -55,6 +55,8 @@ tests/inventory/application/organization_inventory_item_transfer/
 
 **Domain Entity Testing**: Don't test entities directly. Test implicitly through use case tests.
 
+**HTTP Handler Unit Tests**: Do NOT create unit tests for HTTP handlers with mocks. HTTP handlers MUST be tested with E2E integration tests using REAL infrastructure (DynamoDB with Docker). Handler tests should be in `tests/integration/inventory/application/{domain}/` with setup.go and test_session.go.
+
 **Loop-Based Testing**: Don't use loops for multiple scenarios. Write individual test functions per scenario.
 - Exceptions: Theory-style tests, character validation, performance benchmarks
 
