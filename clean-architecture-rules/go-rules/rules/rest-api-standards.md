@@ -1,12 +1,12 @@
 ---
 trigger: always_on
-description: REST API standards for designing new endpoints in the inventory service
-globs: 
+description: HBK Inventory REST API standards for endpoint design
+globs: **/*.go,template.yaml
 ---
 
-# REST API Standards
+# HBK Inventory REST API Standards
 
-Standards for creating or modifying HTTP endpoints in `hbk-inventory-service`.
+Standards for creating or modifying HTTP endpoints in `hbk-inventory-service`. Use these rules as a service-specific profile, not as generic REST guidance for every project.
 
 ## Scope
 

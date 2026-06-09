@@ -1,10 +1,10 @@
 ---
-description: Create E2E integration tests for HTTP handlers using REAL infrastructure (DynamoDB with Docker)
+description: HBK Inventory E2E integration tests for HTTP handlers using DynamoDB with Docker
 ---
 
-# Create E2E Test Workflow
+# HBK Inventory E2E Test Workflow
 
-Use this workflow whenever creating E2E integration tests for HTTP handlers in `hbk-inventory-service`.
+Use this workflow whenever creating E2E integration tests for HTTP handlers in `hbk-inventory-service`. This is a service-specific profile for Lambda handlers and DynamoDB-backed tests.
 
 ## Phase 1: Setup Test Environment
 

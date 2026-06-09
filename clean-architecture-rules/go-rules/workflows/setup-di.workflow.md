@@ -2,9 +2,9 @@
 description: Setup dependency injection using Wire following Clean Architecture and CQRS
 ---
 
-# Dependency Injection Setup Workflow (Wire)
+# Dependency Injection Setup Workflow
 
-Create Wire-based dependency injection following Clean Architecture, CQRS, and Wire patterns (see `go-dependency-injection.md`).
+Create dependency injection following Clean Architecture, CQRS, and the project's local style. Use Wire when the project already uses it or when compile-time generated wiring clearly reduces complexity.
 
 ## Phase 1: Analysis
 
@@ -37,23 +37,15 @@ func ProvideDatabase(cfg config.Config) (*sql.DB, error) {
     return db, nil
 }
 
-// Wire injector (in wire.go)
-var InfrastructureProviderSet = wire.NewSet(
-    ProvideDatabase,
-    ProvideCache,
-    wire.Struct(new(Infrastructure), "*"),
-)
-
-var ApplicationProviderSet = wire.NewSet(
-    NewCreateUseCase,
-    NewGetUseCase,
-)
-
 func InitializeApplication(cfg config.Config) (*Application, error) {
     wire.Build(
         wire.Value(cfg),
-        InfrastructureProviderSet,
-        ApplicationProviderSet,
+        ProvideDatabase,
+        ProvideCache,
+        NewCreateUseCase,
+        NewGetUseCase,
+        wire.Struct(new(Infrastructure), "*"),
+        wire.Struct(new(Application), "*"),
     )
     return nil, nil
 }
@@ -88,14 +80,7 @@ func ProvideGetQuery(db *sql.DB) GetOrderByID {
     return NewSQLGetQuery(db)
 }
 
-// wire.go
-var InfrastructureProviderSet = wire.NewSet(
-    ProvideDatabase,
-    ProvideCache,
-    ProvideCreateCommand,
-    ProvideGetQuery,
-    wire.Struct(new(Infrastructure), "*"),
-)
+// Register these providers explicitly in the root wire.Build().
 ```
 
 ## Phase 4: Domain Providers
@@ -110,12 +95,7 @@ func ProvideValidationService() *ValidationService {
     return NewValidationService()
 }
 
-// wire.go
-var DomainProviderSet = wire.NewSet(
-    ProvidePricingService,
-    ProvideValidationService,
-    wire.Struct(new(Domain), "*"),
-)
+// Register these providers explicitly in the root wire.Build().
 ```
 
 ## Phase 5: Application Providers (CQRS)
@@ -133,12 +113,7 @@ func NewGetUseCase(getQuery GetOrderByID) *GetUseCase {
     return &GetUseCase{getQuery: getQuery}
 }
 
-// wire.go
-var ApplicationProviderSet = wire.NewSet(
-    NewCreateUseCase,
-    NewGetUseCase,
-    wire.Struct(new(Application), "*"),
-)
+// Register these providers explicitly in the root wire.Build().
 ```
 
 ## Phase 6: Interface Providers
@@ -158,11 +133,7 @@ func SetupHTTPServer(handler *Handler, cfg config.Config) *HTTPServer {
     }
 }
 
-// wire.go
-var InterfaceProviderSet = wire.NewSet(
-    NewHTTPHandler,
-    SetupHTTPServer,
-)
+// Register these providers explicitly in the root wire.Build().
 ```
 
 ## Phase 7: Wire Injector
@@ -172,9 +143,17 @@ var InterfaceProviderSet = wire.NewSet(
 func InitializeApplication(cfg config.Config) (*Application, error) {
     wire.Build(
         wire.Value(cfg),
-        InfrastructureProviderSet,
-        DomainProviderSet,
-        ApplicationProviderSet,
+        ProvideDatabase,
+        ProvideCache,
+        ProvideCreateCommand,
+        ProvideGetQuery,
+        ProvidePricingService,
+        ProvideValidationService,
+        NewCreateUseCase,
+        NewGetUseCase,
+        wire.Struct(new(Infrastructure), "*"),
+        wire.Struct(new(Domain), "*"),
+        wire.Struct(new(Application), "*"),
     )
     return nil, nil
 }
@@ -182,10 +161,19 @@ func InitializeApplication(cfg config.Config) (*Application, error) {
 func InitializeServer(cfg config.Config) (*HTTPServer, error) {
     wire.Build(
         wire.Value(cfg),
-        InfrastructureProviderSet,
-        DomainProviderSet,
-        ApplicationProviderSet,
-        InterfaceProviderSet,
+        ProvideDatabase,
+        ProvideCache,
+        ProvideCreateCommand,
+        ProvideGetQuery,
+        ProvidePricingService,
+        ProvideValidationService,
+        NewCreateUseCase,
+        NewGetUseCase,
+        NewHTTPHandler,
+        SetupHTTPServer,
+        wire.Struct(new(Infrastructure), "*"),
+        wire.Struct(new(Domain), "*"),
+        wire.Struct(new(Application), "*"),
     )
     return nil, nil
 }
@@ -247,9 +235,9 @@ wire gen ./internal/di/...
 - One responsibility per provider
 
 **Provider Sets**:
-- Group related providers by layer (Infrastructure, Domain, Application, Interface)
-- Use `wire.NewSet()` to create sets
-- Nest sets for composition
+- Prefer explicit provider listing in the root `wire.Build()`
+- Use `wire.NewSet()` only for small same-package groups when it improves readability
+- Do not hide cross-layer wiring behind broad exported provider sets
 
 **Wire Build**:
 - Use `wire.Value()` for constant values (config, primitives)
@@ -312,8 +300,8 @@ func ProvideCreateCommand(db *sql.DB) CreateCommand {
     return NewSQLCreateCommand(db)
 }
 
-// Wire set (in wire.go)
-var InfrastructureProviderSet = wire.NewSet(
+// Root wire.Build()
+wire.Build(
     ProvideDatabase,
     ProvideCreateCommand,
 )

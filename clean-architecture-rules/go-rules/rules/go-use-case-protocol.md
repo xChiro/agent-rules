@@ -1,7 +1,7 @@
 ---
 trigger: model_decision
-description: when working on uses cases in production code
-globs: 
+description: Go use case implementation protocol for Clean Architecture and CQRS
+globs: **/*.go
 ---
 
 # Go Use Case Implementation Protocol - CQRS Enhanced with YAGNI
@@ -89,21 +89,17 @@ type CreateMemberResponse struct {
 ```go
 // usecase.go
 type CreateMemberUseCase struct {
-    // CQRS Dependencies - interfaces defined in ports/ directory
-    createCmd        CreateMemberCommand
-    validateEmail    ValidateMemberEmailUniqueness
-    validateHandler  ValidateHandlerNameUniqueness
+    createMember CreateMemberCommand
+    validateEmail ValidateMemberEmailUniqueness
 }
 
 func NewCreateMemberUseCase(
-    createCmd CreateMemberCommand,
+    createMember CreateMemberCommand,
     validateEmail ValidateMemberEmailUniqueness,
-    validateHandler ValidateHandlerNameUniqueness,
 ) *CreateMemberUseCase {
     return &CreateMemberUseCase{
-        createCmd:       createCmd,
-        validateEmail:   validateEmail,
-        validateHandler: validateHandler,
+        createMember: createMember,
+        validateEmail: validateEmail,
     }
 }
 ```
@@ -111,34 +107,50 @@ func NewCreateMemberUseCase(
 ### Use Case Logic
 ```go
 func (uc *CreateMemberUseCase) Execute(ctx context.Context, req CreateMemberRequest) (CreateMemberResponse, error) {
-    // 1. Validate input (domain validations)
-    handlerName, err := domain.NewHandlerName(req.HandlerName)
+    member, err := uc.buildMember(req)
     if err != nil {
-        return CreateMemberResponse{}, fmt.Errorf("invalid handler name: %w", err)
+        return CreateMemberResponse{}, err
     }
-    
-    // 2. Validate uniqueness using CQRS queries
-    externalID := domain.NewExternalIdentifier(req.ExternalID, req.Provider)
-    isUnique, err := uc.validateEmail.Execute(ctx, externalID)
-    if err != nil {
-        return CreateMemberResponse{}, fmt.Errorf("validations failed: %w", err)
+
+    if err := uc.ensureEmailIsUnique(ctx, member.Email()); err != nil {
+        return CreateMemberResponse{}, err
     }
-    if !isUnique {
-        return CreateMemberResponse{}, domain.ErrEmailAlreadyExists
-    }
-    
-    // 3. Create domain entity (business logic in domain)
-    member := domain.NewMember(handlerName, externalID)
-    
-    // 4. Persist using CQRS command
-    if err := uc.createCmd.Execute(ctx, member); err != nil {
+
+    if err := uc.createMember.Execute(ctx, member); err != nil {
         return CreateMemberResponse{}, fmt.Errorf("failed to create member: %w", err)
     }
-    
-    return CreateMemberResponse{
-        MemberID: member.ID().String(),
-        Status:   member.Status().String(),
-    }, nil
+
+    return newCreateMemberResponse(member), nil
+}
+
+func (uc *CreateMemberUseCase) buildMember(req CreateMemberRequest) (domain.Member, error) {
+    handlerName, err := domain.NewHandlerName(req.HandlerName)
+    if err != nil {
+        return domain.Member{}, fmt.Errorf("invalid handler name: %w", err)
+    }
+
+    externalID, err := domain.NewExternalIdentifier(req.ExternalID, req.Provider)
+    if err != nil {
+        return domain.Member{}, fmt.Errorf("invalid external id: %w", err)
+    }
+
+    return domain.NewMember(handlerName, externalID), nil
+}
+
+func (uc *CreateMemberUseCase) ensureEmailIsUnique(ctx context.Context, email domain.Email) error {
+    isUnique, err := uc.validateEmail.Execute(ctx, email)
+    if err != nil {
+        return fmt.Errorf("failed to validate email uniqueness: %w", err)
+    }
+    if !isUnique {
+        return domain.ErrEmailAlreadyExists
+    }
+
+    return nil
+}
+
+func newCreateMemberResponse(member domain.Member) CreateMemberResponse {
+    return CreateMemberResponse{MemberID: member.ID().String(), Status: member.Status().String()}
 }
 ```
 
@@ -148,9 +160,8 @@ func (uc *CreateMemberUseCase) Execute(ctx context.Context, req CreateMemberRequ
 ```
 tests/{domain}/application/{use_case}/mocks/
 ├── types.go                              # Shared verification types
-├── mock_create_member_command.go         # Command mock
-├── mock_validate_member_email_uniqueness.go # Validation mock
-└── README.go                             # Mock index
+├── mock_create_member_command.go
+└── mock_validate_member_email_uniqueness.go
 ```
 
 ### Mock Implementation Pattern
@@ -209,8 +220,8 @@ Check for:
 - Depend on interfaces, not concrete types
 - Define interfaces in the application layer, implement in infrastructure
 
-### Testing
-- Use table-driven tests for multiple scenarios
+- Use individual tests for business-significant scenarios
+- Use table-driven tests for compact validation matrices where each row follows the same rule
 - Manual mocks over heavy mocking frameworks
 - Arrange/Act/Assert structure with clear comments
 - Test edge cases before happy paths

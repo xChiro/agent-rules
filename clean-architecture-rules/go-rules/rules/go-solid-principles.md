@@ -1,7 +1,7 @@
 ---
 trigger: always_on
-description: 
-globs: 
+description: Go SOLID principles for Clean Architecture projects
+globs: **/*.go
 ---
 
 # SOLID Principles for Go

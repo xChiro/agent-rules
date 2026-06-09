@@ -1,8 +1,10 @@
 ---
-description: Publish a new inventory domain event using HBK shared SNS infrastructure
+description: HBK Inventory workflow for publishing domain events through shared SNS infrastructure
 ---
 
-# Publish Domain Event Workflow
+# HBK Inventory Domain Event Publishing Workflow
+
+Use this workflow only for HBK Inventory or projects intentionally sharing the same SNS envelope, topic, IAM, and cross-stack conventions.
 
 ## Steps
 

@@ -1,7 +1,7 @@
 ---
 trigger: always_on
-description: 
-globs: 
+description: Go project structure rules for Clean Architecture, CQRS, and Screaming Architecture
+globs: **/*.go
 ---
 
 # Go Project Structure - Screaming Architecture with CQRS
@@ -112,7 +112,7 @@ ports/
 - **Request DTOs**: `{entity}_request_dto.go` (e.g., `create_inventory_item_request_dto.go`)
 - **Response DTOs**: `{entity}_response_dto.go` (e.g., `create_inventory_item_response_dto.go`)
 - **Naming**: File name must match the struct name in snake_case
-- **Package**: DTOs belong to their handler's package (e.g., `package create_invetory`)
+- **Package**: DTOs belong to their handler's package (e.g., `package create_inventory`)
 
 **Examples**:
 - ❌ `create_inventory_item_dto.go` containing both request and response structs

@@ -1,10 +1,12 @@
 ---
 trigger: always_on
-description: Domain event publishing standards for HBK inventory service
-globs: 
+description: HBK Inventory domain event publishing standards
+globs: **/*.go,template.yaml
 ---
 
-# Domain Event Publishing
+# HBK Inventory Domain Event Publishing
+
+Use this profile only for HBK Inventory or projects that intentionally share the same SNS event envelope and infrastructure conventions.
 
 - Publish only domain facts, never consumer-specific commands
 - Use the shared SNS topic from `hbk-shared-infrastructure`

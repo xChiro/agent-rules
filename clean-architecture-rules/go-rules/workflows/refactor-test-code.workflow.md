@@ -157,7 +157,7 @@ tests/inventory/application/organization_inventory_item_transfer/
   item_existence_test.go                          # Item must exist
   quantity_validation_test.go                     # Sufficient quantity required
   transfer_success_test.go                        # Successful flow
-  infrastructure_errors_test.go                   # Persistence failures
+  transfer_persistence_failure_test.go            # Persistence failure behavior
 ```
 
 **Split by**: Business concern/action being validated (NOT by happy/edge/error type)

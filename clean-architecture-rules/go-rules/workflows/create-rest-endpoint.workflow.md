@@ -1,10 +1,10 @@
 ---
-description: Design and implement a REST endpoint in the inventory service using consistent REST conventions and Clean Architecture
+description: HBK Inventory workflow for REST endpoints using Lambda, DynamoDB-backed E2E tests, and Clean Architecture
 ---
 
 # Create REST Endpoint Workflow
 
-Use this workflow whenever creating or changing an endpoint in `hbk-inventory-service`.
+Use this workflow whenever creating or changing an endpoint in `hbk-inventory-service`. Do not apply the inventory routes, Lambda router assumptions, or DynamoDB E2E requirements to unrelated services unless they intentionally share this profile.
 
 ## Phase 1: Model the Resource
 

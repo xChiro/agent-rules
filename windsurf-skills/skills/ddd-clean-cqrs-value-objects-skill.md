@@ -1,7 +1,7 @@
 ---
 trigger: always_on
 description: DDD, Clean Architecture, CQRS, and value-object modeling skill.
-globs:
+globs: **/*.go,**/*.cs
 ---
 
 # DDD Clean CQRS Value Objects Skill
@@ -44,4 +44,3 @@ Model the business explicitly. Invalid states should be difficult or impossible 
 - Application wraps technical failures with context and preserves cause.
 - Interface layer maps known domain/application errors to transport status/messages.
 - Infrastructure failures do not become business rules.
-

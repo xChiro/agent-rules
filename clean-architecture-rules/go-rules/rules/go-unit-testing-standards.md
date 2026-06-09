@@ -1,7 +1,7 @@
 ---
 trigger: model_decision
-description: when working with unit test
-globs: 
+description: Go unit testing standards for domain and application behavior
+globs: **/*_test.go
 ---
 
 # Go Unit Testing Standards - CQRS Enhanced with YAGNI
@@ -38,7 +38,7 @@ tests/inventory/application/organization_inventory_item_transfer/
   item_existence_test.go                          # Item not found behavior
   quantity_validation_test.go                     # Insufficient quantity behavior
   transfer_success_test.go                        # Successful transfer behavior
-  infrastructure_errors_test.go                   # Persistence/event failures
+  transfer_persistence_failure_test.go            # Persistence failure behavior
   fixtures/builders.go                            # Test data builders
   mocks/mock_{port}.go
 ```
@@ -56,14 +56,14 @@ tests/inventory/application/organization_inventory_item_transfer/
 
 ## Anti-Patterns
 
-**One-Class-One-Test**: Don't create separate test files per domain class. Test through use cases covering complete workflows.
+**One-Class-One-Test**: Don't create separate test files just because every production type needs a matching test. Test behavior through the smallest meaningful public contract.
 
-**Domain Entity Testing**: Don't test entities directly. Test implicitly through use case tests.
+**Domain Entity Testing**: Domain entities and value objects may be tested directly when they own pure invariants, state transitions, or validation rules. Prefer use case tests for workflow orchestration and cross-dependency behavior.
 
-**HTTP Handler Unit Tests**: Do NOT create unit tests for HTTP handlers with mocks. HTTP handlers MUST be tested with E2E integration tests using REAL infrastructure (DynamoDB with Docker). Handler tests should be in `tests/integration/inventory/application/{domain}/` with setup.go and test_session.go.
+**HTTP Handler Unit Tests**: Do not create mock-heavy handler unit tests when the handler's value is request parsing, status codes, auth/session extraction, and response mapping. Prefer end-to-end or integration tests with real wiring for HTTP contracts. For service-specific HBK Inventory rules, use DynamoDB-backed E2E tests.
 
-**Loop-Based Testing**: Don't use loops for multiple scenarios. Write individual test functions per scenario.
-- Exceptions: Theory-style tests, character validation, performance benchmarks
+**Loop-Based Testing**: Avoid loops when each scenario has distinct business meaning. Write individual test functions for important business cases.
+- Exceptions: table-driven validation matrices, parser/formatter cases, character validation, permissions matrices, and performance benchmarks
 
 ## TDD Workflow
 
@@ -200,4 +200,4 @@ All tests pass, ≥80% coverage, no race conditions, static analysis passes
 **CQRS Testing**: Commands (write ops), Queries (read ops), Validation (business rules), Integration (real infrastructure)
 **YAGNI**: Test current functionality, delete unused tests, critical paths, simple setup
 
-Ensures comprehensive, maintainable, reliable unit test coverage for Go applications following CQRS, Clean Architecture, YAGNI, and Screaming Architecture.
+Ensures maintainable, reliable unit test coverage for Go applications following CQRS, Clean Architecture, YAGNI, and Screaming Architecture.

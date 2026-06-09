@@ -4,150 +4,143 @@
 
 ## Overview
 
-Agent Rules is a public-domain collection of reusable rules and workflows for AI coding agents.
+Agent Rules is a public-domain collection of reusable rules, workflows, and skills for AI coding agents.
 
-The purpose of this repository is to document practical engineering standards that an AI assistant can follow when creating, reviewing, refactoring, or testing software.
+The goal is to give coding agents explicit engineering standards they can follow when creating, reviewing, refactoring, or testing software. The repository favors disciplined, reviewable work over fast generation of large amounts of code.
 
-The current focus is on Go projects that follow:
-
-- Clean Architecture
-- SOLID principles
-- Test-Driven Development
-- CQRS
-- YAGNI
-- Screaming Architecture
-- Clean Code practices
-
-These documents are intended to be copied or adapted into tools such as Windsurf, Cursor, Claude Code, GitHub Copilot instructions, OpenAI agents, or any custom agent workflow.
-
-## Repository Report
-
-This repository currently contains a Go-oriented rule set for disciplined software development with AI agents.
-
-The main documents are located under:
+## Repository Map
 
 ```text
 clean-architecture-rules/go-rules/
-├── rules/
-└── workflows/
+├── rules/       # Go backend standards and selected service-specific profiles
+├── workflows/   # Step-by-step task workflows
+└── skills/      # Go-oriented skill copies for tools that consume skills locally
+
+react-rules/
+├── rules/       # React feature architecture standards
+└── workflows/   # React feature implementation workflow
+
+windsurf-skills/
+├── skills/      # Canonical Windsurf skill definitions
+└── workflows/   # Canonical Windsurf workflows
 ```
 
-### Rules
+## Rule Families
 
-Rules define the non-negotiable standards the agent must respect while working on a codebase.
+### Go Clean Architecture
 
-The current Go rules include clean code standards for writing idiomatic and maintainable Go code. They define principles such as expressive naming, small functions, one responsibility per method, encapsulation, consistency, YAGNI, and one type per file.
+Use these rules for Go backend projects that follow Clean Architecture, DDD, CQRS, TDD, YAGNI, SOLID, and Screaming Architecture.
 
-The rules also include concrete quality limits:
-
-- Files should be no longer than 150 lines.
-- Functions should be no longer than 20 lines.
-- Each method should have exactly one responsibility.
-- Tests should use `github.com/stretchr/testify/assert` for assertions.
-- Unused code, imports, variables, and speculative functions should be removed.
-
-The standards also cover naming conventions, function design, value objects, entities, collections, error handling, formatting, static analysis, CQRS interfaces, and testing expectations.
-
-See:
+Core reusable rules:
 
 - [`go-clean-code-standards.md`](./clean-architecture-rules/go-rules/rules/go-clean-code-standards.md)
+- [`go-architecture-patterns.md`](./clean-architecture-rules/go-rules/rules/go-architecture-patterns.md)
+- [`go-project-structure.md`](./clean-architecture-rules/go-rules/rules/go-project-structure.md)
+- [`go-solid-principles.md`](./clean-architecture-rules/go-rules/rules/go-solid-principles.md)
+- [`go-use-case-protocol.md`](./clean-architecture-rules/go-rules/rules/go-use-case-protocol.md)
+- [`go-unit-testing-standards.md`](./clean-architecture-rules/go-rules/rules/go-unit-testing-standards.md)
+- [`go-integration-testing-standards.md`](./clean-architecture-rules/go-rules/rules/go-integration-testing-standards.md)
+- [`go-dependency-injection.md`](./clean-architecture-rules/go-rules/rules/go-dependency-injection.md)
 
-### Workflows
+Service-specific HBK Inventory rules:
 
-Workflows define the step-by-step process the agent should follow when performing larger tasks.
+- [`rest-api-standards.md`](./clean-architecture-rules/go-rules/rules/rest-api-standards.md)
+- [`domain-event-publishing.md`](./clean-architecture-rules/go-rules/rules/domain-event-publishing.md)
+- [`create-rest-endpoint.workflow.md`](./clean-architecture-rules/go-rules/workflows/create-rest-endpoint.workflow.md)
+- [`create-e2e-test.workflow.md`](./clean-architecture-rules/go-rules/workflows/create-e2e-test.workflow.md)
+- [`publish-domain-event.workflow.md`](./clean-architecture-rules/go-rules/workflows/publish-domain-event.workflow.md)
 
-The current workflow focuses on a disciplined TDD modification cycle. It requires the agent to analyze existing tests first, identify fragile test patterns, define missing edge cases, modify or add tests before production code, and run tests continuously after every refactor step.
+Load service-specific files only when working on that service or an equivalent project that uses the same API, AWS, DynamoDB, SNS, Lambda, and route conventions.
 
-The workflow is organized into phases:
+### React
 
-1. Test analysis
-2. Test implementation using Red -> Green
-3. Test review
-4. Minimal production implementation
-5. Test code refactor
-6. Production code refactor
-7. Integration validation
+Use the React rules for frontend applications. They intentionally do not force backend-style Clean Architecture, ports, use cases, or TDD by default.
 
-The workflow reinforces Clean Architecture, CQRS, YAGNI, Screaming Architecture, small functions, manual mocks, ATDD-style test naming, and continuous testing.
+- [`react-feature-architecture-standards.md`](./react-rules/rules/react-feature-architecture-standards.md)
+- [`react-feature-implementation.workflow.md`](./react-rules/workflows/react-feature-implementation.workflow.md)
 
-See:
+### Windsurf Skills
 
-- [`modify-tdd-cycle.md`](./clean-architecture-rules/go-rules/workflows/modify-tdd-cycle.md)
+`windsurf-skills/` is the canonical source for reusable Windsurf skills and workflows. The copies under `clean-architecture-rules/go-rules/skills/` exist only for Go-oriented package layouts.
 
-## Rules vs Workflows
+## Rules vs Workflows vs Skills
 
-This repository separates rules from workflows.
-
-Rules answer:
-
-> What must always be true?
+Rules answer: what must always be true?
 
 Examples:
 
 - Domain logic must not depend on infrastructure.
-- Each method must have exactly one responsibility.
+- Each use case should have one actor and one business outcome.
 - Do not add unused code.
 - Use meaningful names.
 - Keep functions small.
 
-Workflows answer:
-
-> What process should the agent follow to complete a task?
+Workflows answer: what process should the agent follow for a task?
 
 Examples:
 
-- Analyze tests before changing production code.
+- Analyze existing tests before changing production code.
 - Write or modify tests first.
 - Make tests pass with minimal implementation.
 - Refactor only after tests pass.
-- Run tests after every refactor step.
+- Run tests after each meaningful refactor step.
 
-## How to Use
+Skills answer: what behavior and judgment should the agent apply in a tool-specific runtime?
 
-Copy the relevant Markdown files into your AI coding tool configuration.
+Examples:
 
-For Windsurf, the documents can be adapted into:
+- Use senior engineering judgment.
+- Prefer small vertical slices.
+- Keep ports consumer-owned and behavior-named.
+- Use manual mocks for outgoing dependencies.
 
-```text
-.windsurf/rules/
-```
+## Recommended Usage
 
-For other tools, they can be used as:
-
-- repository instructions
-- project rules
-- agent prompts
-- workflow playbooks
-- pull request review guidelines
-- coding standards
-
-## Recommended Usage Pattern
-
-Use the rules as always-on engineering standards.
-
-Use the workflows when the agent is asked to perform a specific task, such as modifying existing code, adding tests, refactoring, or implementing behavior through TDD.
-
-A practical agent setup could load:
+For a reusable Go backend setup, start with:
 
 ```text
-rules/go-clean-code-standards.md
-workflows/modify-tdd-cycle.md
+clean-architecture-rules/go-rules/rules/go-clean-code-standards.md
+clean-architecture-rules/go-rules/rules/go-architecture-patterns.md
+clean-architecture-rules/go-rules/rules/go-project-structure.md
+clean-architecture-rules/go-rules/rules/go-unit-testing-standards.md
+clean-architecture-rules/go-rules/workflows/senior-tdd-feature.workflow.md
 ```
 
-This gives the agent both the engineering constraints and the implementation process.
+Add more focused files only when the task needs them:
+
+```text
+go-dependency-injection.md        # DI or Wire work
+go-integration-testing-standards.md # real adapter or external-system tests
+rest-api-standards.md             # HBK Inventory REST endpoints only
+domain-event-publishing.md        # HBK Inventory domain events only
+```
+
+For React:
+
+```text
+react-rules/rules/react-feature-architecture-standards.md
+react-rules/workflows/react-feature-implementation.workflow.md
+```
+
+For Windsurf:
+
+```text
+windsurf-skills/skills/
+windsurf-skills/workflows/
+```
 
 ## Design Philosophy
 
-The repository is based on the idea that AI-assisted development should be disciplined, explicit, and reviewable.
+AI-assisted development should be disciplined, explicit, and reviewable.
 
-The goal is not to let the agent generate large amounts of code quickly. The goal is to help the agent work like a careful software engineer:
+The agent should:
 
-- understand the existing design
+- read the existing design before changing it
 - protect architecture boundaries
-- write tests before production code
+- write tests before production behavior when TDD is in scope
 - make small changes
 - avoid speculative abstractions
-- refactor safely
+- refactor safely after tests pass
 - keep behavior covered by tests
 - explain decisions clearly
 

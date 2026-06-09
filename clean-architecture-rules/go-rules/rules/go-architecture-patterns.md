@@ -1,7 +1,7 @@
 ---
 trigger: always_on
-description: 
-globs: 
+description: Go architecture patterns for Clean Architecture, DDD, CQRS, and YAGNI
+globs: **/*.go
 ---
 
 # Go Architecture Patterns

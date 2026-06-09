@@ -1,7 +1,7 @@
 ---
 trigger: always_on
 description: Integration testing standards - ALWAYS test against REAL infrastructure, NEVER use mocks
-globs: 
+globs: **/*_test.go
 ---
 
 # Go Integration Testing Standards
@@ -155,12 +155,12 @@ services:
 ## Infrastructure Testing Guidelines
 
 ### HTTP Endpoint/Handler Integration (E2E)
-- **Use REAL infrastructure**: Handler + Use Case + Database (DynamoDB with Docker)
+- **Use REAL infrastructure**: Handler + Use Case + datastore or external adapter
 - **NO unit tests for handlers**: Do not create unit tests with mocks for HTTP handlers
 - **Test complete flow**: Request parsing → Use case execution → Database query → Response construction
 - **Location**: `tests/end2end/{domain}/` with setup.go and test_session.go
 - **Test scenarios**: Success path, empty results, pagination, error handling
-- **Example**: Handler calls real use case, which calls real DynamoDB query adapter
+- **Example**: Handler calls real use case, which calls the real query adapter for the selected datastore
 
 ### Database Integration
 - **Use real database instances**: PostgreSQL, MongoDB, etc.

@@ -1,16 +1,16 @@
 ---
 trigger: always_on
-description:
-globs:
+description: Go dependency injection and Wire guidelines for Clean Architecture projects
+globs: **/*.go
 ---
 
-# Go Dependency Injection Guidelines (Wire)
+# Go Dependency Injection Guidelines
 
-**Principles**: Separation of concerns, explicit dependencies via providers, testability with interfaces, minimal side-effects, YAGNI, compile-time DI
+**Principles**: Separation of concerns, explicit dependencies via providers, testability with interfaces, minimal side effects, YAGNI, compile-time DI when Wire is used
 
 ## Layer Structure
 
-Each layer has its own DI configuration directory following Clean Architecture.
+Each layer may have its own DI configuration directory following Clean Architecture. Keep DI as simple as the project needs; do not introduce Wire or layer-specific DI folders for small applications that can be wired clearly in `main`.
 
 **Directory Structure**:
 ```
@@ -35,15 +35,11 @@ internal/
 // internal/infrastructure/di/providers.go
 package di
 
-func ProvideContext() context.Context {
-    return context.Background()
-}
-
-func ProvideDynamoDBManager(ctx context.Context, region string) (*DynamoDBManager, error) {
+func ProvideDatabase(ctx context.Context, cfg DatabaseConfig) (*sql.DB, error) {
     // Infrastructure setup
 }
 
-func ProvideInfrastructureSetup(dbManager *DynamoDBManager) *InfrastructureSetup {
+func ProvideInfrastructureSetup(db *sql.DB) *InfrastructureSetup {
     // All infrastructure components
 }
 
@@ -81,34 +77,29 @@ package di
 
 package di
 
-import (
-    "github.com/google/wire"
-    appdi "hbk-membership-service/internal/application/di"
-    infradi "hbk-membership-service/internal/infrastructure/di"
-)
+import "github.com/google/wire"
 
-func InitializeApplication() (*appdi.ApplicationServices, error) {
+func InitializeApplication(cfg Config) (*ApplicationServices, error) {
     wire.Build(
         // Infrastructure layer providers
-        infradi.ProvideContext,
-        infradi.ProvideRegion,
-        infradi.ProvideDynamoDBManager,
-        infradi.ProvideInfrastructureSetup,
+        wire.Value(cfg.Database),
+        ProvideDatabase,
+        ProvideInfrastructureSetup,
         // Application layer providers
-        appdi.NewEnrollMember,
-        appdi.NewGetEnrollmentsByStatus,
-        appdi.NewApplicationServices,
+        NewEnrollMember,
+        NewGetEnrollmentsByStatus,
+        NewApplicationServices,
     )
     return nil, nil
 }
 ```
 
 **Critical Rules**:
-- **DO NOT** use provider sets across packages - Wire cannot resolve cross-package provider sets reliably
-- List providers individually in `wire.Build()` from each layer
+- Prefer listing providers individually in the root `wire.Build()` when wiring across layers
+- Use `wire.NewSet()` only inside the same package or for a small local group that is not exported as an architectural boundary
 - Each layer's `di/` directory contains only its own providers
 - Main `internal/di/wire.go` orchestrates all layers
-- Domain layer typically has empty providers (no external dependencies)
+- Do not create empty `di/` packages just for symmetry; domain usually needs no DI package
 
 ## Provider Guidelines
 
@@ -187,24 +178,15 @@ func LoadConfig() (*Config, error) {
 
 ## Wire Provider Sets
 
-**Pattern**: Group related providers by layer using `wire.NewSet()`
+**Pattern**: Use provider sets only for local grouping inside one package. Do not make cross-package provider sets the main architecture contract.
 
 ```go
-// wire.go
-var InfrastructureProviderSet = wire.NewSet(
+// internal/infrastructure/di/providers.go
+var databaseProviders = wire.NewSet(
     ProvideDatabase,
-    ProvideCache,
-    ProvideOrderRepository,
 )
 
-var ApplicationProviderSet = wire.NewSet(
-    NewCreateOrderUseCase,
-    NewGetOrderUseCase,
-)
-
-var DomainProviderSet = wire.NewSet(
-    NewOrderService,
-)
+// internal/di/wire.go still owns the full application graph.
 ```
 
 ## Wire Injector
@@ -214,9 +196,11 @@ var DomainProviderSet = wire.NewSet(
 func InitializeApplication(cfg config.Config) (*Application, error) {
     wire.Build(
         wire.Value(cfg),
-        InfrastructureProviderSet,
-        DomainProviderSet,
-        ApplicationProviderSet,
+        ProvideDatabase,
+        ProvideOrderRepository,
+        NewCreateOrderUseCase,
+        NewGetOrderUseCase,
+        NewApplication,
     )
     return nil, nil
 }
@@ -311,9 +295,9 @@ func (m *MockOrderService) CreateOrder(ctx context.Context, order Order) error {
 - Wire auto-detects dependencies from function signatures
 
 **Provider Sets**:
-- Group by layer (Infrastructure, Domain, Application, Interface)
-- Nest sets for composition
-- Keep sets focused and small
+- Use sparingly for same-package provider groups
+- Do not hide cross-layer wiring behind broad exported sets
+- Keep sets focused and small when used
 
 ## Summary
 
