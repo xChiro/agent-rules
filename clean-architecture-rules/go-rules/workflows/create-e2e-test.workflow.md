@@ -1,52 +1,42 @@
 ---
-description: HBK Inventory E2E integration tests for HTTP handlers using DynamoDB with Docker
+description: Create E2E integration tests for HTTP handlers using real infrastructure
 ---
 
-# HBK Inventory E2E Test Workflow
+# Create E2E Test Workflow
 
-Use this workflow whenever creating E2E integration tests for HTTP handlers in `hbk-inventory-service`. This is a service-specific profile for Lambda handlers and DynamoDB-backed tests.
+Use this workflow whenever creating E2E integration tests for HTTP handlers.
 
 ## Phase 1: Setup Test Environment
 
 **Goal**: Create test infrastructure setup.
 
 **Checklist**:
-- Create `tests/end2end/{domain}/` directory structure
-- Create `setup.go` with DynamoDB test environment setup
-- Create `test_session.go` with mock user session
-- Create `fixtures/builders.go` with test data builders
-- Create `fixtures/value_object_helpers.go` with value object helpers
-- Import existing infrastructure setup from `tests/integration/inventory/infrastructure/persistence`
+- Create `tests/end2end/{domain}/` directory structure.
+- Create `setup.go` with real infrastructure test setup.
+- Create `test_session.go` or equivalent auth/session helper when needed.
+- Create `fixtures/builders.go` with test data builders.
+- Create `fixtures/value_object_helpers.go` with value object helpers.
+- Reuse existing integration test infrastructure setup when available.
 
 **Template for setup.go**:
 ```go
-package personal
+package orders
 
 import (
-    queries2 "hbk-inventory-service/internal/inventory/infrastructure/persistence/queries"
     "testing"
-    
-    appretriever "hbk-inventory-service/internal/inventory/application/{domain}/use_case"
-    "hbk-inventory-service/internal/inventory/infrastructure/persistence"
-    testpersistence "hbk-inventory-service/tests/integration/inventory/infrastructure/persistence"
 )
 
 type TestEnvironment struct {
-    Client    *testpersistence.DynamoDBTestEnvironment
-    Cfg       *persistence.Config
-    TableName string
-    Cleanup   func() error
+    Store   *TestStore
+    Cleanup func() error
 }
 
 func SetupTestEnvironment(t *testing.T) *TestEnvironment {
-    env := testpersistence.SetupDynamoDBTestEnvironment()
-    cfg := &persistence.Config{TableName: env.TableName}
-    
+    store := SetupRealTestStore(t)
+
     return &TestEnvironment{
-        Client:    env,
-        Cfg:       cfg,
-        TableName: env.TableName,
-        Cleanup:   env.Cleanup,
+        Store:   store,
+        Cleanup: store.Cleanup,
     }
 }
 
@@ -54,19 +44,17 @@ func GetTestUserID() string {
     return "test-user-e2e"
 }
 
-func CreateUseCase(env *TestEnvironment, session *TestUserSession) appretriever.UseCaseInterface {
-    query := queries2.NewDynamoDBQuery(env.Client.Client, env.Cfg)
-    return appretriever.NewUseCase(query, session)
+func CreateUseCase(env *TestEnvironment, session *TestUserSession) *UseCase {
+    query := NewRealQueryAdapter(env.Store)
+    return NewUseCase(query, session)
 }
 ```
 
 **Template for test_session.go**:
 ```go
-package personal
+package orders
 
-import (
-    "context"
-)
+import "context"
 
 type TestUserSession struct {
     UserID string
@@ -91,107 +79,91 @@ func (s *TestUserSession) HasAnyRole(ctx context.Context, roles ...string) bool 
 
 ## Phase 2: Create E2E Test File
 
-**Goal**: Create test file with REAL infrastructure.
+**Goal**: Create test file with real infrastructure.
 
 **Checklist**:
-- Create `{use_case}_e2e_test.go` in `tests/end2end/{domain}/`
-- Import handler, use case, and DynamoDB dependencies
-- Use comment separators: `// Arrange`, `// Act`, `// Assert`
-- Test against REAL DynamoDB (NO mocks)
+- Create `{use_case}_e2e_test.go` in `tests/end2end/{domain}/`.
+- Import handler, use case, and real infrastructure dependencies.
+- Use comment separators: `// Arrange`, `// Act`, `// Assert`.
+- Test against real infrastructure, not mocks.
 
 **Test scenarios**:
-- Success path with data in DynamoDB
-- Empty results
-- Pagination (limit/offset)
-- Request parsing validation
+- Success path with persisted test data.
+- Empty results or not-found behavior.
+- Pagination or filtering when applicable.
+- Request parsing validation.
 
 **Template**:
 ```go
-package personal_test
+package orders_test
 
 import (
     "context"
-    "hbk-inventory-service/tests/end2end/inventory/application/personal"
     "testing"
-    
-    "github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
-    "github.com/aws/aws-sdk-go-v2/service/dynamodb"
+
     "github.com/stretchr/testify/assert"
-    
-    "hbk-inventory-service/internal/inventory/interfaces/lambda/handlers/{handler}"
-    "github.com/aws/aws-lambda-go/events"
 )
 
-func Test_given_data_in_dynamodb_when_handler_called_then_returns_records(t *testing.T) {
-    // Arrange: Setup REAL infrastructure
-    env := personal.SetupTestEnvironment(t)
+func Test_given_data_in_store_when_handler_called_then_returns_records(t *testing.T) {
+    // Arrange
+    env := orders.SetupTestEnvironment(t)
     defer env.Cleanup()
-    
-    userID := personal.GetTestUserID()
-    session := &personal.TestUserSession{UserID: userID}
-    seedTestDataInDynamoDB(t, env.Client.Client, env.TableName, userID)
-    
-    // Create real use case with REAL DynamoDB
-    useCase := personal.CreateUseCase(env, session)
-    handler := handler.NewHandler(useCase)
-    
-    req := events.APIGatewayV2HTTPRequest{
-        QueryStringParameters: map[string]string{
-            "limit":  "20",
-            "offset": "0",
-        },
-    }
-    
-    // Act: Execute handler with REAL infrastructure
+
+    userID := orders.GetTestUserID()
+    session := &orders.TestUserSession{UserID: userID}
+    seedTestData(t, env.Store, userID)
+
+    useCase := orders.CreateUseCase(env, session)
+    handler := NewHandler(useCase)
+
+    req := NewTestHTTPRequest(map[string]string{
+        "limit":  "20",
+        "offset": "0",
+    })
+
+    // Act
     resp, err := handler.Handle(context.Background(), req)
-    
-    // Assert: Verify response from REAL infrastructure
+
+    // Assert
     assert.NoError(t, err)
     assert.Equal(t, 200, resp.StatusCode)
     assert.Contains(t, resp.Body, "expectedField")
 }
 
-func seedTestDataInDynamoDB(t *testing.T, client *dynamodb.Client, tableName string, userID string) {
-    // Seed test data in REAL DynamoDB
+func seedTestData(t *testing.T, store *TestStore, userID string) {
+    // Seed test data in real infrastructure.
 }
 ```
 
 ## Phase 3: Run and Validate Tests
 
-**Goal**: Verify tests pass with REAL infrastructure.
+**Goal**: Verify tests pass with real infrastructure.
 
 **Checklist**:
 - Run tests: `go test -v -tags=integration ./tests/end2end/...`
-- Verify DynamoDB is running (Docker or local)
-- Ensure cleanup functions work correctly
-- Verify all test scenarios pass
-
-**Docker setup** (if not already running):
-```bash
-docker run -d -p 8000:8000 --name dynamodb amazon/dynamodb-local:latest
-```
+- Verify required infrastructure is running locally or in containers.
+- Ensure cleanup functions work correctly.
+- Verify all test scenarios pass.
 
 ## Phase 4: CI/CD Integration
 
-**Goal**: Ensure tests run in GitHub Actions.
+**Goal**: Ensure tests can run in CI.
 
 **Checklist**:
-- Verify `.github/workflows/deploy-prod.yml` has DynamoDB setup
-- Ensure tests run with `-tags=integration`
-- Verify cleanup after tests in CI
-
-**Note**: GitHub Actions already has DynamoDB Docker setup in lines 33-78 of `deploy-prod.yml`.
+- Configure CI services or containers for required infrastructure.
+- Ensure tests run with the expected build tags.
+- Verify cleanup after tests in CI.
 
 ## Quality Standards
 
 **Mandatory Requirements**:
-- **REAL infrastructure ONLY**: Handler + Use Case + DynamoDB (NO mocks)
-- **File limit**: ≤150 lines per test file
-- **Function limit**: ≤20 lines per test function
-- **Assertions**: `github.com/stretchr/testify/assert`
-- **Comment separators**: MUST use `// Arrange`, `// Act`, `// Assert`
-- **Cleanup**: Always cleanup test data with `defer env.Cleanup()`
+- **Real infrastructure only**: handler + use case + real adapter.
+- **File limit**: <=150 lines per test file.
+- **Function limit**: <=20 lines per test function.
+- **Assertions**: `github.com/stretchr/testify/assert`.
+- **Comment separators**: MUST use `// Arrange`, `// Act`, `// Assert`.
+- **Cleanup**: Always cleanup test data with `defer env.Cleanup()`.
 
 **Test naming**: `Test_given_[scenario]_when_[action]_then_[expected]` (snake_case)
 
-**Location**: `tests/end2end/{domain}/` with setup.go and test_session.go
+**Location**: `tests/end2end/{domain}/` with setup.go and test_session.go when needed.

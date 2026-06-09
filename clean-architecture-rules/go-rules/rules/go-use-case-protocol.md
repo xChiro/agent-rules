@@ -170,7 +170,7 @@ tests/{domain}/application/{use_case}/mocks/
 type MockCreateMemberCommand struct {
     // Configuration
     Error error
-    
+
     // Verification
     Calls []CreateMemberCall
 }

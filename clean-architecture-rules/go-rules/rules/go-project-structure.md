@@ -109,15 +109,15 @@ ports/
 
 ### Interface Layer DTO Organization (CRITICAL)
 **One Type Per File**: Each DTO struct must be in its own file
-- **Request DTOs**: `{entity}_request_dto.go` (e.g., `create_inventory_item_request_dto.go`)
-- **Response DTOs**: `{entity}_response_dto.go` (e.g., `create_inventory_item_response_dto.go`)
+- **Request DTOs**: `{entity}_request_dto.go` (e.g., `create_order_request_dto.go`)
+- **Response DTOs**: `{entity}_response_dto.go` (e.g., `create_order_response_dto.go`)
 - **Naming**: File name must match the struct name in snake_case
-- **Package**: DTOs belong to their handler's package (e.g., `package create_inventory`)
+- **Package**: DTOs belong to their handler's package (e.g., `package create_order`)
 
 **Examples**:
-- ❌ `create_inventory_item_dto.go` containing both request and response structs
-- ✅ `create_inventory_item_request_dto.go` containing only `CreateInventoryItemRequestDTO`
-- ✅ `create_inventory_item_response_dto.go` containing only `CreateInventoryItemResponseDTO`
+- ❌ `create_order_dto.go` containing both request and response structs
+- ✅ `create_order_request_dto.go` containing only `CreateOrderRequestDTO`
+- ✅ `create_order_response_dto.go` containing only `CreateOrderResponseDTO`
 
 ### Maximum File Sizes
 - **Production files**: ≤150 lines

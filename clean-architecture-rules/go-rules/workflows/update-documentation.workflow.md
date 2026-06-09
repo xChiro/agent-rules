@@ -33,7 +33,7 @@ go mod tidy && go list -m all | head -10
 # Find new domains
 find internal -maxdepth 2 -type d -name "*domain*" | sort
 
-# Find new use cases  
+# Find new use cases
 find internal -type d -name "*application*" | sort
 
 # Find new CQRS ports
@@ -207,7 +207,7 @@ EOF
 echo "Documentation update complete!"
 echo "Files updated:"
 echo "- docs/README-DEVELOPER.md"
-echo "- docs/README-AI-CONTEXT.md" 
+echo "- docs/README-AI-CONTEXT.md"
 echo "- docs/ARCHITECTURE.md"
 echo "- docs/TESTING.md"
 echo "- docs/INDEX.md"

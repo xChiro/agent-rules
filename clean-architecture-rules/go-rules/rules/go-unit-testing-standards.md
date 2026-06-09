@@ -32,9 +32,9 @@ tests/{domain}/application/{use_case}/
 
 **Example** (transfer use case):
 ```
-tests/inventory/application/organization_inventory_item_transfer/
-  organization_inventory_item_transfer_test_setup.go    # Setup helpers
-  organization_inventory_item_transfer_value_object_helpers.go # Value object helpers
+tests/orders/application/order_transfer/
+  order_transfer_test_setup.go    # Setup helpers
+  order_transfer_value_object_helpers.go # Value object helpers
   item_existence_test.go                          # Item not found behavior
   quantity_validation_test.go                     # Insufficient quantity behavior
   transfer_success_test.go                        # Successful transfer behavior
@@ -60,7 +60,7 @@ tests/inventory/application/organization_inventory_item_transfer/
 
 **Domain Entity Testing**: Domain entities and value objects may be tested directly when they own pure invariants, state transitions, or validation rules. Prefer use case tests for workflow orchestration and cross-dependency behavior.
 
-**HTTP Handler Unit Tests**: Do not create mock-heavy handler unit tests when the handler's value is request parsing, status codes, auth/session extraction, and response mapping. Prefer end-to-end or integration tests with real wiring for HTTP contracts. For service-specific HBK Inventory rules, use DynamoDB-backed E2E tests.
+**HTTP Handler Unit Tests**: Do not create mock-heavy handler unit tests when the handler's value is request parsing, status codes, auth/session extraction, and response mapping. Prefer end-to-end or integration tests with real wiring for HTTP contracts.
 
 **Loop-Based Testing**: Avoid loops when each scenario has distinct business meaning. Write individual test functions for important business cases.
 - Exceptions: table-driven validation matrices, parser/formatter cases, character validation, permissions matrices, and performance benchmarks
@@ -99,19 +99,19 @@ func (m *MockCreateMemberCommand) Execute(ctx context.Context, member domain.Mem
 // Use Case Test with Builder Pattern
 func Test_given_valid_data_when_enrolling_member_then_success(t *testing.T) {
     t.Parallel()
-    
+
     // Arrange
     useCase, mocks := setupEnrollMember(t)
     mocks.UserSession.UserID = testUserID
-    
+
     request := fixtures.NewEnrollMemberRequestBuilder().
         WithHandlerName("test-handler").
         WithExternalID("test-id").
         Build()
-    
+
     // Act
     response, err := useCase.Execute(context.Background(), request)
-    
+
     // Assert
     assert.NoError(t, err)
     assert.NotEmpty(t, response.MemberID)
@@ -175,7 +175,7 @@ func setupEnrollMember(t *testing.T) (*EnrollMemberUseCase, *EnrollMemberTestMoc
     validateCmd := &MockValidateMemberUniqueness{Result: true}
     userSession := &MockUserSession{UserID: "test-user-id"}
     useCase := NewEnrollMemberUseCase(createCmd, validateCmd, userSession)
-    
+
     return useCase, &EnrollMemberTestMocks{
         CreateCmd:    createCmd,
         ValidateCmd:  validateCmd,

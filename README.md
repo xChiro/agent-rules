@@ -42,7 +42,7 @@ Core reusable rules:
 - [`go-integration-testing-standards.md`](./clean-architecture-rules/go-rules/rules/go-integration-testing-standards.md)
 - [`go-dependency-injection.md`](./clean-architecture-rules/go-rules/rules/go-dependency-injection.md)
 
-Service-specific HBK Inventory rules:
+Optional API and messaging rules:
 
 - [`rest-api-standards.md`](./clean-architecture-rules/go-rules/rules/rest-api-standards.md)
 - [`domain-event-publishing.md`](./clean-architecture-rules/go-rules/rules/domain-event-publishing.md)
@@ -50,7 +50,7 @@ Service-specific HBK Inventory rules:
 - [`create-e2e-test.workflow.md`](./clean-architecture-rules/go-rules/workflows/create-e2e-test.workflow.md)
 - [`publish-domain-event.workflow.md`](./clean-architecture-rules/go-rules/workflows/publish-domain-event.workflow.md)
 
-Load service-specific files only when working on that service or an equivalent project that uses the same API, AWS, DynamoDB, SNS, Lambda, and route conventions.
+Load these files only when the task touches HTTP APIs, domain events, messaging, or end-to-end handler tests.
 
 ### React
 
@@ -111,8 +111,8 @@ Add more focused files only when the task needs them:
 ```text
 go-dependency-injection.md        # DI or Wire work
 go-integration-testing-standards.md # real adapter or external-system tests
-rest-api-standards.md             # HBK Inventory REST endpoints only
-domain-event-publishing.md        # HBK Inventory domain events only
+rest-api-standards.md             # HTTP endpoint design
+domain-event-publishing.md        # Domain events and messaging
 ```
 
 For React:

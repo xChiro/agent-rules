@@ -152,8 +152,8 @@ tests/{domain}/application/{use_case}/
 
 **Real example** (transfer use case):
 ```
-tests/inventory/application/organization_inventory_item_transfer/
-  organization_inventory_item_transfer_test.go    # Setup helpers
+tests/orders/application/order_transfer/
+  order_transfer_test.go    # Setup helpers
   item_existence_test.go                          # Item must exist
   quantity_validation_test.go                     # Sufficient quantity required
   transfer_success_test.go                        # Successful flow

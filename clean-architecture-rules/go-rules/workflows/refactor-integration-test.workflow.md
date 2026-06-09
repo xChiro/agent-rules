@@ -36,7 +36,7 @@ func SetupRealInfrastructure(t *testing.T) *TestEnvironment {
     cache := connectToRealCache(t)      // REAL connection
     queue := connectToRealQueue(t)      // REAL connection
     api := setupRealAPIClient(t)        // REAL client
-    
+
     return &TestEnvironment{
         Database: db, Cache: cache, Queue: queue, APIClient: api,
         Cleanup: func() { cleanupAll(db, cache, queue) },
@@ -93,7 +93,7 @@ func (s *TestDataSeeder) SeedTestData() error {
     // Seed REAL database
     _, err := s.DB.Exec("INSERT INTO users VALUES ($1, $2)", "test-id", "test@example.com")
     if err != nil { return err }
-    
+
     // Seed REAL cache
     return s.Cache.Set(ctx, "test-key", "test-value", 0).Err()
 }
@@ -110,10 +110,10 @@ func (s *TestDataSeeder) Cleanup() error {
 ```go
 func Test_isolated_with_real_infrastructure(t *testing.T) {
     t.Parallel() // Safe with isolated REAL infrastructure
-    
+
     env := SetupRealInfrastructureWithUniqueNamespace(t)
     defer env.Cleanup()
-    
+
     // Test against REAL infrastructure with unique namespace
 }
 ```

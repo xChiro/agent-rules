@@ -33,12 +33,12 @@ services:
       POSTGRES_DB: test_db
     ports:
       - "5433:5432"
-  
+
   test-cache:
     image: redis:7
     ports:
       - "6380:6379"
-  
+
   test-queue:
     image: rabbitmq:3-management  # Or your queue
     ports:
@@ -67,11 +67,11 @@ type TestEnvironment struct {
 func SetupRealDatabase(t *testing.T) *sql.DB {
     db, err := sql.Open("postgres", "postgres://user:pass@localhost:5433/test_db")
     assert.NoError(t, err, "failed to connect to REAL database")
-    
+
     // Run migrations if needed
     err = runMigrations(db)
     assert.NoError(t, err, "failed to run migrations")
-    
+
     return db
 }
 
@@ -84,10 +84,10 @@ func SetupRealCache(t *testing.T) *redis.Client {
     client := redis.NewClient(&redis.Options{
         Addr: "localhost:6380",
     })
-    
+
     err := client.Ping(context.Background()).Err()
     assert.NoError(t, err, "failed to connect to REAL cache")
-    
+
     return client
 }
 
@@ -102,7 +102,7 @@ func cleanupCache(cache *redis.Client) {
 func SetupRealInfrastructure(t *testing.T) *TestEnvironment {
     db := SetupRealDatabase(t)
     cache := SetupRealCache(t)
-    
+
     return &TestEnvironment{
         Database: db,
         Cache: cache,
@@ -135,7 +135,7 @@ func (s *TestDataSeeder) SeedTestData() error {
     if err != nil {
         return err
     }
-    
+
     // Seed REAL cache
     return s.Cache.Set(context.Background(), "test-key", "test-value", 0).Err()
 }
@@ -146,10 +146,10 @@ func (s *TestDataSeeder) CleanupTestData() error {
     if err != nil {
         return err
     }
-    
+
     // Cleanup from REAL cache
     s.Cache.FlushDB(context.Background())
-    
+
     return nil
 }
 ```
@@ -171,27 +171,27 @@ func (s *TestDataSeeder) CleanupTestData() error {
 ```go
 func Test_given_valid_user_when_create_user_then_saves_in_database(t *testing.T) {
     t.Parallel()
-    
+
     // Arrange: Setup REAL infrastructure and use case
     env := SetupRealInfrastructure(t)
     defer env.Cleanup()
-    
+
     seeder := NewTestDataSeeder(env.Database, env.Cache)
     defer seeder.CleanupTestData()
-    
+
     useCase := NewCreateUserUseCase(env.Database) // REAL database
     request := CreateUserRequest{
         Email: "test@example.com",
         Name: "Test User",
     }
-    
+
     // Act: Execute workflow against REAL infrastructure (ONE LINE ONLY)
     result, err := useCase.Execute(context.Background(), request)
-    
+
     // Assert: Verify state in REAL infrastructure
     assert.NoError(t, err)
     assert.NotEmpty(t, result.ID)
-    
+
     // Verify REAL database state
     var count int
     err = env.Database.QueryRow("SELECT COUNT(*) FROM users WHERE email = $1", "test@example.com").Scan(&count)
@@ -201,28 +201,28 @@ func Test_given_valid_user_when_create_user_then_saves_in_database(t *testing.T)
 
 func Test_given_existing_user_when_create_duplicate_user_then_returns_error(t *testing.T) {
     t.Parallel()
-    
+
     // Arrange: Setup REAL infrastructure, use case, and pre-existing data
     env := SetupRealInfrastructure(t)
     defer env.Cleanup()
-    
+
     seeder := NewTestDataSeeder(env.Database, env.Cache)
     defer seeder.CleanupTestData()
-    
+
     // Seed existing user in REAL database (setup for duplicate test)
-    _, err := env.Database.Exec("INSERT INTO users (id, email, name) VALUES ($1, $2, $3)", 
+    _, err := env.Database.Exec("INSERT INTO users (id, email, name) VALUES ($1, $2, $3)",
         "existing-id", "test@example.com", "Existing User")
     assert.NoError(t, err)
-    
+
     useCase := NewCreateUserUseCase(env.Database) // REAL database
     request := CreateUserRequest{
         Email: "test@example.com", // Duplicate email
         Name: "New User",
     }
-    
+
     // Act: Execute workflow against REAL infrastructure (ONE LINE ONLY - the duplicate action)
     result, err := useCase.Execute(context.Background(), request)
-    
+
     // Assert: Verify error returned
     assert.Error(t, err)
     assert.Empty(t, result.ID)
@@ -237,14 +237,14 @@ func Test_given_existing_user_when_create_duplicate_user_then_returns_error(t *t
 ```go
 func Test_given_unique_namespace_when_parallel_then_no_conflicts(t *testing.T) {
     t.Parallel() // Safe with isolated REAL infrastructure
-    
+
     // Use unique identifiers for isolation
     uniqueID := uuid.New().String()
     testEmail := fmt.Sprintf("user-%s@example.com", uniqueID)
-    
+
     env := SetupRealInfrastructureWithUniqueNamespace(t, uniqueID)
     defer env.Cleanup()
-    
+
     // Test with unique namespace
 }
 ```
@@ -319,7 +319,7 @@ jobs:
           POSTGRES_DB: test_db
       redis:
         image: redis:7
-    
+
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-go@v4

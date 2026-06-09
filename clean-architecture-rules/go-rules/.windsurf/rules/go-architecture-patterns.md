@@ -1,7 +1,7 @@
 ---
 trigger: always_on
-description: 
-globs: 
+description: Go architecture patterns for Clean Architecture, DDD, CQRS, and YAGNI
+globs: **/*.go
 ---
 
 # Go Architecture Patterns
@@ -125,7 +125,7 @@ type OrderRepository interface { Save(); FindByID(); ListByCustomer(); Delete();
 
 ```go
 // ✅ Application layer - pure domain DTO
-// internal/inventory/application/category_catalog_retriever/requests/get_categories_catalog_response.go
+// internal/catalog/application/category_catalog_retriever/requests/get_categories_catalog_response.go
 package requests
 
 type CategoryDTO struct {
@@ -138,7 +138,7 @@ type GetCategoriesCatalogResponse struct {
 }
 
 // ✅ Interface layer - transport DTO with translation methods
-// internal/inventory/interfaces/lambda/handlers/category_dto.go
+// internal/catalog/interfaces/http/handlers/category_dto.go
 package handlers
 
 type CategoryDTO struct {

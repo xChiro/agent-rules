@@ -17,7 +17,7 @@ SOLID principles applied to Go following Clean Architecture definitions.
 
 **Violations**:
 - ❌ `validateAndExtractData()` - Validates AND extracts (2 responsibilities)
-- ❌ `createAndSaveEntity()` - Creates AND persists (2 responsibilities)  
+- ❌ `createAndSaveEntity()` - Creates AND persists (2 responsibilities)
 - ❌ `processAndNotify()` - Processes AND notifies (2 responsibilities)
 
 **Correct Examples**:

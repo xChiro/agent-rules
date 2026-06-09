@@ -1,66 +1,58 @@
 ---
 trigger: always_on
-description: HBK Inventory REST API standards for endpoint design
+description: REST API standards for endpoint design
 globs: **/*.go,template.yaml
 ---
 
-# HBK Inventory REST API Standards
+# REST API Standards
 
-Standards for creating or modifying HTTP endpoints in `hbk-inventory-service`. Use these rules as a service-specific profile, not as generic REST guidance for every project.
+Standards for creating or modifying HTTP endpoints in a Go service.
 
 ## Scope
 
-- Apply these rules to new endpoints under `/api/inventory`
-- Preserve existing public contracts unless a versioned change is intended
-- New endpoint design must align with REST resource modeling and the current Lambda router conventions
+- Apply these rules to new or changed HTTP endpoints.
+- Preserve existing public contracts unless a versioned change is intended.
+- New endpoint design must align with REST resource modeling and the current router conventions.
 
 ## Resource Modeling
 
-- Use nouns, not verbs
-- Use plural resource names: `items`, `categories`, `locations`
-- Put identity in the path: `/api/inventory/items/{item_id}`
-- Use sub-resources when a child concept is bounded by a parent resource
-- Keep nesting shallow unless the relationship is intrinsic
+- Use nouns, not verbs.
+- Use plural resource names: `orders`, `users`, `locations`.
+- Put identity in the path: `/api/orders/{order_id}`.
+- Use sub-resources when a child concept is bounded by a parent resource.
+- Keep nesting shallow unless the relationship is intrinsic.
 
 ## URL Conventions
 
-- Keep the base prefix consistent: `/api/inventory`
-- Use lowercase path segments
-- Use query params for filters and pagination
-- Avoid route names such as `/create-item`, `/get-locations`, `/delete-category`
+- Keep the service base prefix consistent.
+- Use lowercase path segments.
+- Use query params for filters, search, sorting, and pagination.
+- Avoid route names such as `/create-order`, `/get-users`, or `/delete-location`.
 
 ## HTTP Method Rules
 
-- `POST /resources`: create
-- `GET /resources`: list
-- `GET /resources/{id}`: get one
-- `PUT /resources/{id}`: full replacement only
-- `PATCH /resources/{id}`: partial update
-- `DELETE /resources/{id}`: delete
-
-## Inventory-Specific Rules
-
-- Inventory items are a resource collection: prefer `/api/inventory/items/{item_id}` for update/delete/get-one
-- User-scoped inventory should still be modeled as a resource projection, not a verb route
-- Prefer `/api/inventory/items?owner=me` over adding more endpoints like `/api/inventory/user/inventory` for new designs
-- Catalogs such as categories and locations are first-class resources, not commands
-- Batch creation is allowed with `POST /api/inventory/categories` when the request explicitly represents a collection payload
+- `POST /resources`: create.
+- `GET /resources`: list.
+- `GET /resources/{id}`: get one.
+- `PUT /resources/{id}`: full replacement only.
+- `PATCH /resources/{id}`: partial update.
+- `DELETE /resources/{id}`: delete.
 
 ## Request Design
 
-- Use JSON bodies for `POST`, `PUT`, and `PATCH`
-- Use `snake_case` JSON tags
-- Validate UUID path params at the boundary
-- Use query params for optional filters like `path`, `parent`, `prefix`, `depth`
-- Do not accept `owner_id` or `performed_by` from the client when it should come from auth/session context
+- Use JSON bodies for `POST`, `PUT`, and `PATCH`.
+- Use the project's established JSON naming convention consistently.
+- Validate path params at the boundary.
+- Use query params for optional filters such as `status`, `owner`, `prefix`, `limit`, and `offset`.
+- Do not accept actor, owner, tenant, or permission-sensitive fields from the client when they should come from auth/session context.
 
 ## Response Design
 
-- `201 Created` for create operations
-- `200 OK` for reads and updates with body
-- `204 No Content` for successful deletes
-- Return DTOs, not internal persistence shapes
-- For list endpoints, use a stable collection envelope when pagination or filtering exists
+- `201 Created` for create operations.
+- `200 OK` for reads and updates with a body.
+- `204 No Content` for successful deletes.
+- Return DTOs, not internal persistence shapes.
+- For list endpoints, use a stable collection envelope when pagination or filtering exists.
 
 ## Collection Responses
 
@@ -75,7 +67,7 @@ Standards for creating or modifying HTTP endpoints in `hbk-inventory-service`. U
 }
 ```
 
-- If the endpoint is not paginated, still keep the response shape predictable and documented
+- If the endpoint is not paginated, still keep the response shape predictable and documented.
 
 ## Error Contract
 
@@ -84,43 +76,34 @@ Standards for creating or modifying HTTP endpoints in `hbk-inventory-service`. U
 ```json
 {
   "error": "Bad Request",
-  "message": "invalid location id",
+  "message": "invalid resource id",
   "code": "VALIDATION_ERROR",
   "request_id": "..."
 }
 ```
 
-- `400` for invalid body, query, or path params
-- `401` for authentication failures
-- `403` for role or ownership authorization failures
-- `404` for missing resources
-- `409` for ownership or state conflicts
-- `500` for unexpected failures
-
-## Inventory Service Notes
-
-- Core resource families:
-  - `/api/inventory/items`
-  - `/api/inventory/categories`
-  - `/api/inventory/locations`
-- Prefer `PATCH /api/inventory/items/{item_id}` over `PUT /api/inventory/items` for future partial updates
-- Prefer `GET /api/inventory/items/{item_id}` and `GET /api/inventory/items?owner=me` for new reads instead of creating more custom route families
+- `400` for invalid body, query, or path params.
+- `401` for authentication failures.
+- `403` for role or ownership authorization failures.
+- `404` for missing resources.
+- `409` for ownership, uniqueness, or state conflicts.
+- `500` for unexpected failures.
 
 ## Good Examples
 
-- `POST /api/inventory/items`
-- `GET /api/inventory/items/{item_id}`
-- `GET /api/inventory/items?owner=me`
-- `PATCH /api/inventory/items/{item_id}`
-- `DELETE /api/inventory/items/{item_id}`
-- `POST /api/inventory/categories`
-- `GET /api/inventory/categories?prefix=armor/`
-- `POST /api/inventory/locations`
-- `GET /api/inventory/locations?path=stanton`
+- `POST /api/orders`
+- `GET /api/orders/{order_id}`
+- `GET /api/orders?owner=me`
+- `PATCH /api/orders/{order_id}`
+- `DELETE /api/orders/{order_id}`
+- `POST /api/categories`
+- `GET /api/categories?prefix=primary`
+- `POST /api/locations`
+- `GET /api/locations?status=active`
 
 ## Avoid
 
-- `PUT /api/inventory/items` for new partial updates without item identity in path
-- `GET /api/inventory/user/inventory` for new user inventory routes when query/resource modeling can express it
-- `POST /api/inventory/delete-item`
-- `GET /api/inventory/get-categories`
+- `PUT /api/orders` for partial updates without resource identity in the path.
+- `GET /api/user/orders` when query/resource modeling can express the same projection.
+- `POST /api/delete-order`
+- `GET /api/get-categories`

@@ -1,7 +1,7 @@
 ---
 trigger: always_on
 description: Senior delivery style for pragmatic, maintainable feature work.
-globs:
+globs: **/*
 ---
 
 # Senior Engineering Style
@@ -34,4 +34,3 @@ Act as a senior engineer who optimizes for simple, testable business behavior ov
 - Are errors mapped at the outer layer, not leaked randomly from infrastructure?
 - Are adapters replaceable without changing domain/application code?
 - Did the change add only the files needed for the use case?
-

@@ -68,14 +68,14 @@ tests/{domain}/integration/
 ```go
 func Test_given_scenario_when_action_then_expected(t *testing.T) {
     t.Parallel()
-    
+
     // Arrange: Setup REAL infrastructure (DB, API, queue, etc.)
     env := SetupRealInfrastructure(t)
     defer env.Cleanup() // ALWAYS cleanup
-    
+
     // Act: Execute workflow against REAL infrastructure
     result := ExecuteAgainstRealInfrastructure(env)
-    
+
     // Assert: Verify state in REAL infrastructure
     VerifyRealInfrastructureState(t, env, result)
 }
@@ -101,19 +101,19 @@ type TestEnvironment struct {
 func SetupRealInfrastructure(t *testing.T) *TestEnvironment {
     // Connect to REAL database (Docker container, test instance, etc.)
     db := connectToRealDatabase(t)
-    
+
     // Connect to REAL cache
     cache := connectToRealCache(t)
-    
+
     // Connect to REAL message queue
     queue := connectToRealQueue(t)
-    
+
     // Setup REAL API client
     apiClient := setupRealAPIClient(t)
-    
+
     // Create REAL temp directory
     tempDir := createRealTempDir(t)
-    
+
     return &TestEnvironment{
         Database: db,
         Cache: cache,
@@ -140,12 +140,12 @@ services:
       POSTGRES_DB: test_db
     ports:
       - "5433:5432"
-  
+
   test-cache:
     image: redis:7
     ports:
       - "6380:6379"
-  
+
   test-queue:
     image: rabbitmq:3-management  # Or your queue
     ports:
@@ -201,17 +201,17 @@ func (s *TestDataSeeder) SeedTestData() error {
     if err := s.seedDatabase(); err != nil {
         return err
     }
-    
+
     // Seed REAL cache
     if err := s.seedCache(); err != nil {
         return err
     }
-    
+
     // Seed REAL queue
     if err := s.seedQueue(); err != nil {
         return err
     }
-    
+
     return nil
 }
 
@@ -221,13 +221,13 @@ func (s *TestDataSeeder) CleanupTestData() error {
     if err != nil {
         return err
     }
-    
+
     // Cleanup from REAL cache
     s.Cache.FlushDB(context.Background())
-    
+
     // Cleanup from REAL queue
     s.Queue.Purge()
-    
+
     return nil
 }
 ```

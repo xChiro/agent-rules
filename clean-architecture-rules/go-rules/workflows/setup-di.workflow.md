@@ -127,7 +127,7 @@ func NewHTTPHandler(createUC *CreateUseCase, getUC *GetUseCase) *Handler {
 func SetupHTTPServer(handler *Handler, cfg config.Config) *HTTPServer {
     mux := http.NewServeMux()
     mux.HandleFunc("/resource", handler.Handle)
-    
+
     return &HTTPServer{
         Server: &http.Server{Addr: fmt.Sprintf(":%d", cfg.APIPort), Handler: mux},
     }
@@ -185,11 +185,11 @@ func InitializeServer(cfg config.Config) (*HTTPServer, error) {
 func main() {
     cfg, err := config.LoadConfig()
     if err != nil { log.Fatalf("config: %v", err) }
-    
+
     // Wire-generated function
     server, err := di.InitializeServer(cfg)
     if err != nil { log.Fatalf("setup: %v", err) }
-    
+
     log.Printf("Starting server on port %d", cfg.APIPort)
     if err := server.Server.ListenAndServe(); err != nil {
         log.Fatalf("server: %v", err)
