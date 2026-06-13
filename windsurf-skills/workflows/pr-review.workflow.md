@@ -1,9 +1,9 @@
 ---
 trigger: manual
-description: Review a pull request in senior style using Clean Architecture, DDD, CQRS, value objects, and TDD standards.
+description: Review a pull request using Clean Architecture, DDD, CQRS, value objects, and TDD standards.
 ---
 
-# Senior PR Review Workflow
+# PR Review Workflow
 
 Use this workflow whenever reviewing a pull request, merge request, or local branch diff.
 
