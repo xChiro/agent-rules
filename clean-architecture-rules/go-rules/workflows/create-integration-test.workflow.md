@@ -8,6 +8,8 @@ description: Create integration tests - ALWAYS use REAL infrastructure, NEVER mo
 
 Create new integration tests following `go-integration-testing-standards.md`.
 
+Every integration test file must start with `//go:build integration`.
+
 ## Phase 1: Determine Integration Points
 
 **Identify**:
@@ -169,6 +171,10 @@ func (s *TestDataSeeder) CleanupTestData() error {
 - Use value object helpers in `fixtures/value_object_helpers.go`
 
 ```go
+//go:build integration
+
+package users_test
+
 func Test_given_valid_user_when_create_user_then_saves_in_database(t *testing.T) {
     t.Parallel()
 
@@ -331,6 +337,7 @@ jobs:
 
 - ✅ Tests use REAL infrastructure (databases, APIs, queues, caches, file systems)
 - ✅ NO mocks in integration tests
+- ✅ Every integration test file starts with `//go:build integration`
 - ✅ Files ≤150 lines
 - ✅ Functions ≤20 lines
 - ✅ Proper isolation (parallel safe)

@@ -17,12 +17,13 @@ description: Full TDD cycle - Red → Green → Refactor
 - Never break Clean Architecture boundaries
 
 **Quality** (see `go-clean-code-standards.md`):
-- Files ≤150 lines
-- Functions ≤20 lines
-- Each method must have exactly ONE responsibility (SRP strict)
+- Files target ≤150 lines unless a cohesive exception is clearer
+- Functions target ≤20 lines unless a cohesive exception is clearer
+- Each method must have one cohesive reason to change
 - Use `testify/assert`
 - Manual mocks only
 - Follow CQRS, YAGNI, Screaming Architecture
+- Follow `go-idiomatic-advanced-practices.md` for context, errors, interfaces, concurrency, generics, and performance
 
 ## Phase 1: Code Analysis
 
@@ -44,6 +45,9 @@ description: Full TDD cycle - Red → Green → Refactor
 - Use `testify/assert` (MANDATORY)
 - One behavior per test
 - Manual mocks only
+- Use no build tag for default unit tests
+- Use `//go:build integration` for integration tests
+- Use `//go:build e2e` for end-to-end tests
 - **MANDATORY**: Use comment separators `// Arrange`, `// Act`, `// Assert` to divide test sections
 - Use Builder pattern for test data in `fixtures/builders.go`
 - Use setup helpers in `{use_case}_test_setup.go`
@@ -83,6 +87,7 @@ description: Full TDD cycle - Red → Green → Refactor
 - Respect architecture layers (see `go-architecture-patterns.md`)
 - Implement only what test requires
 - No unnecessary abstractions
+- No interfaces, generics, worker pools, caching, or functional options without a current trigger
 - No refactoring yet
 
 **Allowed**: Domain logic, use cases, DTOs, validation, dependency wiring
@@ -95,7 +100,7 @@ description: Full TDD cycle - Red → Green → Refactor
 
 **Order**: Test code → Production code → Run tests
 
-**Look for**: Duplication, long methods (>20 lines), SRP violations (multiple responsibilities), poor naming, architecture violations, large files (>150 lines)
+**Look for**: Semantic duplication, long/cohesion-poor methods, SRP violations (multiple responsibilities), poor naming, architecture violations, large files, decorative abstractions, incorrect context/error/logging boundaries
 
 **Verify**: All tests still pass
 
@@ -105,9 +110,12 @@ description: Full TDD cycle - Red → Green → Refactor
 - ✅ All tests pass
 - ✅ Edge cases + happy paths covered
 - ✅ Architecture boundaries respected
+- ✅ Test build tags match suite type (`integration`, `e2e`, or no tag for unit)
 - ✅ No unused code (YAGNI)
-- ✅ Files ≤150 lines, functions ≤20 lines
-- ✅ Each method has exactly ONE responsibility (SRP strict)
+- ✅ File/function size targets respected or exceptions are cohesive
+- ✅ Each method has one cohesive reason to change
 - ✅ CQRS compliance (one interface per file)
+- ✅ Advanced patterns have current evidence and tests
+- ✅ Race detector run when concurrency changed
 
 **Summary**: Tests added, production changes, refactors, risks, next TDD step

@@ -8,6 +8,8 @@ globs: **/*.go
 
 Clean Architecture, DDD, CQRS, YAGNI, and Screaming Architecture for Go.
 
+See `go-idiomatic-advanced-practices.md` for advanced Go techniques and the evidence required before introducing them.
+
 ## Layer Structure
 
 **Dependency Rule**: Infrastructure → Application → Domain
@@ -22,6 +24,7 @@ Clean Architecture, DDD, CQRS, YAGNI, and Screaming Architecture for Go.
 **Core**: Create only what's needed now, delete unused code, focus on current use cases
 **CQRS**: One port per use case, delete unused ports, minimal interfaces
 **Apply**: When refactoring/adding features, prefer simplicity, no "just in case" code
+**Advanced Patterns**: Strategy, worker pools, event outbox, streaming, functional options, and generics require current evidence, not speculation
 
 ## CQRS Pattern
 
@@ -105,6 +108,7 @@ func LoadConfig() (*Config, error) { /* load from env, validate, return */ }
 **Guidelines**: One per file, single method, consumer-focused, no god interfaces
 **Location**: Define in application (near consumer), implement in infrastructure
 **Group**: commands/queries/validation
+**YAGNI**: Do not create interfaces for private helpers or concrete code that does not cross a boundary
 
 ```go
 // ✅ Small focused interfaces
@@ -178,6 +182,20 @@ for i, cat := range appResponse.Categories {
 
 **Rules**: One type per file, single responsibility, snake_case.go, ≤150 lines
 **Structure**: `{entity}/{entity.go, value_objects/, errors.go, ports/}` and `{use_case}/{usecase.go, requests.go, ports/}`
+
+## Advanced Patterns with Guardrails
+
+Use advanced patterns only when the project has a real need:
+
+- **Strategy**: Use when there are multiple current algorithms or providers selected by policy.
+- **Worker pool**: Use when concurrency must be bounded and work volume justifies queueing.
+- **`errgroup`**: Use for parallel I/O where failure should cancel sibling work.
+- **Domain events/outbox**: Use when side effects must be reliable across transaction boundaries.
+- **Streaming**: Use for large files, responses, messages, or imports where memory use matters.
+- **Functional options**: Use for optional settings with stable defaults, not required dependencies.
+- **Generics**: Use for type-safe reusable algorithms across current call sites, not repositories/use cases.
+
+Before adding one of these patterns, document or encode the trigger in the code shape: current implementations, operational requirement, performance evidence, or a failing test that the simpler design cannot satisfy cleanly.
 
 ## Summary
 

@@ -18,6 +18,7 @@ Improve test maintainability while preserving behavior (see `go-unit-testing-sta
 - File size violations (>150 lines)
 - Assertion violations (using `if` instead of `testify/assert`)
 - SRP violations (test functions doing multiple things)
+- Missing or incorrect build tags for integration/e2e tests
 
 **MANDATORY**: MUST use `github.com/stretchr/testify/assert` for ALL assertions
 **MANDATORY**: MUST use comment separators `// Arrange`, `// Act`, `// Assert` to divide test sections
@@ -183,6 +184,8 @@ func BenchmarkProcessing(b *testing.B) {
 
 ```bash
 go test -v -cover ./...                                    # Coverage
+go test -v -tags=integration ./tests/...                   # Integration suite when changed
+go test -v -tags=e2e ./tests/end2end/...                   # E2E suite when changed
 go test -race ./...                                        # Race detection
 find tests/ -name "*_test.go" -exec wc -l {} \; | awk '$1 > 150' # File sizes
 ```
@@ -209,6 +212,8 @@ find tests/ -name "*_test.go" -exec wc -l {} \; | awk '$1 > 150' # File sizes
 - ✅ `testify/assert` used (MANDATORY - no `if` statements)
 - ✅ Files ≤150 lines (MANDATORY)
 - ✅ Test files organized by **domain concern/action** (MANDATORY - NOT by test type like happy_path/error_cases)
+- ✅ Integration tests use `//go:build integration`
+- ✅ E2E tests use `//go:build e2e`
 - ✅ No repeated assertions
 - ✅ Edge cases before happy path
 - ✅ Tests isolated and deterministic

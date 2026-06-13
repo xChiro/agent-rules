@@ -8,12 +8,14 @@ globs: **/*.go
 
 SOLID principles applied to Go following Clean Architecture definitions.
 
+Apply SOLID through idiomatic Go: small packages, explicit dependencies, composition, focused interfaces, and YAGNI. Do not add abstractions only to look object-oriented.
+
 ## Single Responsibility Principle (SRP)
 
 **Definition (Uncle Bob, Clean Architecture)**: A module should be responsible to one, and only one, actor.
 
 ### Method-Level SRP (CRITICAL REQUIREMENT)
-**STRICT RULE**: Each method must perform exactly ONE operation/responsibility.
+**STRICT RULE**: Each method must have exactly one cohesive reason to change.
 
 **Violations**:
 - ❌ `validateAndExtractData()` - Validates AND extracts (2 responsibilities)
@@ -27,6 +29,11 @@ SOLID principles applied to Go following Clean Architecture definitions.
 - ✅ `saveEntity()` - Only persists (1 responsibility)
 - ✅ `processData()` - Only processes (1 responsibility)
 - ✅ `sendNotification()` - Only notifies (1 responsibility)
+
+**Senior Interpretation**:
+- Do not split a cohesive function only because it validates, transforms local data, and returns a value.
+- Split when different actors, policies, layer concerns, side effects, or reusable domain concepts are mixed.
+- Prefer a clear 25-line cohesive function over five vague helpers that hide the workflow.
 
 ### Actor Definition
 Any entity that needs the system to change:
@@ -61,13 +68,14 @@ Any entity that needs the system to change:
 Software entities should be open for extension but closed for modification.
 
 ### Guidelines
-- Use interfaces and abstractions to allow behavior extension without changing existing code
-- Prefer composition over inheritance for extending functionality
-- Design for extension points without modifying core logic
+- Use interfaces and abstractions only where current variation exists or a boundary must be protected
+- Prefer composition over inheritance-style embedding
+- Add extension points when a second real implementation, plugin boundary, transport, persistence adapter, or domain strategy exists
+- Do not create speculative interfaces for hypothetical future processors
 
 ### Example
 ```go
-// ✅ Open for extension via interface
+// ✅ Open for extension via interface when there are real implementations
 type PaymentProcessor interface {
     Process(amount float64) error
 }
@@ -78,7 +86,14 @@ func (c *CreditCardProcessor) Process(amount float64) error { /* ... */ }
 type PayPalProcessor struct{}
 func (p *PayPalProcessor) Process(amount float64) error { /* ... */ }
 
-// Add new processors without modifying existing code
+// Add new processors without modifying existing orchestration
+```
+
+```go
+// ✅ Simpler when there is no current variation
+type PaymentService struct {
+    gateway *StripeGateway
+}
 ```
 
 ## Liskov Substitution Principle (LSP)
@@ -89,6 +104,7 @@ Subtypes must be substitutable for their base types without altering correctness
 - Interface contracts must be honored by all implementations
 - Avoid breaking expected behavior when using polymorphism
 - Implementations should not weaken preconditions or strengthen postconditions
+- Use shared contract tests for multiple implementations of the same port
 
 ### Example
 ```go
@@ -113,6 +129,8 @@ Clients should not depend on interfaces they don't use.
 - Keep interfaces small and focused on specific needs
 - Prefer multiple specific interfaces over one large interface
 - One interface per file (CQRS pattern)
+- Define interfaces near the consumer, not next to the provider by default
+- Do not introduce an interface only to wrap a single private helper
 
 ### Example
 ```go
@@ -144,8 +162,9 @@ type DeleteCommand interface {
 High-level modules should not depend on low-level modules. Both should depend on abstractions.
 
 ### Guidelines
-- Depend on interfaces, not concrete types
-- Define interfaces in the application layer (near consumers)
+- Depend on interfaces at real boundaries: persistence, messaging, external APIs, clocks, sessions, and transport adapters
+- Use concrete types inside a package when no substitution or boundary exists
+- Define interfaces in the application layer or near consumers
 - Implement interfaces in the infrastructure layer
 - Abstractions should not depend on details; details depend on abstractions
 
@@ -188,6 +207,13 @@ Infrastructure → Application → Domain
 - Creating interfaces and abstractions
 - Organizing code into layers
 - Implementing CQRS patterns
+
+**Avoid SOLID theater**:
+- Interfaces with one implementation and no boundary
+- Generic repositories created before multiple real use cases need them
+- Factories/builders for simple constructors
+- Layers that only pass calls through without owning behavior
+- Splitting files or functions until the workflow becomes harder to read
 
 **Benefits**:
 - Maintainable and testable code

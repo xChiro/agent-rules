@@ -12,7 +12,16 @@ Create dependency injection following Clean Architecture, CQRS, and the project'
 - Target layer (Domain, Application, Infrastructure, Interface)
 - Dependencies (CQRS interfaces and implementations)
 - Configuration (env vars, connection strings)
-- File size (≤150 lines)
+- File size/cohesion target (≤150 lines when practical)
+- Whether direct constructor wiring is simpler than Wire
+- Which dependencies cross real boundaries and need interfaces
+- Which collaborators can remain concrete because they are local implementation details
+
+**YAGNI Decision**:
+- Do not add Wire to a small app that is clearer with direct constructors.
+- Do not create `di/` packages only for symmetry.
+- Do not create interfaces only to satisfy Wire.
+- Do not hide required dependencies behind functional options.
 
 ## Phase 2: Wire Setup Pattern
 

@@ -44,10 +44,17 @@ Start with small failure modes before happy path when the rule is risky:
 - Integration tests verify real adapters, mapping, DI, migrations/tables, messaging, and transaction/event behavior.
 - Handler/API tests verify request parsing, status codes, error mapping, auth/session extraction, and response DTOs.
 
+## Test Tags
+
+- Unit tests are the default fast suite and normally do not use a Go build tag.
+- Integration tests must start with `//go:build integration`.
+- End-to-end tests must start with `//go:build e2e`.
+- Use `e2e` as the standard tag name for full end-to-end flows. Use `contract` only for provider-consumer/API contract tests.
+- Keep tagged tests out of the default unit run unless the repository intentionally documents a different policy.
+
 ## Done Means
 
 - Failing test existed before production code.
 - New behavior has happy path and meaningful edge cases.
 - No unused ports, request fields, mocks, or test helpers.
 - The final test command for the touched scope passes.
-

@@ -8,6 +8,8 @@ globs: **/*.go
 
 **Principles**: Separation of concerns, explicit dependencies via providers, testability with interfaces, minimal side effects, YAGNI, compile-time DI when Wire is used
 
+Prefer direct constructor injection until the object graph is large enough that Wire improves clarity. DI must make dependencies explicit; it must not create artificial interfaces or empty packages.
+
 ## Layer Structure
 
 Each layer may have its own DI configuration directory following Clean Architecture. Keep DI as simple as the project needs; do not introduce Wire or layer-specific DI folders for small applications that can be wired clearly in `main`.
@@ -100,6 +102,8 @@ func InitializeApplication(cfg Config) (*ApplicationServices, error) {
 - Each layer's `di/` directory contains only its own providers
 - Main `internal/di/wire.go` orchestrates all layers
 - Do not create empty `di/` packages just for symmetry; domain usually needs no DI package
+- Do not create interfaces only to satisfy Wire or tests
+- Use concrete constructors inside one package when no boundary or substitution exists
 
 ## Provider Guidelines
 
@@ -112,6 +116,7 @@ func InitializeApplication(cfg Config) (*ApplicationServices, error) {
 **Location**: Define in domain/application (near consumer), implement in infrastructure
 **Naming**: Commands (`CreateOrderCommand`), Queries (`GetOrderByID`), Validation (`ValidateOrderUniqueness`)
 **Files**: `snake_case.go`
+**YAGNI**: Interfaces protect boundaries; they are not required for every service/helper
 
 ```go
 // ✅ Small focused interfaces
@@ -143,6 +148,8 @@ func NewGetOrderUseCase(getQuery GetOrderByID) *GetOrderUseCase {
 ## YAGNI in DI
 
 **Philosophy**: Only inject what's used, delete unused dependencies, simple providers, avoid over-engineering
+**Required dependencies**: Pass required dependencies explicitly in constructors. Do not hide them behind functional options.
+**Optional settings**: Use config structs or functional options only when defaults and optional values are real.
 
 ```go
 // ❌ Unused dependencies

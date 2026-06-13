@@ -8,13 +8,14 @@ Improve maintainability while preserving behavior (see `go-clean-code-standards.
 
 ## Requirements
 
-**Critical Limits** (NON-NEGOTIABLE):
-- Files ≤150 lines
-- Functions ≤20 lines
-- Each method must have exactly ONE responsibility (SRP strict)
+**Critical Guardrails**:
+- Files target ≤150 lines unless a cohesive exception is clearer
+- Functions target ≤20 lines unless a cohesive exception is clearer
+- Each method must have one cohesive reason to change
 - No unused code (YAGNI)
 - Follow CQRS (one interface per file)
 - Follow Screaming Architecture
+- Follow `go-idiomatic-advanced-practices.md` for context, errors, interfaces, concurrency, generics, performance, and observability
 
 ## Phase 1: Prerequisites
 
@@ -29,9 +30,13 @@ Improve maintainability while preserving behavior (see `go-clean-code-standards.
 - Code smells (functions >20 lines, files >150 lines)
 - Architecture violations (layer dependencies, SOLID)
 - **SRP violations**: Methods with multiple responsibilities
-- Duplication (repeated logic)
+- Semantic duplication: repeated business rules, validation, mapping, permissions, error decisions, or setup
+- Superficial similarity that should stay explicit
 - Complexity (nested conditionals, long params)
 - Standards violations (naming, error handling, DI)
+- Decorative interfaces, generic helpers, factories, options, or worker pools without current evidence
+- Goroutines without ownership/cancellation/error handling
+- Error wrapping/logging repeated across layers
 
 ## Phase 3: Refactoring Patterns
 
@@ -66,7 +71,7 @@ func transformData() error {
 ```
 ```
 
-**Extract Function** (eliminate duplication):
+**Extract Function** (eliminate semantic duplication):
 ```go
 // Before: Duplicated validations
 func (t *Type1) Validate() error { /* duplicate logic */ }
@@ -78,6 +83,23 @@ func ValidateCommon(id string, value float64, field string) error {
     if value < 0 { return fmt.Errorf("%s cannot be negative", field) }
     return nil
 }
+```
+
+**Do Not Abstract Incidental Similarity**:
+```go
+// These functions look similar but represent different business rules.
+// Keep them separate unless the domain confirms they must change together.
+func ValidateOrderLimit(limit int) error { /* order-specific rule */ }
+func ValidateTransferLimit(limit int) error { /* transfer-specific rule */ }
+```
+
+**Prefer Domain Ownership Over Generic Helpers**:
+```go
+// ❌ Vague helper with unclear ownership
+func ValidateString(value string, min int, max int) error { /* ... */ }
+
+// ✅ Rule lives where the concept belongs
+func NewOrderCode(value string) (OrderCode, error) { /* ... */ }
 ```
 
 **Replace Conditional with Polymorphism**:
@@ -92,6 +114,8 @@ type DeviceProcessor interface { Process(data Data) error }
 type GPSProcessor struct{}
 func (g *GPSProcessor) Process(data Data) error { /* ... */ }
 ```
+
+Use this only when there are multiple current implementations or a real policy variation. Keep a direct conditional when the branch is small, local, and unlikely to vary independently.
 
 **Extract Class** (split large structs):
 ```go
@@ -220,6 +244,8 @@ find . -name "*.go" -exec wc -l {} \; | awk '$1 > 150' # File sizes
 
 ## Phase 8: Performance
 
+Optimize after evidence from benchmarks, profiles, production metrics, or an obvious algorithmic issue. Do not introduce pools, caches, concurrency, or generics solely to appear optimized.
+
 **Algorithm Optimization**:
 ```go
 // Before: O(n²)
@@ -243,19 +269,22 @@ func findDuplicates(items []string) []string {
 **Long Function**: Split >20 lines into focused methods
 **Large File**: Split >150 lines by responsibility/feature
 **Magic Numbers**: Replace with named constants
-**Duplication**: Extract to shared functions
-**Complex Conditionals**: Extract to methods
+**Duplication**: Extract semantic duplication to named functions, value objects, mappers, or builders
+**Complex Conditionals**: Extract to methods or strategies only when behavior varies independently
+**Decorative Interface**: Remove if it has no boundary, substitution, or test isolation value
+**Unsafe Goroutine**: Add ownership/cancellation/error collection or keep synchronous code
 
 ## Success Criteria
 
 - ✅ All tests pass (behavior preserved)
-- ✅ Files ≤150 lines (MANDATORY)
-- ✅ Functions ≤20 lines
-- ✅ Each method has exactly ONE responsibility (SRP strict)
+- ✅ File/function size targets respected or cohesive exceptions are clear
+- ✅ Each method has one cohesive reason to change
 - ✅ Clean Architecture boundaries respected
 - ✅ SOLID principles followed (see `go-solid-principles.md`)
 - ✅ CQRS compliance (one interface per file)
 - ✅ No unused code (YAGNI)
+- ✅ Advanced patterns have current evidence and tests
+- ✅ Context, errors, logging, and goroutine lifetimes are handled at the right boundaries
 - ✅ Performance maintained
 
 **Stop when**: Code clean, standards met, tests pass, no obvious improvements

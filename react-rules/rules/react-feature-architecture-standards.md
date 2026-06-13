@@ -139,6 +139,36 @@ Do not leave users with blank screens during async operations.
 - Avoid rendering large dynamic lists without pagination or virtualization.
 - Check bundle impact before adding dependencies.
 
+## Duplication Rules
+
+Avoid duplicated behavior and decisions, not just repeated text.
+
+### Must Not Be Duplicated
+
+- API request construction, auth headers, retry/error handling, or response parsing.
+- DTO-to-UI mapping logic.
+- Permission and feature-flag checks.
+- Form validation rules.
+- Table column behavior, sorting, filtering, pagination, and row actions.
+- Loading, empty, error, and success state handling for the same async workflow.
+- Formatting for dates, numbers, status labels, and domain-specific display values.
+
+### Allowed Temporary Duplication
+
+- Two similar components while UX requirements are still diverging.
+- Small explicit JSX when abstraction would hide intent.
+- Local test or story data that keeps a scenario readable.
+- Similar UI layout with different business meaning.
+
+### Extraction Rules
+
+- Extract a custom hook for repeated behavior.
+- Extract a mapper for repeated DTO normalization.
+- Extract a UI primitive for repeated visual structure.
+- Extract a HOC only for repeated cross-cutting wrappers such as auth, permissions, telemetry, or feature flags.
+- Extract compound components only when a component family shares state.
+- Do not create generic "common" helpers without a clear domain, UI, or boundary name.
+
 ## Accessibility Rules
 
 - Use semantic HTML first.

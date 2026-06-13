@@ -8,6 +8,8 @@ globs: **/*_test.go
 
 **CRITICAL RULE**: Integration tests MUST ALWAYS use REAL infrastructure (databases, APIs, message queues, file systems). NEVER use mocks in integration tests.
 
+See `go-test-tagging-standards.md` for build tag conventions. Integration tests must use `//go:build integration`.
+
 ## Core Principles
 
 - **Real Infrastructure ONLY**: Test against actual databases, message queues, APIs, file systems - NO MOCKS
@@ -43,6 +45,7 @@ globs: **/*_test.go
 - **YAGNI**: Test only existing features
 - **Cleanup**: Always cleanup test data and resources
 - **Comment separators**: MUST use `// Arrange`, `// Act`, `// Assert` to divide test sections
+- **Build tag**: Every integration test file MUST start with `//go:build integration`
 
 ## Test Structure
 
@@ -66,6 +69,10 @@ tests/{domain}/integration/
 **MANDATORY**: MUST use comment separators `// Arrange`, `// Act`, `// Assert` to divide test sections
 
 ```go
+//go:build integration
+
+package orders_test
+
 func Test_given_scenario_when_action_then_expected(t *testing.T) {
     t.Parallel()
 
@@ -159,6 +166,7 @@ services:
 - **NO unit tests for handlers**: Do not create unit tests with mocks for HTTP handlers
 - **Test complete flow**: Request parsing → Use case execution → Database query → Response construction
 - **Location**: `tests/end2end/{domain}/` with setup.go and test_session.go
+- **Build tag**: Use `//go:build e2e` for full end-to-end handler tests
 - **Test scenarios**: Success path, empty results, pagination, error handling
 - **Example**: Handler calls real use case, which calls the real query adapter for the selected datastore
 

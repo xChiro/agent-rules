@@ -8,6 +8,8 @@ globs: **/*.go
 
 When creating a new Use Case, follow this exact sequence for CQRS and Clean Architecture compliance with YAGNI principles.
 
+Also follow `go-idiomatic-advanced-practices.md` for context, error handling, interfaces, concurrency, and advanced Go patterns.
+
 ## Phase 1: Requirements Analysis
 - Identify the **Actor** requesting the change
 - Define the **Responsibility** of the new component
@@ -67,6 +69,8 @@ ports/
 - **Delete unused ports**: Remove interfaces without implementations
 - **Keep interfaces small**: Single responsibility per interface
 - **One interface per file**: Following CQRS standards
+- **Protect real boundaries**: Create ports for persistence, messaging, sessions, clocks, external APIs, or substitutable policies
+- **Avoid decorative ports**: Do not create ports for private helpers or concrete collaborators that do not cross a boundary
 
 ## Phase 4: Use Case Implementation (Green)
 
@@ -214,11 +218,15 @@ Check for:
 - Use explicit error checking with `if err != nil`
 - Wrap errors with context using `fmt.Errorf("operation: %w", err)`
 - Define sentinel errors for common conditions
+- Use `errors.Is/As` for branching decisions
+- Never branch on error strings
+- Do not log and return the same error inside use cases unless the use case is the final process boundary
 
 ### Dependency Injection
 - Use constructor functions `NewUseCase(dep1, dep2) *UseCase`
-- Depend on interfaces, not concrete types
+- Depend on interfaces at real boundaries, not for every private helper
 - Define interfaces in the application layer, implement in infrastructure
+- Use concrete types inside the same package when no boundary or substitution exists
 
 - Use individual tests for business-significant scenarios
 - Use table-driven tests for compact validation matrices where each row follows the same rule

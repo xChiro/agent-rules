@@ -8,6 +8,8 @@ globs: **/*_test.go
 
 **Principles**: TDD-first, Red-Green-Refactor, behavior over implementation, isolation, deterministic, YAGNI testing
 
+See `go-test-tagging-standards.md` for test suite tags. Unit tests should run by default without requiring a Go build tag.
+
 ## Test Structure
 
 **Naming**: `Test_given_[scenario]_when_[action]_then_[expected]` (snake_case)
@@ -75,6 +77,13 @@ tests/orders/application/order_transfer/
 
 **Requirements**: ≤150 lines/file, ≤20 lines/function, use `testify/assert`, single assertion concept
 **YAGNI**: Test current functionality only, delete unused tests, focus on critical paths, simple setup
+
+## Test Tags
+
+- Unit tests are the default fast suite and should not require `//go:build unit`.
+- Identify unit tests by path, naming, and isolation from infrastructure.
+- If a repository intentionally uses build tags for every suite, use `//go:build unit` consistently and document `go test -tags=unit ./...`.
+- Do not put `integration` or `e2e` tests in the default unit suite.
 
 ## CQRS Mock Strategy
 

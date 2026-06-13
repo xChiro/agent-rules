@@ -6,6 +6,8 @@ description: Create E2E integration tests for HTTP handlers using real infrastru
 
 Use this workflow whenever creating E2E integration tests for HTTP handlers.
 
+Use the Go build tag `e2e` for these tests. Keep the name `e2e`; use `contract` only for API/provider-consumer contract tests that do not execute a full end-to-end flow.
+
 ## Phase 1: Setup Test Environment
 
 **Goal**: Create test infrastructure setup.
@@ -83,6 +85,7 @@ func (s *TestUserSession) HasAnyRole(ctx context.Context, roles ...string) bool 
 
 **Checklist**:
 - Create `{use_case}_e2e_test.go` in `tests/end2end/{domain}/`.
+- Add `//go:build e2e` as the first non-blank line.
 - Import handler, use case, and real infrastructure dependencies.
 - Use comment separators: `// Arrange`, `// Act`, `// Assert`.
 - Test against real infrastructure, not mocks.
@@ -95,6 +98,8 @@ func (s *TestUserSession) HasAnyRole(ctx context.Context, roles ...string) bool 
 
 **Template**:
 ```go
+//go:build e2e
+
 package orders_test
 
 import (
@@ -140,7 +145,7 @@ func seedTestData(t *testing.T, store *TestStore, userID string) {
 **Goal**: Verify tests pass with real infrastructure.
 
 **Checklist**:
-- Run tests: `go test -v -tags=integration ./tests/end2end/...`
+- Run tests: `go test -v -tags=e2e ./tests/end2end/...`
 - Verify required infrastructure is running locally or in containers.
 - Ensure cleanup functions work correctly.
 - Verify all test scenarios pass.
@@ -163,6 +168,7 @@ func seedTestData(t *testing.T, store *TestStore, userID string) {
 - **Assertions**: `github.com/stretchr/testify/assert`.
 - **Comment separators**: MUST use `// Arrange`, `// Act`, `// Assert`.
 - **Cleanup**: Always cleanup test data with `defer env.Cleanup()`.
+- **Build tag**: Every E2E test file must start with `//go:build e2e`.
 
 **Test naming**: `Test_given_[scenario]_when_[action]_then_[expected]` (snake_case)
 

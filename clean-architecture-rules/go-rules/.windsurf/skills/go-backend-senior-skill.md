@@ -26,6 +26,28 @@ Use the existing backend style in the current repository.
 - Keep DTOs without infrastructure tags in application. Put transport or persistence tags in interface/infrastructure DTOs only.
 - Run `gofmt` on touched Go files.
 
+## Senior Go Decisions
+
+- Use concrete types inside a package unless an interface protects a real boundary or enables real substitution.
+- Define interfaces near consumers; keep them small and named by behavior.
+- Pass `context.Context` only through request-scoped I/O/application paths, never through pure domain objects.
+- Use `errors.Is/As` for decisions and avoid comparing error strings.
+- Prefer composition over embedding for reuse.
+- Use generics only when they remove real duplication across current call sites and improve type safety.
+- Start goroutines only with explicit ownership, cancellation, and error collection.
+- Use `errgroup` for parallel I/O that should cancel as a group.
+- Benchmark/profile before performance-oriented complexity unless the algorithmic issue is obvious.
+- Log at boundaries and avoid logging the same returned error in every layer.
+
+## Advanced Pattern Gate
+
+Before adding strategy, worker pool, functional options, generic helpers, event outbox, streaming, caching, or background processing, confirm:
+
+- The current feature needs it now.
+- The simpler explicit implementation was considered.
+- The pattern has tests or operational evidence behind it.
+- The pattern does not create unused extension points.
+
 ## TDD Slice
 
 1. Add or modify a unit test under the matching use case.
@@ -35,9 +57,19 @@ Use the existing backend style in the current repository.
 5. Wire DI providers last.
 6. Add integration/end-to-end coverage when adapter behavior, messaging, auth/session, routing, or persistence changes.
 
+## Test Tags
+
+- Unit tests run by default without a Go build tag.
+- Integration test files must start with `//go:build integration`.
+- End-to-end test files must start with `//go:build e2e`.
+- Prefer `e2e` over `endtoend`; use `contract` only for API/provider-consumer contract suites.
+- Document the matching command when adding a tagged suite, for example `go test -tags=e2e ./tests/end2end/...`.
+
 ## Avoid
 
 - Raw primitive validation duplicated across handlers and use cases.
 - Repositories with broad CRUD interfaces.
 - Domain importing transport, persistence, cloud SDK, JSON, or framework concerns.
 - Updating generated DI files by hand when generated wiring is expected.
+- Interfaces, factories, builders, or functional options created only for style.
+- Fire-and-forget goroutines without shutdown, cancellation, or error handling.
