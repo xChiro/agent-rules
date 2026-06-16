@@ -7,7 +7,7 @@ description: Create or update HBK GitHub Actions pipelines using the identity-se
 
 Use this workflow when creating or refactoring GitHub Actions pipelines for HBK repositories.
 
-The baseline pattern comes from `hbk-identity-service`: Go tests, DynamoDB Local integration setup, SAM build artifacts, AWS OIDC deployment roles, staging and production environments, and explicit deploy gates. Improve that pattern by separating PR review checks from build/deploy work.
+The baseline pattern comes from `hbk-identity-service`: Go tests, DynamoDB Local integration setup, SAM build artifacts, AWS OIDC deployment roles, staging and production environments, and explicit deploy gates. For Go/SAM services, copy that job shape closely so pull requests run unit, integration, build, and e2e jobs while deploy jobs remain gated by branch `if` conditions.
 
 ## 1. Read the Repository Shape
 
@@ -27,32 +27,23 @@ The baseline pattern comes from `hbk-identity-service`: Go tests, DynamoDB Local
 - Deploy workflows must run only on pushes to their target branch and explicit `workflow_dispatch`.
 - Never deploy from `pull_request` events.
 
-## 3. Split PR Review from Deploy
+## 3. PR Review and Deploy Boundaries
 
-Create a dedicated PR review workflow, normally `.github/workflows/pr-review.yml`.
+For Go/SAM services, prefer the identity-service single-workflow pattern unless the repository already has split deploy files.
 
-The PR review workflow should:
+The workflow should:
 
 - Trigger on `pull_request` to `staging` and `main`.
+- Trigger on `push` to `staging` and `main`.
+- Support `workflow_dispatch`.
 - Use `permissions: contents: read`.
 - Use concurrency by workflow and PR ref, with `cancel-in-progress: true`.
-- Checkout with `actions/checkout@v4`, `fetch-depth: 1`, and `persist-credentials: false`.
-- Install only the toolchain required for tests.
-- Download dependencies.
-- Run unit tests.
-- Start local infrastructure only when integration tests need it.
-- Run integration tests with local endpoints and dummy AWS credentials.
-- Run end-to-end tests only when they do not require deploy artifacts, cloud deploy, or production-like credentials.
-- Upload test artifacts only when the repo already produces useful reports.
+- Run `setup`, `test-unit`, `test-integration`, `build`, and `test-e2e` on pull requests.
+- Keep deploy jobs in the same workflow guarded by `if` conditions so pull requests never deploy.
 
-The PR review workflow must not:
+The pull request path may run `sam build` when e2e tests need the `sam-build` artifact, matching `hbk-identity-service`. Pull requests must still not configure cloud deployment credentials, assume AWS/Azure deployment roles, deploy stacks, deploy static apps, or run production smoke tests.
 
-- Run `sam build`.
-- Upload SAM build artifacts.
-- Configure cloud deployment credentials.
-- Assume AWS/Azure deployment roles.
-- Deploy stacks, static apps, functions, or infrastructure.
-- Run production smoke tests against deployed URLs.
+Create a separate `.github/workflows/pr-review.yml` only for repositories that intentionally use split workflows. If split workflows are used for Go/SAM services, PR review must still include the equivalent of identity-service `setup`, `test-unit`, `test-integration`, `build`, and `test-e2e` when e2e depends on SAM artifacts.
 
 ## 4. Create Environment Deploy Workflows
 
@@ -70,14 +61,74 @@ Deploy workflows should:
 - Set `permissions` narrowly: `id-token: write` and `contents: read` only when OIDC is required.
 - Use `concurrency` per workflow and ref.
 - Run unit and integration tests before build/deploy, or depend on a reusable test job in the same workflow.
-- Run `sam build` only in deploy workflows for SAM services.
+- Run `sam build` before deploy for SAM services. In identity-style single workflows, allow `build` on pull requests when `test-e2e` depends on the `sam-build` artifact.
 - Upload build artifacts with short retention only when deploy jobs need cross-job artifacts.
 - Configure AWS with `aws-actions/configure-aws-credentials@v4` and `role-to-assume` secrets, not long-lived access keys, when the account supports OIDC.
 - Verify caller identity with `aws sts get-caller-identity` before deploy.
 - Deploy with environment-specific stack names, config envs, S3 buckets, parameters, and secrets.
 - Run smoke tests only after production deploy when the service has a stable public health or root endpoint.
 
-## 5. Go/SAM Service Pattern
+## 5. Identity-Service Pipeline Shape
+
+For Go/SAM HBK services, the deploy pipeline must follow the `hbk-identity-service` job shape unless the repository has a documented reason not to:
+
+- `setup`
+  - `name: Setup Infrastructure`
+  - `runs-on: ubuntu-latest`
+  - `timeout-minutes: 10`
+  - `permissions: contents: read`
+  - Steps: checkout, setup Go, `go mod download`, start DynamoDB Local or required local infra, wait for readiness, create tables or seed data.
+- `test-unit`
+  - `name: Unit Tests`
+  - `needs: setup`
+  - `permissions: contents: read`
+  - Steps: checkout, setup Go, `go mod download`, run the repository's unit test command.
+- `test-integration`
+  - `name: Integration Tests`
+  - `needs: setup`
+  - `permissions: contents: read`
+  - Steps: checkout, setup Go, `go mod download`, start DynamoDB Local or required local infra, wait for readiness, create tables or seed data, run integration tests with local endpoints and dummy credentials.
+- `build`
+  - `name: SAM Build`
+  - `needs: setup`
+  - `permissions: contents: read`
+  - Steps: checkout, setup SAM CLI, run `sam build`, upload `.aws-sam/build/` as `sam-build` with short retention.
+  - Do not skip this job on pull requests when `test-e2e` downloads `sam-build`; identity-service runs this job so e2e can run.
+- `test-e2e`
+  - `name: E2E Tests`
+  - `needs: [setup, build]`
+  - `permissions: contents: read`
+  - Steps: checkout, setup Go, `go mod download`, download `sam-build` into `.aws-sam/build/`, start DynamoDB Local or required local infra, wait for readiness, create tables or seed data, run the repository's e2e command with local endpoints and dummy credentials.
+  - This job is required. Do not omit it because it needs build artifacts; copy identity-service and download the artifact.
+- `deploy-staging`
+  - `name: Deploy to Staging`
+  - `needs: [test-unit, test-integration, test-e2e, build]`
+  - `if: (github.ref == 'refs/heads/staging' && github.event_name == 'push') || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/staging')`
+  - `environment: staging`
+  - Steps: checkout, download `sam-build`, configure staging credentials, verify AWS identity, setup SAM CLI, deploy the staging stack.
+- `deploy-production`
+  - `name: Deploy to Production`
+  - `needs: [test-unit, test-integration, test-e2e, build]`
+  - `if: (github.ref == 'refs/heads/main' && github.event_name == 'push') || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')`
+  - `environment: production`
+  - Steps: checkout, download `sam-build`, configure production credentials, verify AWS identity, setup SAM CLI, deploy the production stack, run smoke tests when available.
+
+Do not create a deploy workflow where `build` is the only dependency for deploy. Deploy jobs must be blocked by the full test suite.
+
+When preserving a single workflow file like identity-service:
+
+- Include `pull_request` triggers for `main` and `staging`.
+- Keep deploy jobs guarded with `if` conditions so pull requests never deploy.
+- Keep `build` active for pull requests when `test-e2e` needs the `sam-build` artifact.
+- Do not remove test jobs just because tests require DynamoDB Local, LocalStack, seeded tables, or setup scripts; add the local infrastructure steps.
+
+When creating split workflows:
+
+- `.github/workflows/pr-review.yml` contains the equivalent of identity-service `setup`, `test-unit`, `test-integration`, `build`, and `test-e2e` for Go/SAM services.
+- `.github/workflows/deploy-stg.yml` and `.github/workflows/deploy-prod.yml` contain the same test jobs plus `build` and the environment deploy job.
+- Keep the commands, table names, stack names, regions, and scripts repository-specific.
+
+## 6. Go/SAM Service Pattern
 
 For Go Lambda services using SAM:
 
@@ -92,7 +143,16 @@ For Go Lambda services using SAM:
 - Create tables and seed data through existing scripts.
 - Always clean up Docker containers in `if: always()` steps when containers are started directly.
 
-## 6. Shared Infrastructure Pattern
+For `hbk-notification-service`, do not copy identity-service test paths blindly. Use its actual commands:
+
+- Unit tests: `go test -v ./tests/notifications/unit_tests/...`
+- Integration tests: `go test -v -tags=integration ./tests/notifications/integrations/...`
+- E2E tests: `go test -v -tags=e2e ./tests/end2end/...`
+- Local table setup: `bash scripts/setup-dynamodb-table.sh us-east-1 http://127.0.0.1:8000 <table-name>`
+- Integration env: dummy AWS credentials, `AWS_REGION=us-east-1`, `DYNAMODB_ENDPOINT_URL=http://127.0.0.1:8000`, and `NOTIFICATIONS_TABLE_NAME=hbk-notifications-test`.
+- E2E env: dummy AWS credentials, `AWS_REGION=us-east-1`, `DYNAMODB_ENDPOINT_URL=http://127.0.0.1:8000`, and `NOTIFICATIONS_TABLE_NAME=hbk-notifications-e2e-test`.
+
+## 7. Shared Infrastructure Pattern
 
 For infrastructure-only SAM repositories:
 
@@ -102,7 +162,7 @@ For infrastructure-only SAM repositories:
 - Keep deployment bucket creation idempotent when the repo already owns that bucket.
 - Do not run PR deploys for infrastructure changes.
 
-## 7. React or Static Web Pattern
+## 8. React or Static Web Pattern
 
 For React and static web repositories:
 
@@ -111,7 +171,7 @@ For React and static web repositories:
 - Do not use Azure deploy actions on PR review workflows.
 - Keep environment variables branch-specific and avoid mixing staging URLs into production workflows.
 
-## 8. Security Requirements
+## 9. Security Requirements
 
 - Use least-privilege workflow permissions. Start with `permissions: contents: read`; add `id-token: write` only in jobs that assume cloud roles.
 - Do not use `pull_request_target` for code checkout or test execution unless the workflow has a documented security reason and never runs untrusted PR code with secrets.
@@ -141,7 +201,7 @@ For React and static web repositories:
 - Review IAM policy changes, public API exposure, CORS origins, cookie settings, JWT settings, OAuth redirect URLs, and Secrets Manager references as security-sensitive changes.
 - Use branch protection and required PR review checks so deploy branches cannot be updated without the PR review workflow passing.
 
-## 9. Required YAML Standards
+## 10. Required YAML Standards
 
 - Pin official actions to current major versions used in HBK unless the repository has a reason to stay older.
 - Use clear job names: `unit-tests`, `integration-tests`, `e2e-tests`, `build`, `deploy-staging`, `deploy-production`.
@@ -151,12 +211,15 @@ For React and static web repositories:
 - Use repository variables for non-secret environment values and secrets only for credentials, tokens, role ARNs, and sensitive parameters.
 - Keep branch and environment names literal and easy to audit.
 
-## 10. Review Before Finishing
+## 11. Review Before Finishing
 
-- Confirm PR review cannot build, upload deploy artifacts, assume cloud roles, or deploy.
+- Confirm PR review cannot assume cloud roles, configure deployment credentials, deploy, or run production smoke tests.
+- Confirm Go/SAM PR review still runs `build` when e2e downloads `sam-build`, matching identity-service.
 - Confirm staging deploy runs only from `staging`.
 - Confirm production deploy runs only from `main`.
 - Confirm deploy jobs require successful tests in the same workflow.
+- Confirm deploy jobs do not depend only on `build`; they must depend on unit, integration, e2e, and build where those suites exist.
+- Confirm the pipeline includes the identity-service shape: setup/local infra, unit tests, integration tests, build, e2e tests, staging deploy, production deploy.
 - Confirm local test infrastructure uses dummy credentials and local endpoints.
 - Confirm every secret or variable referenced by YAML is listed in the final summary.
 - Confirm workflow file names match their purpose.
@@ -164,7 +227,7 @@ For React and static web repositories:
 - Confirm no PR workflow can access deployment secrets or cloud role credentials.
 - Confirm production deploys require GitHub environment protection or an equivalent approval gate.
 
-## 11. Final Summary
+## 12. Final Summary
 
 Report:
 
