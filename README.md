@@ -16,6 +16,11 @@ clean-architecture-rules/go-rules/
 ├── workflows/   # Step-by-step task workflows
 └── skills/      # Go-oriented skill copies for tools that consume skills locally
 
+clean-architecture-rules/csharp-rules/
+├── rules/       # C#/.NET backend standards for Clean Architecture and DDD
+├── workflows/   # C#/.NET task workflows
+└── skills/      # C#/.NET Windsurf skill definitions
+
 react-rules/
 ├── rules/       # React feature architecture standards
 └── workflows/   # React feature implementation workflow
@@ -34,6 +39,7 @@ Use these rules for Go backend projects that follow Clean Architecture, DDD, CQR
 Core reusable rules:
 
 - [`go-clean-code-standards.md`](./clean-architecture-rules/go-rules/rules/go-clean-code-standards.md)
+- [`go-logging-and-error-boundaries.md`](./clean-architecture-rules/go-rules/rules/go-logging-and-error-boundaries.md)
 - [`go-architecture-patterns.md`](./clean-architecture-rules/go-rules/rules/go-architecture-patterns.md)
 - [`go-project-structure.md`](./clean-architecture-rules/go-rules/rules/go-project-structure.md)
 - [`go-solid-principles.md`](./clean-architecture-rules/go-rules/rules/go-solid-principles.md)
@@ -51,6 +57,30 @@ Optional API and messaging rules:
 - [`publish-domain-event.workflow.md`](./clean-architecture-rules/go-rules/workflows/publish-domain-event.workflow.md)
 
 Load these files only when the task touches HTTP APIs, domain events, messaging, or end-to-end handler tests.
+
+### C#/.NET Clean Architecture
+
+Use these rules for C#/.NET backend projects that follow Clean Architecture, DDD, CQRS, TDD, SOLID, Clean Code, EF Core adapters, ASP.NET Core APIs, message consumers, and hosted services.
+
+Core reusable rules:
+
+- [`csharp-architecture-patterns.md`](./clean-architecture-rules/csharp-rules/rules/csharp-architecture-patterns.md)
+- [`csharp-clean-code-standards.md`](./clean-architecture-rules/csharp-rules/rules/csharp-clean-code-standards.md)
+- [`csharp-solid-principles.md`](./clean-architecture-rules/csharp-rules/rules/csharp-solid-principles.md)
+- [`csharp-ddd-value-objects.md`](./clean-architecture-rules/csharp-rules/rules/csharp-ddd-value-objects.md)
+- [`csharp-use-case-protocol.md`](./clean-architecture-rules/csharp-rules/rules/csharp-use-case-protocol.md)
+- [`csharp-unit-testing-standards.md`](./clean-architecture-rules/csharp-rules/rules/csharp-unit-testing-standards.md)
+- [`csharp-error-logging-boundaries.md`](./clean-architecture-rules/csharp-rules/rules/csharp-error-logging-boundaries.md)
+
+Focused adapter and boundary rules:
+
+- [`csharp-dependency-injection.md`](./clean-architecture-rules/csharp-rules/rules/csharp-dependency-injection.md)
+- [`csharp-efcore-dataaccess.md`](./clean-architecture-rules/csharp-rules/rules/csharp-efcore-dataaccess.md)
+- [`csharp-integration-testing-standards.md`](./clean-architecture-rules/csharp-rules/rules/csharp-integration-testing-standards.md)
+- [`csharp-rest-api-standards.md`](./clean-architecture-rules/csharp-rules/rules/csharp-rest-api-standards.md)
+- [`csharp-messaging-hosted-services.md`](./clean-architecture-rules/csharp-rules/rules/csharp-messaging-hosted-services.md)
+
+Load the focused files only when the task touches DI, EF Core/DataAccess, integration tests, HTTP APIs, message consumers, or hosted services.
 
 ### React
 
@@ -100,6 +130,7 @@ For a reusable Go backend setup, start with:
 
 ```text
 clean-architecture-rules/go-rules/rules/go-clean-code-standards.md
+clean-architecture-rules/go-rules/rules/go-logging-and-error-boundaries.md
 clean-architecture-rules/go-rules/rules/go-architecture-patterns.md
 clean-architecture-rules/go-rules/rules/go-project-structure.md
 clean-architecture-rules/go-rules/rules/go-unit-testing-standards.md
@@ -113,6 +144,7 @@ go-dependency-injection.md        # DI or Wire work
 go-integration-testing-standards.md # real adapter or external-system tests
 rest-api-standards.md             # HTTP endpoint design
 domain-event-publishing.md        # Domain events and messaging
+go-logging-and-error-boundaries.md # Error propagation and boundary logging
 ```
 
 For React:
@@ -120,6 +152,29 @@ For React:
 ```text
 react-rules/rules/react-feature-architecture-standards.md
 react-rules/workflows/react-feature-implementation.workflow.md
+```
+
+For C#/.NET:
+
+```text
+clean-architecture-rules/csharp-rules/rules/csharp-architecture-patterns.md
+clean-architecture-rules/csharp-rules/rules/csharp-clean-code-standards.md
+clean-architecture-rules/csharp-rules/rules/csharp-solid-principles.md
+clean-architecture-rules/csharp-rules/rules/csharp-ddd-value-objects.md
+clean-architecture-rules/csharp-rules/rules/csharp-use-case-protocol.md
+clean-architecture-rules/csharp-rules/rules/csharp-unit-testing-standards.md
+clean-architecture-rules/csharp-rules/workflows/senior-tdd-feature.workflow.md
+```
+
+Add more focused files only when the task needs them:
+
+```text
+csharp-dependency-injection.md       # DI, options, lifetimes, composition root
+csharp-efcore-dataaccess.md          # EF Core adapters and migrations
+csharp-integration-testing-standards.md # real adapter or public boundary tests
+csharp-rest-api-standards.md         # ASP.NET Core endpoint design
+csharp-messaging-hosted-services.md  # message consumers and hosted workers
+csharp-error-logging-boundaries.md   # exception mapping and structured logging
 ```
 
 For Windsurf:

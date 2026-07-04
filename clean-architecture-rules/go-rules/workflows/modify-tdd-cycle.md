@@ -22,7 +22,7 @@ description: Test-Driven TDD - Analyze Tests → Make Pass → Refactor with Con
 - Each method must have exactly ONE responsibility (SRP strict)
 - Use `testify/assert`
 - Manual mocks only
-- Follow ATDD naming conventions
+- Follow A-TDD naming conventions
 
 ## Phase 1: Test Analysis
 
@@ -94,7 +94,7 @@ description: Test-Driven TDD - Analyze Tests → Make Pass → Refactor with Con
 - Happy paths are covered
 - Test assertions are correct
 - Mock dependencies are appropriate
-- Tests follow ATDD naming convention
+- Tests follow A-TDD naming convention
 - No fragile test patterns
 
 **User Approval Required**: Wait for user confirmation before proceeding to Phase 3

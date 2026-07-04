@@ -308,7 +308,7 @@ func (m *MockOrderService) CreateOrder(ctx context.Context, order Order) error {
 
 ## Summary
 
-**Test Design**: TDD (failing test first), test behavior not implementation, descriptive names (ATDD), simple tests, manual DI for tests
+**Test Design**: A-TDD framing, TDD failing test first, test behavior not implementation, descriptive names, simple tests, manual DI for tests, 90%+ domain/application unit coverage
 **CQRS DI**: One interface per file, implement in infrastructure, provider functions (pure construction), Wire auto-wiring, manual mocks for tests
 **YAGNI DI**: Simple providers, delete unused dependencies, avoid over-engineering, focus on current needs
 **Lifetime**: Singletons (shared resources), request-scoped (per-request), avoid globals, Wire handles singleton behavior

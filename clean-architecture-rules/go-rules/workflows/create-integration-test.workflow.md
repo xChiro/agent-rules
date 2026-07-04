@@ -343,9 +343,9 @@ jobs:
 - ✅ Proper isolation (parallel safe)
 - ✅ Complete cleanup of REAL resources
 - ✅ `testify/assert` used for assertions
-- ✅ ATDD naming: `Test_given_[scenario]_when_[action]_then_[expected]`
+- ✅ A-TDD naming: `Test_given_[scenario]_when_[action]_then_[expected]`
 - ✅ Tests current functionality only (YAGNI)
 - ✅ Integration tests <30 seconds total
-- ✅ Coverage ≥80%
+- ✅ Domain/application unit coverage remains 90%+ or improves toward it when core code is touched
 
 **Key Principle**: If you're tempted to use a mock, you're writing a unit test, not an integration test. Integration tests MUST use REAL infrastructure.

@@ -1,5 +1,5 @@
 ---
-description: Refactor test code following TDD/ATDD standards
+description: Refactor test code following A-TDD and TDD standards
 ---
 
 # Test Code Refactoring Workflow
@@ -192,7 +192,7 @@ find tests/ -name "*_test.go" -exec wc -l {} \; | awk '$1 > 150' # File sizes
 
 **Quality Gates**:
 - All tests pass
-- Coverage threshold: ≥80%
+- Coverage threshold: 90%+ unit coverage for domain/application layers
 - No race conditions
 - Test files ≤150 lines
 - Each test function: ≤20 lines, ONE responsibility

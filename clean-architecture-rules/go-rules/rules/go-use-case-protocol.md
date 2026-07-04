@@ -17,7 +17,7 @@ Also follow `go-idiomatic-advanced-practices.md` for context, error handling, in
 - Determine CQRS operations (commands/queries/validation)
 - **YAGNI Check**: Only create what's actually needed now
 
-## Phase 2: Failing ATDD Test (Red)
+## Phase 2: Failing A-TDD Test (Red)
 Create test file in `tests/{domain}/application/{use_case}/` using snake_case function names.
 
 ### Mandatory Requirements
@@ -26,6 +26,7 @@ Create test file in `tests/{domain}/application/{use_case}/` using snake_case fu
 - **Function size limit**: ≤20 lines per test function
 - **Single Responsibility**: Each test function must test exactly ONE scenario
 - **YAGNI**: Only test current functionality
+- **Coverage target**: Maintain 90%+ unit coverage for domain/application layers
 
 ### Test Quality Guidelines
 - **One assertion per concept**: Group related assertions only
@@ -262,7 +263,7 @@ Before starting any phase, ask:
 
 This protocol ensures:
 
-1. **TDD-First Development**: Always start with failing tests
+1. **A-TDD-First Development**: Frame actor-visible acceptance behavior, then start with failing tests
 2. **Clean Architecture Compliance**: Proper layer separation
 3. **CQRS Implementation**: Commands vs queries vs validation
 4. **Domain-Driven Design**: Business logic in domain entities
@@ -270,5 +271,6 @@ This protocol ensures:
 6. **Code Quality**: Size limits and naming conventions
 7. **YAGNI Compliance**: Only what's needed now
 8. **Screaming Architecture**: Structure communicates purpose
+9. **Core Coverage**: 90%+ unit coverage for domain/application layers
 
 Follow this sequence exactly for consistent, high-quality use case implementations that are maintainable, testable, and follow all architectural principles.

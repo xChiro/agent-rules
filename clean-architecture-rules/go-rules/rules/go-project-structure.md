@@ -60,7 +60,7 @@ ports/
 ## Test Layers
 
 **Domain** (`tests/{domain}/domain/`): Pure business logic, no mocks/infrastructure
-**Application** (`tests/{domain}/application/{use_case}/`): Use case orchestration, mock dependencies, ATDD naming
+**Application** (`tests/{domain}/application/{use_case}/`): Use case orchestration, mock dependencies, A-TDD naming
 **Infrastructure** (`tests/{domain}/infrastructure/`): Real DB/containers, verify mapping/integration
 **Interface** (`tests/{domain}/interfaces/`): API contracts, e2e workflows
 
@@ -68,7 +68,7 @@ ports/
 
 **Files**: `{entity}_test.go`, `{use_case}_test.go` (snake_case for shared setup)
 **Per-Behavior Files**: `{action_or_concern}_test.go` describing the business concern (e.g., `quantity_validation_test.go`, `item_existence_test.go`, `transfer_success_test.go`)
-**Functions**: `Test_given_{scenario}_when_{action}_then_{expected}` (ATDD pattern)
+**Functions**: `Test_given_{scenario}_when_{action}_then_{expected}` (A-TDD pattern)
 
 **MANDATORY**: Test file names MUST be domain-oriented, NOT type-oriented:
 - ❌ AVOID: `happy_path_test.go`, `error_cases_test.go`, `edge_cases_test.go`, `infrastructure_errors_test.go` (generic types)

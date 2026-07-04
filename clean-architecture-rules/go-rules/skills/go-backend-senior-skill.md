@@ -50,12 +50,14 @@ Before adding strategy, worker pool, functional options, generic helpers, event 
 
 ## TDD Slice
 
-1. Add or modify a unit test under the matching use case.
-2. Create or extend value objects first when input has rules.
-3. Implement use case orchestration with small command/query/validation ports.
-4. Add infrastructure adapters only after application ports exist.
-5. Wire DI providers last.
-6. Add integration/end-to-end coverage when adapter behavior, messaging, auth/session, routing, or persistence changes.
+1. Frame actor-visible acceptance behavior with A-TDD.
+2. Add or modify a unit test under the matching use case.
+3. Create or extend value objects first when input has rules.
+4. Implement use case orchestration with small command/query/validation ports.
+5. Add infrastructure adapters only after application ports exist.
+6. Wire DI providers last.
+7. Add integration/end-to-end coverage when adapter behavior, messaging, auth/session, routing, or persistence changes.
+8. Maintain 90%+ unit coverage for domain/application layers; integration tests do not replace this target.
 
 ## Test Tags
 

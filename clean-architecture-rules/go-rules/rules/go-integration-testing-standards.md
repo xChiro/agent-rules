@@ -278,7 +278,7 @@ func (s *TestDataSeeder) CleanupTestData() error {
 **CI/CD**:
 - Run with: `go test -tags=integration ./tests/integration/...`
 - Ensure REAL infrastructure available in CI (Docker services)
-- Coverage threshold: ≥80%
+- Coverage threshold: 90%+ unit coverage for domain/application layers; integration coverage does not replace this target.
 - No race conditions
 
 **Key Principle**: If you're tempted to use a mock, you're writing a unit test, not an integration test. Integration tests MUST use REAL infrastructure.

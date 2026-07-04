@@ -1,19 +1,20 @@
 ---
 trigger: always_on
-description: TDD and ATDD skill for senior-style incremental implementation.
+description: A-TDD and TDD skill for senior-style incremental implementation with 90%+ domain/application unit coverage.
 globs: **/*_test.go,**/*Test.cs,**/*Tests.cs
 ---
 
 # TDD Senior Skill
 
-Never implement production behavior before a failing test captures the expected behavior.
+Never implement production behavior before a failing test captures the expected behavior. Use A-TDD to frame the actor-visible acceptance behavior before choosing the first unit test.
 
 ## Cycle
 
-1. Red: write the smallest failing test for the next business rule.
-2. Green: write the minimum production code needed to pass.
-3. Refactor: improve names, duplication, boundaries, and file size with tests green.
-4. Repeat for edge cases, alternative flows, infrastructure, and transport mapping.
+1. A-TDD: state the actor, acceptance outcome, and observable behavior.
+2. Red: write the smallest failing test for the next business rule.
+3. Green: write the minimum production code needed to pass.
+4. Refactor: improve names, duplication, boundaries, and file size with tests green.
+5. Repeat for edge cases, alternative flows, infrastructure, and transport mapping.
 
 ## Test Shape
 
@@ -43,6 +44,7 @@ Start with small failure modes before happy path when the rule is risky:
 - Domain/application unit tests must not touch databases, queues, network, filesystem, environment, or clocks directly.
 - Integration tests verify real adapters, mapping, DI, migrations/tables, messaging, and transaction/event behavior.
 - Handler/API tests verify request parsing, status codes, error mapping, auth/session extraction, and response DTOs.
+- Maintain 90%+ unit test coverage for domain and application layers; do not use integration tests to mask weak core unit coverage.
 
 ## Test Tags
 
@@ -56,5 +58,6 @@ Start with small failure modes before happy path when the rule is risky:
 
 - Failing test existed before production code.
 - New behavior has happy path and meaningful edge cases.
+- Domain/application unit coverage remains at 90%+ or improves toward it in touched packages.
 - No unused ports, request fields, mocks, or test helpers.
 - The final test command for the touched scope passes.

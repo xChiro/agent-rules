@@ -6,9 +6,21 @@ globs: **/*_test.go
 
 # Go Unit Testing Standards - CQRS Enhanced with YAGNI
 
-**Principles**: TDD-first, Red-Green-Refactor, behavior over implementation, isolation, deterministic, YAGNI testing
+**Principles**: A-TDD-first, TDD Red-Green-Refactor, behavior over implementation, isolation, deterministic, YAGNI testing
 
 See `go-test-tagging-standards.md` for test suite tags. Unit tests should run by default without requiring a Go build tag.
+
+## A-TDD Coverage Objective
+
+Use A-TDD to drive implementation from acceptance behavior into focused domain/application unit tests. Start from the behavior the actor needs, express it as executable tests, then implement the smallest domain/application code that satisfies those tests.
+
+Coverage target:
+
+- Maintain 90%+ unit test coverage for domain and application layers.
+- Prioritize behavior and branch coverage for entities, value objects, domain services, use cases, and application ports.
+- Do not inflate coverage with shallow tests for generated code, DTO-only files, wiring, or framework glue.
+- Use integration tests for adapters and public boundaries, but do not count them as a substitute for domain/application unit coverage.
+- When coverage drops below 90% in touched domain/application packages, add meaningful unit tests before finishing.
 
 ## Test Structure
 
@@ -60,6 +72,16 @@ tests/orders/application/order_transfer/
 
 **One-Class-One-Test**: Don't create separate test files just because every production type needs a matching test. Test behavior through the smallest meaningful public contract.
 
+**Coverage Theater**: Do not create trivial tests only to raise coverage. Avoid tests that only instantiate structs, call getters, verify constants, cover generated code, or assert framework wiring without behavior.
+
+**Fragile Tests**: Avoid tests coupled to private methods, internal call order, exact timestamps, map iteration order, goroutine scheduling, log text, full error strings, or unrelated implementation details.
+
+**Repeated Assertions**: Do not copy the same assertion set across many tests. Extract a named assertion helper only when the repeated checks represent one stable behavior contract.
+
+**Over-Assertion**: Assert the behavior that matters for the scenario. Do not assert every field of a large response when only one business outcome is relevant.
+
+**Overspecified Mocks**: Do not verify every collaborator call by default. Verify interactions only when the interaction is the observable behavior, such as a command executed, event published, or external port called.
+
 **Domain Entity Testing**: Domain entities and value objects may be tested directly when they own pure invariants, state transitions, or validation rules. Prefer use case tests for workflow orchestration and cross-dependency behavior.
 
 **HTTP Handler Unit Tests**: Do not create mock-heavy handler unit tests when the handler's value is request parsing, status codes, auth/session extraction, and response mapping. Prefer end-to-end or integration tests with real wiring for HTTP contracts.
@@ -69,13 +91,14 @@ tests/orders/application/order_transfer/
 
 ## TDD Workflow
 
-1. **Red**: Write failing test
-2. **Green**: Minimal code to pass
-3. **Refactor**: Clean up
+1. **A-TDD framing**: State the actor-visible behavior and acceptance outcome.
+2. **Red**: Write failing test
+3. **Green**: Minimal code to pass
+4. **Refactor**: Clean up
 
 ## Quality Standards
 
-**Requirements**: ≤150 lines/file, ≤20 lines/function, use `testify/assert`, single assertion concept
+**Requirements**: ≤150 lines/file, ≤20 lines/function, 90%+ domain/application unit coverage, use `testify/assert`, single assertion concept
 **YAGNI**: Test current functionality only, delete unused tests, focus on critical paths, simple setup
 
 ## Test Tags
@@ -195,11 +218,12 @@ func setupEnrollMember(t *testing.T) (*EnrollMemberUseCase, *EnrollMemberTestMoc
 
 ## Quality Gates
 
-All tests pass, ≥80% coverage, no race conditions, static analysis passes
+All tests pass, 90%+ unit coverage for domain/application layers, no race conditions, static analysis passes
 
 ## Best Practices
 
-**Test Design**: TDD (failing test first), test behavior not implementation, descriptive names (ATDD), simple tests
+**Test Design**: A-TDD framing, TDD failing test first, test behavior not implementation, descriptive names, simple tests
+**Suite Quality**: Avoid fragile tests, repeated assertions, trivial coverage-only tests, overspecified mocks, and implementation-detail assertions
 **CQRS Mocks**: One per interface, mock only external dependencies, simple manual mocks, verify interactions
 **Organization**: Group tests by business concern/action (one concern per file), mirror production structure, use test data builders, ≤150 lines
 **File Naming**: Domain-oriented (`quantity_validation_test.go`), NOT type-oriented (`error_cases_test.go`)

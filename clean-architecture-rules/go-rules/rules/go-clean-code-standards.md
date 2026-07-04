@@ -198,7 +198,7 @@ Prefer a named function, value object, mapper, or builder before introducing gen
 ## Static Analysis
 
 **Tools**: `go fmt`, `go vet`, `golangci-lint`, compiler warnings
-**Quality Gates**: All tests pass, ≥80% coverage, no race conditions, static analysis passes
+**Quality Gates**: All tests pass, 90%+ unit coverage for domain/application layers, no race conditions, static analysis passes
 
 ## CQRS Standards
 
@@ -266,10 +266,12 @@ func (p *Processor) ProcessSingle(ctx context.Context, msg Message) error {
 ## Best Practices Summary
 
 ### Test Design
+- **Frame acceptance behavior first**: A-TDD approach from actor outcome to executable tests
 - **Write failing test first**: TDD approach
 - **Test behavior**: Not implementation
-- **Use descriptive names**: Following ATDD pattern
+- **Use descriptive names**: Given-When-Then or project-standard behavior names
 - **Keep tests simple**: One assertion per concept
+- **Protect core coverage**: Maintain 90%+ unit test coverage for domain and application layers
 
 ### CQRS Testing Standards
 - **Command tests**: Verify write operations and side effects

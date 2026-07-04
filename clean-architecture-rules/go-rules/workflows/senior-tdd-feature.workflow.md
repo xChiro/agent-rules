@@ -10,10 +10,12 @@ Use this workflow whenever implementing or changing business behavior.
 ## 1. Read and Frame
 
 - Identify the bounded context, actor, use case, and business outcome.
+- Frame the acceptance outcome with A-TDD before choosing implementation details.
 - Locate the closest existing use case, tests, ports, value objects, and adapters.
 - State which layer owns the rule.
 - Identify whether the change touches I/O, context propagation, concurrency, error mapping, logging, security, or performance.
 - Prefer the simplest explicit design unless an advanced pattern has a current trigger.
+- Preserve or improve 90%+ unit coverage for touched domain/application packages.
 
 ## 2. Red
 
@@ -46,5 +48,6 @@ Use this workflow whenever implementing or changing business behavior.
 - Verify goroutine lifetime, cancellation, and error collection when concurrency was touched.
 - Check file size, naming, and dependency direction.
 - Run targeted tests, then broader tests when adapters or wiring changed.
+- Check domain/application unit coverage for touched packages; add meaningful tests if it is below 90%.
 - Run `go test -race ./...` when shared state or goroutines changed.
 - Summarize behavior added, tests run, and residual risk.

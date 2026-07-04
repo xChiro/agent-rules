@@ -10,6 +10,7 @@ description: Full TDD cycle - Red → Green → Refactor
 
 **Process**:
 - Analyze code before changes
+- Frame acceptance behavior with A-TDD before implementation
 - Write tests before implementation
 - Start with edge cases, then happy paths
 - Never implement without failing tests
@@ -22,6 +23,7 @@ description: Full TDD cycle - Red → Green → Refactor
 - Each method must have one cohesive reason to change
 - Use `testify/assert`
 - Manual mocks only
+- Maintain 90%+ unit coverage for domain/application layers
 - Follow CQRS, YAGNI, Screaming Architecture
 - Follow `go-idiomatic-advanced-practices.md` for context, errors, interfaces, concurrency, generics, and performance
 
@@ -71,7 +73,7 @@ description: Full TDD cycle - Red → Green → Refactor
 - Happy paths are covered
 - Test assertions are correct
 - Mock dependencies are appropriate
-- Tests follow ATDD naming convention
+- Tests follow A-TDD naming convention
 - No fragile test patterns
 
 **User Approval Required**: Wait for user confirmation before proceeding to Green phase
@@ -109,6 +111,7 @@ description: Full TDD cycle - Red → Green → Refactor
 **Verify**:
 - ✅ All tests pass
 - ✅ Edge cases + happy paths covered
+- ✅ Domain/application unit coverage remains 90%+ or improves toward it in touched packages
 - ✅ Architecture boundaries respected
 - ✅ Test build tags match suite type (`integration`, `e2e`, or no tag for unit)
 - ✅ No unused code (YAGNI)
