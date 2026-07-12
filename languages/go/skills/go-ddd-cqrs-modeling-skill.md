@@ -1,0 +1,58 @@
+---
+skill_id: SKILL-GO_DDD_CQRS_MODELING_SKILL
+name: go-ddd-cqrs-modeling
+trigger: always_on
+description: Go DDD, Clean Architecture, CQRS, and value-object modeling skill.
+globs: **/*.go
+---
+
+# Go DDD CQRS Modeling Skill
+
+## SDD Baseline
+
+- Follow `common-sdd-agentic-discipline.md` for every behavior-changing task.
+- Keep specs versioned under `specs/features/<number>-<slug>/` when the project supports SDD artifacts.
+- Apply mandatory Gate 1 before spec writes, Gate 2 before RED, and Gate 3 before Green, even for simple or low-risk changes.
+- Start with BDD Given/When/Then acceptance evidence, then unit-level ATDD-style focused failing test code, then production code.
+- Refactor only with tests green and converge specs, tasks, parallel tracks, traceability, verification notes, and code.
+
+
+Model the business explicitly. Invalid states should be difficult or impossible to create.
+
+## Layer Rules
+
+- Domain is pure: no framework, persistence, transport, env, logger, or queue dependencies.
+- Application owns use cases and consumer-side ports.
+- Infrastructure implements ports and maps between storage/message DTOs and domain/application types.
+- Interfaces/handlers/controllers map transport DTOs and errors.
+- Each external DTO owns its boundary mapping functions in the DTO file/package: persistence DTOs expose `FromDomain`/`ToDomain`, transport DTOs expose request/response conversion, and message DTOs expose event/message conversion. Keep mapping structural and free of I/O or business policy.
+- Dependencies point inward only.
+
+## Value Objects
+
+- Create a value object when a primitive has validation, behavior, formatting, identity semantics, or domain language.
+- Validate in constructors/factories and return explicit errors/exceptions.
+- Keep value objects immutable and comparable by value.
+- Expose a clear primitive conversion (`String`, `Value`, or record property) only when needed by outer layers.
+- Do not allow raw strings/ints to pass deep into use cases when the domain has a named concept.
+
+## Entities and Aggregates
+
+- Entities protect invariants through constructors and methods.
+- Business state transitions happen through named methods, not public field mutation.
+- Keep timestamps, IDs, user/session context, and external data explicit.
+- Emit domain events from business decisions, not from persistence adapters.
+
+## CQRS Ports
+
+- Commands mutate one business concept and return only what the use case needs.
+- Queries return DTOs for read models or domain objects only when behavior needs them.
+- Validation ports answer one business question.
+- One port per behavior; no god repository with unused CRUD methods.
+
+## Error Strategy
+
+- Domain errors describe violated rules.
+- Application wraps technical failures with context and preserves cause.
+- Interface layer maps known domain/application errors to transport status/messages.
+- Infrastructure failures do not become business rules.
