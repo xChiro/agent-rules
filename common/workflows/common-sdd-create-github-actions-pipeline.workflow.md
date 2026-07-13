@@ -6,7 +6,7 @@ description: Create SDD-aligned GitHub Actions pipelines with only unit and HTTP
 
 # Common Create GitHub Actions Pipeline Workflow
 
-Use this workflow to create or change CI/CD. Pipeline behavior is versioned behavior: show the read-only SDD plan and obtain Gate 1 before spec writes, create/evolve BDD acceptance expectations, obtain Gate 2 before RED, obtain Gate 3 after RED evidence, and record validation in `verification.md`.
+Use this workflow to create or change CI/CD. Pipeline behavior is versioned behavior: show the read-only SDD plan and obtain Gate 1 before spec writes, create/evolve BDD acceptance expectations, obtain Gate 2 before RED, obtain Gate 3 after RED evidence, pass `RULE-COMMON_SDD_DOCUMENTATION_GATE` through `WORKFLOW-COMMON_SDD_UPDATE_DOCUMENTATION_WORKFLOW`, and record validation in `verification.md`.
 
 ## Canonical Backend Test Jobs
 
@@ -117,6 +117,8 @@ For SAM/Lambda:
 - Do not replace a service profile with generic placeholders. Generic rules define the contract; the generated repository workflow keeps its concrete commands and paths.
 
 ## Verification
+
+Before reporting the pipeline change complete, invoke `common-sdd-update-documentation.workflow.md` through `RULE-COMMON_SDD_DOCUMENTATION_GATE` to reconcile CI documentation, developer commands, operations/runbooks, the active SDD, and `workflow-routing.md`. If no documentation surface is affected, record the workflow's inspected-surface `no_documentation_change_reason` in `spec.md`, `verification.md`, and `change-summary.md`.
 
 - Validate YAML and action expressions with the repository's existing checker.
 - Confirm PRs cannot deploy or assume cloud roles.

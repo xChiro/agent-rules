@@ -15,3 +15,4 @@ This is a global workflow. Invoke it as `/go-sdd-refactor-code`; do not search f
 - Preserve Go package direction, context propagation, error identity, cancellation, and explicit composition.
 - Run focused unit tests after each inner change and HTTP integration tests after outer-boundary changes.
 - Update tasks, traceability, verification, history, and repository maps when ownership or structure changes.
+- Before completion, pass `RULE-COMMON_SDD_DOCUMENTATION_GATE` through `WORKFLOW-COMMON_SDD_UPDATE_DOCUMENTATION_WORKFLOW`; record changed surfaces or its explicit no-change result.

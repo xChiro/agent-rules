@@ -46,6 +46,7 @@ For each behavior slice:
 9. Add or change adapters, REST/Lambda/messaging boundary, and DI only when required.
 10. Make the HTTP or message-boundary evidence green through real local resources.
 11. Refactor with tests green and converge all spec artifacts.
+12. Pass `RULE-COMMON_SDD_DOCUMENTATION_GATE` by invoking `WORKFLOW-COMMON_SDD_UPDATE_DOCUMENTATION_WORKFLOW` before completion; record affected surfaces or the workflow's explicit no-change result.
 
 Go backends have only unit tests and HTTP integration tests. Do not add direct repository/adapter/handler integration suites.
 
@@ -72,5 +73,6 @@ Go backends have only unit tests and HTTP integration tests. Do not add direct r
 - Run focused unit tests without build tags.
 - Run focused HTTP integration tests with `-tags=integration`.
 - Invoke `common-sdd-coverage-gate.workflow.md` and record `>= 90%` aggregate coverage for the complete project production scope with no affected-scope regression.
+- Invoke `common-sdd-update-documentation.workflow.md` through the common documentation gate after verification and before completion approval.
 - Run race, architecture, coverage, mutation, lint, format, build, or SAM validation gates when touched or required by the spec.
 - Record commands and evidence in `verification.md`.

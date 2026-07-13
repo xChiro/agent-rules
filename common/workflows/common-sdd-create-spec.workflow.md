@@ -23,11 +23,12 @@ Inspect the repository without creating or modifying spec files. Present:
 - Proposed workflow routing: primary workflow for each SDD phase and task, supporting workflow IDs, and the reason each workflow is the most specific applicable procedure.
 - Proposed BDD route: `WORKFLOW-COMMON_BDD_SPECIFICATION_WORKFLOW` for value, conversation, examples, business-language scenarios, executable acceptance evidence, and living documentation.
 - Proposed boundary routes when applicable: `WORKFLOW-COMMON_REST_API_DESIGN_WORKFLOW`, `WORKFLOW-COMMON_AWS_LAMBDA_REST_WORKFLOW`, `WORKFLOW-COMMON_AWS_SNS_PUBLISH_WORKFLOW`, `WORKFLOW-COMMON_AWS_SQS_CONSUMER_WORKFLOW`, and the selected Go/C#/React adapter workflow. Attach each route to the task phase that owns it.
-- Proposed completion route: `WORKFLOW-COMMON_SDD_COMPLETE_SPEC_WORKFLOW`, snapshot path under `specs/context/ai-snapshots/`, and destination `specs/features/completed/<number>-<slug>/`.
-- Proposed mandatory code-quality route: `WORKFLOW-COMMON_SDD_CODE_QUALITY_GATE_WORKFLOW`, with `code-quality-review.md` covering every created or modified file and controlled refactoring when needed.
+- Proposed completion route: `WORKFLOW-COMMON_SDD_COMPLETE_SPEC_WORKFLOW`, snapshot path under `specs/context/ai-snapshots/`, and destination `specs/features/<number>-<slug>-completed/`.
+- Proposed mandatory clean-up route: `WORKFLOW-COMMON_SDD_CLEAN_UP_GATE_WORKFLOW`, with `code-quality-review.md` covering every created or modified file, the strict <150-line source-file check, and controlled Fowler refactoring.
 - Proposed mandatory security route: `WORKFLOW-COMMON_SDD_SECURITY_GATE_WORKFLOW`, with `security_role: oauth-client | resource-server | identity-server | none` and a `security-review.md` artifact.
 - Proposed mandatory coverage route: `WORKFLOW-COMMON_SDD_COVERAGE_GATE_WORKFLOW`; production scopes require a minimum project-wide result of `>= 90%` and no affected-scope regression.
 - Proposed continuity route: `WORKFLOW-COMMON_SDD_CONTEXT_CHECKPOINT_WORKFLOW`, with `handoffs/context-checkpoints/` created automatically if context reaches 60%.
+- Proposed documentation gate: `RULE-COMMON_SDD_DOCUMENTATION_GATE` with a final `documentation` task routed to `WORKFLOW-COMMON_SDD_UPDATE_DOCUMENTATION_WORKFLOW`; list the expected project/SDD documentation surfaces or the evidence-based no-change outcome.
 
 Ask explicitly: may these folders and artifacts be created? Do not continue to Phase 1 without approval.
 
@@ -112,10 +113,10 @@ In `plan.md`, map behavior to implementation strategy:
 - Observability and operational validation.
 - Rollback approach when relevant.
 - Workflow routing: which workflow governs spec creation, implementation, RED review, verification, documentation, and convergence.
-- Completion routing: final approval, move to `specs/features/completed/`, snapshot, and snapshot index update.
+- Completion routing: final approval, rename with the `-completed` suffix, snapshot, and snapshot index update.
 - Coverage routing: command, complete project scope, affected baseline/current scope, expected `>= 90%` threshold, exclusions, and report location.
 - Security routing: declared role, changed trust boundaries, OAuth/OIDC or web-session evidence when applicable, security commands, findings, and exception owner.
-- Code-quality routing: reviewed file manifest, naming/size/ownership checks, Clean Code/SOLID/Clean Architecture/CQRS checks, refactor workflow, and quality evidence.
+- Clean-up routing: reviewed file manifest, naming/size/ownership checks, Clean Code/SOLID/Clean Architecture/CQRS checks, Fowler refactor workflow, and clean-up evidence.
 - Boundary workflow routing: for REST, Lambda, SNS, SQS, and React REST-client work, name the common boundary workflow, language adapter, invocation phase, expected RED/GREEN evidence, and the IaC/contract verification command.
 
 Keep the plan as a strategy, not a code dump.
@@ -208,6 +209,7 @@ In `verification.md`, record:
 - Manual QA needed.
 - Current unverified scope.
 - Current microtask, exact next task, and context checkpoint status.
+- The documentation gate task, workflow ID, expected surfaces, and the condition that blocks completion until the documentation workflow runs or records `no_documentation_change_reason`.
 
 ## Phase 10: History Entry
 
@@ -232,7 +234,7 @@ After all approved folders and files exist, show:
 
 - Files created.
 - Human-readable `change-summary.md` with all planned changes and affected files.
-- Completion workflow, snapshot path, and `specs/features/completed/` destination.
+- Completion workflow, snapshot path, and the `specs/features/<number>-<slug>-completed/` destination.
 - Coverage workflow, command, scope, measured result, threshold, and exclusions.
 - Final User Stories and Given/When/Then scenarios.
 - Sequential and parallel task table with task IDs, track IDs, dependencies, ownership, execution waves, and `max_parallel_agents`.
@@ -259,6 +261,7 @@ The spec is ready for implementation only when:
 - Tasks start with acceptance and unit-level ATDD-style tests.
 - Every production implementation task depends on a prior failing unit-level `TEST-*`.
 - Include a final `documentation` task using `WORKFLOW-COMMON_SDD_UPDATE_DOCUMENTATION_WORKFLOW`, or record `no_documentation_change_reason` in `spec.md` and `verification.md`.
+- Load `RULE-COMMON_SDD_DOCUMENTATION_GATE`; the documentation workflow must run during final convergence before the spec can be reported complete, even when the change appears documentation-free.
 - `parallel-tracks.md` defines maximum concurrent agents and ownership boundaries.
 - Traceability links artifacts, User Stories, requirements, scenarios, tasks, tracks, and tests.
 - Gate 1, Gate 2, and Gate 3 approvals are recorded in `verification.md`.
@@ -266,10 +269,10 @@ The spec is ready for implementation only when:
 - Every task explicitly states whether it is parallelizable and which track owns it.
 - Gate 2 approval was received before creating or running RED tests.
 - Gate 3 approval was received after RED evidence and before editing production code.
-- Documentation was updated through the routed documentation workflow, or `no_documentation_change_reason` is recorded.
+- `RULE-COMMON_SDD_DOCUMENTATION_GATE` passed: `WORKFLOW-COMMON_SDD_UPDATE_DOCUMENTATION_WORKFLOW` was invoked and evidence was recorded, or its surface analysis produced an explicit `no_documentation_change_reason` in `spec.md`, `verification.md`, and `change-summary.md`.
 - Every phase and task has a primary `workflow_id`; supporting workflows are explicit when needed.
-- Completion uses `WORKFLOW-COMMON_SDD_COMPLETE_SPEC_WORKFLOW`; spec creation alone does not move the feature to `specs/features/completed/`.
+- Completion uses `WORKFLOW-COMMON_SDD_COMPLETE_SPEC_WORKFLOW`; spec creation alone does not add the `-completed` suffix.
 - Completion is blocked until `WORKFLOW-COMMON_SDD_COVERAGE_GATE_WORKFLOW` records its final result; production scopes must record `>= 90%` coverage and docs-only specs must record `coverage_scope: none`.
 - If context reaches 60%, completion of the current AI turn is blocked until `WORKFLOW-COMMON_SDD_CONTEXT_CHECKPOINT_WORKFLOW` leaves an append-only handoff and an explicit resume action in the active spec.
 - Completion is blocked until `WORKFLOW-COMMON_SDD_SECURITY_GATE_WORKFLOW` records a passed review with no unresolved findings.
-- Completion is blocked until `WORKFLOW-COMMON_SDD_CODE_QUALITY_GATE_WORKFLOW` records a passed review for every created/modified file.
+- Completion is blocked until `WORKFLOW-COMMON_SDD_CLEAN_UP_GATE_WORKFLOW` records a passed review for every created/modified file and confirms every in-scope code file is below 150 physical lines.

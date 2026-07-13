@@ -1,35 +1,32 @@
 ---
 rule_id: RULE-COMMON_CODE_QUALITY_GUARDRAILS
-trigger: code_quality_review
-description: Cross-language Clean Code, naming, file-size, complexity, duplication, SOLID, Clean Architecture, CQRS, and refactoring guardrails.
+trigger: clean_up_gate
+description: Cross-language Clean Code, naming, strict source-file size, complexity, duplication, SOLID, Clean Architecture, CQRS, and Fowler refactoring guardrails.
 ---
 
-# Common Code Quality Guardrails
+# Common Clean Up Guardrails
 
-Load this rule for the final code-quality gate. The gate reviews every file created or modified by the SDD spec, including production code, tests, contracts, configuration, CI, documentation, and generated artifacts. The language rules and repository conventions remain authoritative when they are stricter.
+Load this rule for the final clean-up gate. The gate reviews every file created or modified by the SDD spec, including production code, tests, contracts, configuration, CI, documentation, and generated artifacts. The language rules and repository conventions remain authoritative when they are stricter.
 
 ## Review Scope And Exceptions
 
 - Determine the exact baseline commit and changed file set from the spec, `change-summary.md`, and Git diff. Do not silently review only the files that are convenient.
 - Review all created files and every modified file that belongs to the spec. Review adjacent files only when needed to prove a dependency, naming, ownership, or architecture violation.
-- Exclude generated, vendor, third-party, and formatter-owned files only when the repository identifies them and the exclusion is recorded in `code-quality-review.md`.
+- Exclude generated, vendor, third-party, and formatter-owned files only when the repository identifies them and the exclusion is recorded in `code-quality-review.md`. Source, test, configuration, CI, and script files have no size exception.
 - A quality exception needs a reason, owner, expiry or follow-up spec, and explicit human approval. The agent cannot approve an exception for its own change.
 - Do not use line counts as a reason for mechanical micro-splitting. A split must improve naming, ownership, testability, or boundary clarity.
 
 ## File And Function Limits
 
-Use native repository metrics when available. Otherwise use these review thresholds for newly created or materially changed source files:
+Use native repository metrics when available. Otherwise count physical lines with `wc -l` (including blank and comment lines) for every newly created or materially changed source, test, configuration, CI, and script file:
 
 | Surface | Target | Mandatory review threshold |
 |---|---:|---:|
-| Domain/application/CQRS production file | <= 150 lines | > 200 lines |
-| Infrastructure/adapter/REST/Lambda production file | <= 150 lines | > 250 lines |
-| React/Web component, hook, or page file | <= 200 lines | > 300 lines |
-| Test file | <= 250 lines | > 400 lines |
+| Any in-scope source, test, configuration, CI, or script file | < 150 lines | >= 150 lines |
 | Function/method/handler | <= 20 lines | > 30 lines |
 | Type/class/component responsibility | one primary responsibility | multiple unrelated actors or reasons to change |
 
-The mandatory threshold means the gate must produce a finding and either refactor, document a justified exception, or block completion. It is not permission to ignore a smaller file that violates SRP, naming, dependency direction, or readability. Generated files and intentionally declarative schemas use a documented exception rather than being split mechanically.
+The mandatory threshold means the gate must produce a blocker finding and refactor the file before completion. A source file with exactly 150 lines fails because the requirement is fewer than 150 lines. Do not satisfy the limit with blind micro-splitting: each extracted file must improve naming, ownership, testability, or boundary clarity. Generated, vendor, third-party, binary, and formatter-owned files may be excluded only with a documented path, reason, owner, and human approval.
 
 ## Naming And File Ownership
 
@@ -68,7 +65,7 @@ The mandatory threshold means the gate must produce a finding and either refacto
 - Prefer CRAP <= 8 for modified high-risk functions when the repository supports CRAP measurement. A high score requires meaningful tests, reduced branching, or both.
 - Do not use coverage padding to pass this gate. The mandatory >=90% coverage gate remains separate and must be rerun after any refactor.
 - Tests should assert observable behavior, edge partitions, authorization, errors, state transitions, events, projections, HTTP responses, or UI outcomes. Avoid private internals and brittle call-order assertions.
-- Refactor only with relevant tests green. If behavior or a public contract changes, stop the quality gate and return to SDD spec evolution.
+- Refactor only with relevant tests green. If behavior or a public contract changes, stop the clean-up gate and return to SDD spec evolution.
 
 ## Conditional Complexity And Fowler Refactoring
 
@@ -92,7 +89,7 @@ Reference: Martin Fowler's `Refactoring` uses small behavior-preserving transfor
 
 ## Refactoring Rule
 
-The quality gate may identify and schedule refactoring, but the actual edit follows `common-sdd-refactor-lifecycle.workflow.md` and the language refactor adapter. Before production refactoring:
+The clean-up gate must identify and complete the required refactoring; a findings-only review does not pass. The actual edit follows `common-sdd-refactor-lifecycle.workflow.md` and the language refactor adapter. Before production refactoring:
 
 1. Protect current behavior with existing characterization or unit/HTTP/component tests.
 2. Ask for the refactor workflow approvals required by the repository's SDD gates.
@@ -100,4 +97,4 @@ The quality gate may identify and schedule refactoring, but the actual edit foll
 4. Run focused tests after each change, then all affected tests and gates.
 5. Update the spec, task, traceability, history, documentation, and review report.
 
-Never change acceptance expectations, business behavior, public contracts, or security policy under the label of code quality.
+Never change acceptance expectations, business behavior, public contracts, or security policy under the label of clean up.

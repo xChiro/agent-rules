@@ -24,11 +24,12 @@ Every behavior-changing task follows this order. Risk classification selects add
 8. **Green**: implement only enough production code to pass the current failing test and record the result in `red-green-refactor.md`.
 9. **Refactor**: improve structure only with tests green and without changing behavior; record the refactor evidence.
 10. **Verify**: run targeted unit tests, backend HTTP integration or frontend interaction tests, required critical E2E/mutation checks, architecture checks, and quality gates.
-11. **Code Quality Gate**: invoke `common-sdd-code-quality-gate.workflow.md`, review every created/modified file, and perform required behavior-preserving refactors through the refactor lifecycle.
-12. **Security Gate**: invoke `common-sdd-security-gate.workflow.md`, review the changed trust boundaries and identity role, and prove no unresolved security findings remain.
-13. **Coverage Gate**: invoke `common-sdd-coverage-gate.workflow.md` for every completed spec and prove at least 90% aggregate coverage across the complete project production scope when production code is in scope, with no affected-scope regression.
-14. **Converge**: invoke the documentation workflow when documentation surfaces are affected, then update spec, plan, tasks, contracts, docs, code-quality review, security review, and verification notes so they match the final code and tests.
-15. **Complete**: after final verification and human approval, invoke `common-sdd-complete-spec.workflow.md` to mark the spec completed, create the AI snapshot, update the index, and move the feature folder to `specs/features/completed/<number>-<slug>/`.
+11. **Documentation Gate**: invoke `common-sdd-update-documentation.workflow.md` for every SDD change through `RULE-COMMON_SDD_DOCUMENTATION_GATE`; record the updated surfaces or the explicit no-change outcome before final gates.
+12. **Clean Up Gate**: invoke `common-sdd-clean-up-gate.workflow.md`, review every created/modified file, and perform all required behavior-preserving refactors through the refactor lifecycle.
+13. **Security Gate**: invoke `common-sdd-security-gate.workflow.md`, review the changed trust boundaries and identity role, and prove no unresolved security findings remain.
+14. **Coverage Gate**: invoke `common-sdd-coverage-gate.workflow.md` for every completed spec and prove at least 90% aggregate coverage across the complete project production scope when production code is in scope, with no affected-scope regression.
+15. **Converge**: update spec, plan, tasks, contracts, docs, clean-up evidence, security review, and verification notes so they match the final code and tests.
+16. **Complete**: after final verification and human approval, invoke `common-sdd-complete-spec.workflow.md` to mark the spec completed, create the AI snapshot, update the index, and rename the feature folder to `specs/features/<number>-<slug>-completed/`.
 For a reported defect, invoke `common-sdd-fix-bug.workflow.md` before this lifecycle. Reproduce and classify it as a production, spec-contract, test/harness, flaky, HTTP/local-resource, or duplicate/non-reproducible defect. Never weaken the acceptance contract or rewrite a completed spec's history to make the defect disappear.
 
 If a repository has no acceptance harness yet, use the closest executable boundary: backend HTTP integration test, frontend component/page interaction test, CLI smoke test, or documented manual QA checklist with clear pass/fail evidence.
@@ -51,13 +52,13 @@ For product behavior, maintain or create:
 - Functional requirements, out-of-scope, edge cases, and success criteria derived from the stories.
 - A technical plan that maps behavior to boundaries, contracts, data, observability, and risks.
 - A final `security-review.md` artifact and `WORKFLOW-COMMON_SDD_SECURITY_GATE_WORKFLOW` evidence, including `security_role: none` when security impact is unchanged.
-- A final `code-quality-review.md` artifact and `WORKFLOW-COMMON_SDD_CODE_QUALITY_GATE_WORKFLOW` evidence for every created or modified file.
+- A final `code-quality-review.md` artifact and `WORKFLOW-COMMON_SDD_CLEAN_UP_GATE_WORKFLOW` evidence for every created or modified file.
 - A `red-green-refactor.md` artifact using `common/templates/red-green-refactor-report.md` for every production behavior change, with one append-only cycle per behavior partition.
 - Role handoffs under `handoffs/` for multi-agent work, using `common-agent-roles-and-handoffs.md`.
 - A context checkpoint under `handoffs/context-checkpoints/` whenever the AI context reaches the 60% pause threshold, using `common/templates/context-handoff.md`.
 - A `workflow-routing.md` artifact that selects the primary and supporting workflow for every SDD phase and task.
 - A documentation task using `WORKFLOW-COMMON_SDD_UPDATE_DOCUMENTATION_WORKFLOW`, or an explicit `no_documentation_change_reason` in the spec when no documentation surface is affected.
-- A completion route using `WORKFLOW-COMMON_SDD_COMPLETE_SPEC_WORKFLOW` for verified features, including the completed catalog move and AI snapshot.
+- A completion route using `WORKFLOW-COMMON_SDD_COMPLETE_SPEC_WORKFLOW` for verified features, including the `-completed` suffix and AI snapshot.
 - A `spec-adjustment-request` using `common/templates/spec-adjustment-request.md` whenever new evidence changes the approved plan or intent.
 - Tasks that reference User Stories, requirements, scenarios, tracks, test IDs, artifact IDs, execution waves, and agent slots.
 - Every task explicitly declares a primary `workflow_id` and `workflow_phase`; supporting workflow IDs are explicit when needed.
@@ -142,7 +143,7 @@ Instructions are not enough. Critical policies should have executable checks whe
 - Coverage thresholds for touched critical code.
 - Mandatory final coverage gate at or above 90% for the complete project production scope when production code is in scope, with no affected-scope regression.
 - Mandatory final security gate with no unresolved Critical/High findings and explicit handling of lower-severity exceptions.
-- Mandatory final code-quality gate for names, file/function limits, ownership, Clean Code, SOLID, Clean Architecture, CQRS, duplication, complexity, and refactoring evidence.
+- Mandatory final clean-up gate for names, ownership, Clean Code, SOLID, Clean Architecture, CQRS, duplication, complexity, Fowler refactoring evidence, and the strict <150-line source-file limit.
 - CRAP/complexity checks when the ecosystem supports them.
 - Risk-based mutation and critical-E2E gates are routed through the common mutation and critical-E2E workflows.
 - Automated SDD/PR structural validation runs through `tools/validate-sdd-change.sh` when the repository uses this catalog.
@@ -183,6 +184,10 @@ Ask a direct question requesting approval to begin the RED phase. Before approva
 
 After the acceptance/public-boundary test and focused unit-level test have been created and run, invoke `common-sdd-review-test-evidence.workflow.md`.
 
+## Mandatory Documentation Gate
+
+Load `common-sdd-documentation-gate.md` for every SDD workflow. The documentation gate is mandatory for spec creation, evolution, bug fixes, refactors, implementation changes, pipeline changes, and completion. Route a traceable `documentation` task to `WORKFLOW-COMMON_SDD_UPDATE_DOCUMENTATION_WORKFLOW` after verification and before clean-up, security, coverage, or completion approval. If no project documentation surface is affected, invoke the workflow's surface analysis and record `no_documentation_change_reason` in `spec.md`, `verification.md`, and `change-summary.md`; never skip the workflow silently.
+
 Show:
 
 - Test IDs, files, Given/When/Then intent, commands, and concise RED output.
@@ -192,4 +197,4 @@ Show:
 
 Ask a direct question requesting approval to edit production code and continue to Green. If the tests are rejected, modify only the authorized spec/test artifacts, rerun RED, and ask again. Record the decision and evidence in `verification.md`.
 
-No production code may be created, modified, or refactored before Gate 3. The first three gates may not be skipped because a change appears simple, low risk, mechanical, or unambiguous. After implementation, quality, security, coverage, documentation, and convergence, Gate 4 must approve completion, snapshot creation, and the move to `specs/features/completed/<number>-<slug>/`. If implementation or discovery later changes intent, pause, analyze the adjustment, obtain approval through `common-sdd-evolve-spec.workflow.md`, then return to Gate 1 and repeat Gate 2 and Gate 3 before resuming.
+No production code may be created, modified, or refactored before Gate 3. The first three gates may not be skipped because a change appears simple, low risk, mechanical, or unambiguous. After implementation, quality, security, coverage, documentation, and convergence, Gate 4 must approve completion, snapshot creation, and the rename to `specs/features/<number>-<slug>-completed/`. If implementation or discovery later changes intent, pause, analyze the adjustment, obtain approval through `common-sdd-evolve-spec.workflow.md`, then return to Gate 1 and repeat Gate 2 and Gate 3 before resuming.

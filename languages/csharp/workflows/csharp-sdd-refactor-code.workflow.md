@@ -15,3 +15,4 @@ This is a global workflow. Invoke it as `/csharp-sdd-refactor-code`; do not sear
 - Preserve Clean Architecture dependency direction, CQRS separation, cancellation, exception identity, and explicit composition.
 - Run focused unit tests after each inner change and HTTP integration tests after outer-boundary changes.
 - Update tasks, traceability, verification, history, and repository maps when ownership or structure changes.
+- Before completion, pass `RULE-COMMON_SDD_DOCUMENTATION_GATE` through `WORKFLOW-COMMON_SDD_UPDATE_DOCUMENTATION_WORKFLOW`; record changed surfaces or its explicit no-change result.

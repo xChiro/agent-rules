@@ -51,12 +51,12 @@ specs/
 │   │   └── history/
 │   │       ├── 2026-07-10-created.md
 │   │       └── 2026-07-12-command-broadcast-change.md
-│   └── completed/
+│   └── 0001-squad-radio-completed/
 └── archive/
     └── 0000-retired-feature/
 ```
 
-Use `specs/features/<number>-<slug>/` for active feature specs. After Gate 4 approval, move verified features with Git to `specs/features/completed/<number>-<slug>/`. Use `archive/` only when a feature is retired, obsolete, or no longer drives implementation. Keep AI snapshots under `specs/context/ai-snapshots/`.
+Use `specs/features/<number>-<slug>/` for active feature specs. After Gate 4 approval, rename verified features with Git to `specs/features/<number>-<slug>-completed/`. Use `archive/` only when a feature is retired, obsolete, or no longer drives implementation. Keep AI snapshots under `specs/context/ai-snapshots/`.
 
 ## Spec And Artifact IDs
 
@@ -136,6 +136,10 @@ skill_id: SKILL-<SCOPE>_<NAME>_SKILL
 ```
 
 Reference these IDs when a spec, history entry, or repository decision depends on a specific rule, workflow, or skill. Do not rely only on filename prose for durable traceability.
+
+## Documentation Gate
+
+Every SDD spec includes a traceable documentation task governed by `RULE-COMMON_SDD_DOCUMENTATION_GATE` and `WORKFLOW-COMMON_SDD_UPDATE_DOCUMENTATION_WORKFLOW`. This applies to spec creation, evolution, bug fixes, refactors, implementation changes, pipeline changes, and completion. The task records the affected project/SDD documentation surfaces and verification evidence; when no project documentation surface is affected, it records `no_documentation_change_reason` in `spec.md`, `verification.md`, and `change-summary.md` after the workflow's surface analysis.
 
 ## Feature Spec Files
 
@@ -247,7 +251,7 @@ Rules:
 
 Completion is separate from spec creation. A feature remains under `specs/features/<number>-<slug>/` while it is active. After implementation and Converge pass, invoke `WORKFLOW-COMMON_SDD_COMPLETE_SPEC_WORKFLOW`.
 
-That workflow first runs `WORKFLOW-COMMON_SDD_CODE_QUALITY_GATE_WORKFLOW` and requires a passed `code-quality-review.md` for every created or modified file. It then runs `WORKFLOW-COMMON_SDD_SECURITY_GATE_WORKFLOW`, any required mutation/critical-E2E gate, and the mandatory `WORKFLOW-COMMON_SDD_COVERAGE_GATE_WORKFLOW` with `>= 90%` project coverage and no affected-scope regression when production code is in scope. After all required gates pass, it obtains final human completion approval, updates `change-summary.md` to `status: verified`, moves the folder to `specs/features/completed/<number>-<slug>/`, and creates an AI context snapshot at:
+That workflow first runs `WORKFLOW-COMMON_SDD_CLEAN_UP_GATE_WORKFLOW` and requires a passed `code-quality-review.md` for every created or modified file, including confirmation that every in-scope code file is below 150 physical lines. It then runs `WORKFLOW-COMMON_SDD_SECURITY_GATE_WORKFLOW`, any required mutation/critical-E2E gate, and the mandatory `WORKFLOW-COMMON_SDD_COVERAGE_GATE_WORKFLOW` with `>= 90%` project coverage and no affected-scope regression when production code is in scope. After all required gates pass, it obtains final human completion approval, updates `change-summary.md` to `status: verified`, renames the folder to `specs/features/<number>-<slug>-completed/`, and creates an AI context snapshot at:
 
 ```text
 specs/context/ai-snapshots/YYYY-MM-DD-<feature-slug>-snapshot.md
@@ -382,9 +386,9 @@ phases:
   - phase: test-evidence-review
     workflow_id: WORKFLOW-COMMON_SDD_REVIEW_TEST_EVIDENCE_WORKFLOW
     reason: Review acceptance and unit RED before Green.
-  - phase: code-quality-gate
-    workflow_id: WORKFLOW-COMMON_SDD_CODE_QUALITY_GATE_WORKFLOW
-    reason: Review all changed files and perform controlled behavior-preserving refactors before final security and coverage gates.
+  - phase: clean-up-gate
+    workflow_id: WORKFLOW-COMMON_SDD_CLEAN_UP_GATE_WORKFLOW
+    reason: Review all changed files, complete required Fowler refactors, and confirm the strict <150-line source-file limit before final security and coverage gates.
   - phase: security-gate
     workflow_id: WORKFLOW-COMMON_SDD_SECURITY_GATE_WORKFLOW
     reason: Review changed trust boundaries, identity, secrets, web sessions, and security evidence before completion approval.
@@ -408,7 +412,7 @@ phases:
     reason: Reconcile project and SDD documentation.
   - phase: complete
     workflow_id: WORKFLOW-COMMON_SDD_COMPLETE_SPEC_WORKFLOW
-    reason: Verify, snapshot, index, and move the feature under the completed catalog.
+    reason: Verify, snapshot, index, and add the `-completed` suffix to the feature folder.
 tasks:
   - task_id: T-0001-001
     workflow_id: WORKFLOW-GO_SDD_IMPLEMENT_CHANGE_WORKFLOW
@@ -432,11 +436,12 @@ Use these routing rules:
 - CI/PR structural validation: `WORKFLOW-COMMON_SDD_VALIDATE_CHANGE_WORKFLOW` through the `sdd-policy` check.
 - Context continuity: `WORKFLOW-COMMON_SDD_CONTEXT_CHECKPOINT_WORKFLOW` at 60% consumed context or a compaction warning.
 - Final security review: `WORKFLOW-COMMON_SDD_SECURITY_GATE_WORKFLOW`, mandatory before Gate 4 even when the scope is recorded as `security_role: none`.
-- Final code quality: `WORKFLOW-COMMON_SDD_CODE_QUALITY_GATE_WORKFLOW`, mandatory for every completed spec and before security/coverage re-verification.
+- Final clean up: `WORKFLOW-COMMON_SDD_CLEAN_UP_GATE_WORKFLOW`, mandatory for every completed spec and before security/coverage re-verification.
 - HTTP infrastructure setup/evidence: the language implementation workflow with `common-http-integration-harness.md` as a supporting rule.
 - GitHub Actions: `WORKFLOW-COMMON_SDD_CREATE_GITHUB_ACTIONS_PIPELINE_WORKFLOW` plus the applicable language/service profile.
 - Documentation: `WORKFLOW-COMMON_SDD_UPDATE_DOCUMENTATION_WORKFLOW`.
-- Completion, snapshot, and move to `specs/features/completed/`: `WORKFLOW-COMMON_SDD_COMPLETE_SPEC_WORKFLOW`.
+- Documentation gate: `RULE-COMMON_SDD_DOCUMENTATION_GATE` requires the documentation workflow before final quality, security, coverage, or completion approval.
+- Completion, snapshot, and rename with the `-completed` suffix: `WORKFLOW-COMMON_SDD_COMPLETE_SPEC_WORKFLOW`.
 
 Do not infer a workflow from a file path. Use the stable `workflow_id` and record why it is the most specific applicable procedure.
 
@@ -650,7 +655,7 @@ workflows:
   test-evidence-review:
     workflow_id: WORKFLOW-COMMON_SDD_REVIEW_TEST_EVIDENCE_WORKFLOW
   code-quality-gate:
-    workflow_id: WORKFLOW-COMMON_SDD_CODE_QUALITY_GATE_WORKFLOW
+    workflow_id: WORKFLOW-COMMON_SDD_CLEAN_UP_GATE_WORKFLOW
   security-gate:
     workflow_id: WORKFLOW-COMMON_SDD_SECURITY_GATE_WORKFLOW
   coverage-gate:
@@ -676,9 +681,10 @@ Before reporting done:
 - Every task points to a primary `workflow_id`; supporting workflows are explicit when needed.
 - Every completed spec records `WORKFLOW-COMMON_SDD_COVERAGE_GATE_WORKFLOW`; specs with production code record `>= 90%` project-wide coverage and affected-scope non-regression in `verification.md` and `change-summary.md`, while docs-only specs record `coverage_scope: none` and proof that no production files changed.
 - Every completed spec records `WORKFLOW-COMMON_SDD_SECURITY_GATE_WORKFLOW` and a `security-review.md` decision in `verification.md` and `change-summary.md`.
-- Every completed spec records `WORKFLOW-COMMON_SDD_CODE_QUALITY_GATE_WORKFLOW` and a `code-quality-review.md` decision in `verification.md` and `change-summary.md`.
+- Every completed spec records `WORKFLOW-COMMON_SDD_CLEAN_UP_GATE_WORKFLOW` and a `code-quality-review.md` decision in `verification.md` and `change-summary.md`.
 - Documentation changes are complete, or the spec records `no_documentation_change_reason`.
-- A completed feature has a completion approval, a folder under `specs/features/completed/<number>-<slug>/`, an AI snapshot, and an index entry.
+- The documentation gate outcome is recorded in `change-summary.md`, including the inspected surfaces and evidence for any `no_documentation_change_reason`.
+- A completed feature has a completion approval, a folder named `specs/features/<number>-<slug>-completed/`, an AI snapshot, and an index entry.
 - Any implementation change that alters behavior must update the spec and history.
 - Any refactor that changes structure or boundaries must update plan, architecture notes, repository map, or decisions as needed.
 - Any discovery-driven adjustment has an approved adjustment record, append-only history entry, synchronized artifacts, and the required gate reset; no proposed adjustment remains unresolved at completion.

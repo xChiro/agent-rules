@@ -36,6 +36,7 @@ Before modifying any existing spec artifact, show:
 - Architecture, contract, data, test, and quality-gate impact.
 - Tasks becoming sequential or parallel, including `track_id`, dependencies, ownership, `can_run_with`, execution waves, merge order, and proposed `max_parallel_agents`.
 - Proposed workflow routing: primary workflow for each phase/task, supporting workflow IDs, and the reason for each selection.
+- Proposed documentation gate: `RULE-COMMON_SDD_DOCUMENTATION_GATE` and a `documentation` task routed to `WORKFLOW-COMMON_SDD_UPDATE_DOCUMENTATION_WORKFLOW`, including affected project/SDD documentation surfaces or the evidence needed for an explicit no-change outcome.
 - If this is a discovery-driven adjustment: the `spec-adjustment-request` artifact, evidence, impact analysis, affected IDs/files, alternatives, approval status, and gate reset.
 
 Ask explicitly for approval to modify those spec artifacts. Do not write the history entry or any other spec file until approval.
@@ -166,10 +167,11 @@ Run checks that match the changed surface:
 - CRAP/complexity where available.
 - Mutation testing or mutation review for high-risk rules.
 - Security/performance/observability checks when specified.
-- Mandatory `WORKFLOW-COMMON_SDD_CODE_QUALITY_GATE_WORKFLOW` for every created/modified file, with required refactors completed through the refactor lifecycle before security and coverage completion gates.
+- Mandatory `WORKFLOW-COMMON_SDD_CLEAN_UP_GATE_WORKFLOW` for every created/modified file, with required refactors completed through the refactor lifecycle before security and coverage completion gates.
 - Mandatory `WORKFLOW-COMMON_SDD_SECURITY_GATE_WORKFLOW` with a declared security role, changed-boundary review, and no unresolved findings before completion.
 - Mandatory `WORKFLOW-COMMON_SDD_COVERAGE_GATE_WORKFLOW` with `>= 90%` project-wide production coverage and no affected-scope regression after quality and security review when production code is in scope.
 - `WORKFLOW-COMMON_SDD_CONTEXT_CHECKPOINT_WORKFLOW` when the context threshold or compaction warning applies.
+- Mandatory `RULE-COMMON_SDD_DOCUMENTATION_GATE`: invoke `WORKFLOW-COMMON_SDD_UPDATE_DOCUMENTATION_WORKFLOW` after the evolved behavior is verified and before final quality/security/coverage/completion approval.
 
 Record results in `verification.md`.
 
@@ -185,8 +187,8 @@ Before reporting done:
 - `plan.md` reflects architecture actually used.
 - `spec.md` and `acceptance.feature` match implemented behavior.
 - Any docs or repository maps affected by structure changes are updated.
-- A documentation task used `WORKFLOW-COMMON_SDD_UPDATE_DOCUMENTATION_WORKFLOW`, or `no_documentation_change_reason` is recorded in `spec.md` and `verification.md`.
-- Code-quality review was executed and recorded in `code-quality-review.md`, `verification.md`, and `change-summary.md` before completion.
+- The documentation gate was executed through `WORKFLOW-COMMON_SDD_UPDATE_DOCUMENTATION_WORKFLOW`; if its surface analysis finds no affected project documentation, record `no_documentation_change_reason` in `spec.md`, `verification.md`, and `change-summary.md`.
+- Clean-up was executed and recorded in `code-quality-review.md`, `verification.md`, and `change-summary.md` before completion.
 - Security review was executed and recorded in `security-review.md`, `verification.md`, and `change-summary.md` before completion.
 - Coverage was executed for every completion and recorded at `>= 90%` when production code is in scope, or `coverage_scope: none` for docs-only specs.
 - If a context handoff occurred, its checkpoint path and exact resume action are recorded in the active spec.
@@ -213,4 +215,4 @@ The change is done only when:
 - Gate 2 approved starting RED before test code was created, modified, or run.
 - Gate 3 approved the actual RED evidence before production code was created or modified.
 - Discovery-driven changes received the required re-approval and gate reset before continuation.
-- Documentation tasks use `WORKFLOW-COMMON_SDD_UPDATE_DOCUMENTATION_WORKFLOW` and update the affected SDD/project documentation before convergence is reported.
+- `RULE-COMMON_SDD_DOCUMENTATION_GATE` passed before convergence: the documentation workflow result and changed surfaces are recorded, or the workflow's explicit no-change result is recorded with its inspected surfaces and evidence.

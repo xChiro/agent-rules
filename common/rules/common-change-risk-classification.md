@@ -20,7 +20,7 @@ Required for a catalog/documentation-only change with no executable behavior cha
 - `git diff --check`;
 - shell/YAML/JSON syntax checks when those files change.
 
-No product acceptance, unit, HTTP, E2E, mutation, or coverage gate is required for the L0 change itself unless executable behavior changes. If the change belongs to a completed SDD spec, the mandatory final security, code-quality, and coverage gates still apply; docs-only completion records `coverage_scope: none`.
+No product acceptance, unit, HTTP, E2E, mutation, or coverage gate is required for the L0 change itself unless executable behavior changes. If the change belongs to a completed SDD spec, the mandatory final security, clean-up, and coverage gates still apply; docs-only completion records `coverage_scope: none`.
 
 ### L1 — Low-Risk Local Behavior
 

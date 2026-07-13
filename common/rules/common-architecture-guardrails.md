@@ -51,7 +51,7 @@ Use this rule after `common-sdd-agentic-discipline.md`, `common-sdd-spec-structu
 - Every completed spec runs `common-sdd-coverage-gate.workflow.md`; when production code is in scope it requires `>= 90%` aggregate coverage across the complete project production scope, with no affected-scope regression.
 - L2 non-trivial logic and every L3 change run `common-sdd-mutation-gate.workflow.md`; L3 critical journeys run `common-sdd-critical-e2e.workflow.md`.
 - Every completed spec runs `common-sdd-security-gate.workflow.md` and records `security-review.md`, including a no-impact review when `security_role: none`.
-- Every completed spec runs `common-sdd-code-quality-gate.workflow.md` and records `code-quality-review.md` for every created or modified file.
+- Every completed spec runs `common-sdd-clean-up-gate.workflow.md` and records `code-quality-review.md` for every created or modified file.
 - Unit tests cover domain/application rules and run without external infrastructure.
 - HTTP integration tests enter through the real server or API Gateway/Lambda HTTP boundary and cover routing, auth/session context, validation, response mapping, DI, persistence, schema, and local-resource wiring.
 - Apply `common/rules/common-http-integration-harness.md` for resource setup, readiness, isolation, cleanup, diagnostics, and public-boundary evidence.
@@ -92,7 +92,7 @@ Use this rule after `common-sdd-agentic-discipline.md`, `common-sdd-spec-structu
 - Load `common-sdd-spec-structure.md` when creating or changing specs.
 - Load `common-workflow-taxonomy.md` when creating, renaming, or reviewing rules, skills, workflows, or style artifact IDs.
 - Load `common-security-and-identity.md` and `common-sdd-security-gate.workflow.md` for every security, identity, cookie, secret, REST auth, browser session, CI credential, or public exposure change.
-- Load `common-code-quality-guardrails.md` and `common-sdd-code-quality-gate.workflow.md` for final naming, file-size, Clean Code, architecture, complexity, duplication, or refactor review.
+- Load `common-code-quality-guardrails.md` and `common-sdd-clean-up-gate.workflow.md` for final naming, file-size, Clean Code, architecture, complexity, duplication, or refactor review.
 - Load `common-test-assertion-structure.md` for every unit, HTTP integration, component, or acceptance-support test change.
 - Load `common-context-continuity.md` for multi-step work, long investigations, or any task approaching the context checkpoint threshold.
 - Load this file for cross-language architecture or review work.

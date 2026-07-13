@@ -6,11 +6,12 @@ description: Create or update project, SDD, architecture, testing, AI-context, a
 
 # Common SDD Update Documentation Workflow
 
-Use this workflow for every `documentation` task selected in `workflow-routing.md`. It keeps documentation synchronized with the approved spec, verified tests, code, architecture, and operational behavior. It replaces the former language-specific documentation-update workflows.
+Use this workflow for every `documentation` task selected in `workflow-routing.md` and every invocation of `RULE-COMMON_SDD_DOCUMENTATION_GATE`. It keeps documentation synchronized with the approved spec, verified tests, code, architecture, and operational behavior. It replaces the former language-specific documentation-update workflows.
 
 ## Preconditions
 
 - The owning spec and `workflow-routing.md` identify this workflow for the task.
+- `RULE-COMMON_SDD_DOCUMENTATION_GATE` is loaded for the owning SDD lifecycle.
 - The relevant behavior or structural change has been verified, or the task is explicitly documentation-only.
 - The documentation task has a `T-*` ID, `ART-*` ownership, `workflow_id`, track, dependencies, and done conditions.
 - Do not overwrite append-only history entries. Add a new history entry for changed intent or architecture.
@@ -25,7 +26,7 @@ Record the actual paths and commands. Do not document files, commands, endpoints
 
 Update only the surfaces affected by the task:
 
-- SDD artifacts: `spec.md`, `change-summary.md`, `plan.md`, `code-quality-review.md`, `security-review.md`, `tasks.md`, `workflow-routing.md`, `traceability.yaml`, `verification.md`, and append-only `history/`.
+- SDD artifacts: `spec.md`, `change-summary.md`, `plan.md`, `code-quality-review.md`, `security-review.md`, `tasks.md`, `workflow-routing.md`, `traceability.yaml`, `verification.md`, and append-only `history/`. Clean-up evidence must include the <150-line source-file result when code is in scope.
 - Architecture: domain model, Clean Architecture boundaries, CQRS commands/queries, dependency direction, repository map, and ADRs.
 - Developer guide: setup, local dependencies, commands, configuration, use cases, REST/Lambda contracts, persistence, messaging, and file organization.
 - AI context: stable project purpose, current architecture, key files, constraints, and known non-goals.

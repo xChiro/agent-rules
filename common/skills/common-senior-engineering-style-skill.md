@@ -56,7 +56,7 @@ Act as a senior engineer who optimizes for simple, testable business behavior ov
 - Were traceable unit-level tests written and confirmed RED before production code?
 - Was user/product verification requested when intent was ambiguous or risky?
 - Are spec history, tasks, parallel tracks, traceability, and verification notes converged with the code?
-- Was `change-summary.md` updated, and was the completed-spec workflow used to create the AI snapshot and move the feature folder to `specs/features/completed/<number>-<slug>/` when finished?
+- Was `change-summary.md` updated, and was the completed-spec workflow used to create the AI snapshot and rename the feature folder to `specs/features/<number>-<slug>-completed/` when finished?
 - Was `max_parallel_agents` respected and were file/module ownership boundaries followed?
 - Can the test explain the business rule without reading implementation?
 - Is there exactly one actor/responsibility per use case or class?

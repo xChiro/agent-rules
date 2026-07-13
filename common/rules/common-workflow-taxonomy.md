@@ -28,7 +28,7 @@ common-sdd-change-lifecycle.workflow.md
 common-sdd-fix-bug.workflow.md
 common-sdd-refactor-lifecycle.workflow.md
 common-sdd-review-test-evidence.workflow.md
-common-sdd-code-quality-gate.workflow.md
+common-sdd-clean-up-gate.workflow.md
 common-sdd-coverage-gate.workflow.md
 common-sdd-mutation-gate.workflow.md
 common-sdd-critical-e2e.workflow.md
@@ -56,6 +56,8 @@ csharp-sdd-refactor-code.workflow.md
 ```
 
 Do not add one workflow per endpoint, use case, adapter, event, consumer, DI registration, or test category. Those are small tasks and work types inside one SDD change. Documentation uses the common documentation workflow and is routed per task.
+
+Every SDD lifecycle also loads `RULE-COMMON_SDD_DOCUMENTATION_GATE`. The gate is mandatory for create, evolve, fix, refactor, implementation, pipeline, and completion workflows; it always invokes `WORKFLOW-COMMON_SDD_UPDATE_DOCUMENTATION_WORKFLOW` and records either updated surfaces or an explicit `no_documentation_change_reason`.
 
 React keeps `react-implement-feature.workflow.md`, `react-rest-api-client.workflow.md`, and the specialized `react-create-hbk-webapp-template.workflow.md`. Web keeps `web-implement-frontend-change.workflow.md`.
 

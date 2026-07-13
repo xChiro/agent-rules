@@ -169,7 +169,7 @@ Update:
 - `workflow-routing.md` and `traceability.yaml` with the security gate and `SEC-*`, `SEC-CHECK-*`, and `FINDING-*` IDs.
 - `history/` with the review decision and any accepted residual risk.
 
-Only after the security gate passes may `common-sdd-complete-spec.workflow.md` request Gate 4, create the AI snapshot, update its index, and move the feature to `specs/features/completed/<number>-<slug>/`.
+Only after the security gate passes may `common-sdd-complete-spec.workflow.md` request Gate 4, create the AI snapshot, update its index, and rename the feature to `specs/features/<number>-<slug>-completed/`.
 
 ## Definition Of Done
 

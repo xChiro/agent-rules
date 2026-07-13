@@ -56,6 +56,20 @@ If the macOS account cannot write `/Library/Application Support/Windsurf`, the i
 
 The administrator-only step can be run separately with `sudo bash tools/windsurf/install-system.sh`.
 
+The installer also configures the shared MCP filesystem used by Cascade in JetBrains:
+
+```text
+~/.codeium/mcp_config.json
+~/.codeium/windsurf/mcp_config.json
+```
+
+Both files use the same pinned filesystem server and allow `~/Projects/HBK` plus
+this repository. The local MCP proxy answers JetBrains `roots/list` with those
+configured roots while preserving the server's complete tool schemas. This
+avoids both the `.codeium` root replacement and the incomplete schemas returned
+by older filesystem server versions. Run `bash tools/windsurf/configure-mcp.sh`
+after changing the project roots, then fully restart Rider, GoLand, and WebStorm.
+
 Do not copy these assets into project `.windsurf/`, `.agents/`, `.devin/`, `AGENTS.md`, or `.windsurfrules` locations. Feature specs remain project-owned under `specs/`; only reusable agent behavior is global.
 
 Devin cloud currently manages Skills & Rules at organization/repository scope and cannot read this machine-local catalog. Devin Desktop uses the Windsurf store as the local fallback; use Windsurf rather than adding repository-local copies when cloud-level configuration is unavailable.
@@ -76,15 +90,16 @@ read-only SDD plan
   -> smallest production change
   -> GREEN
   -> refactor with tests green
-  -> code quality review and required refactor
+  -> clean-up gate with required Fowler refactoring
   -> security review gate
   -> mutation/E2E gates when risk requires them
   -> mandatory project-wide coverage gate >= 90% when production code is in scope
   -> at 60% context: checkpoint the spec and request a new context
   -> deterministic gates
-  -> documentation and spec/code/test convergence
+  -> mandatory documentation gate via WORKFLOW-COMMON_SDD_UPDATE_DOCUMENTATION_WORKFLOW
+  -> spec/code/test/documentation convergence
   -> Human Gate 4: approve completion
-  -> AI snapshot and move the spec folder to specs/features/completed/<number>-<slug>/
+  -> AI snapshot and rename the spec folder to specs/features/<number>-<slug>-completed/
 ```
 
 Reported defects enter through `common-sdd-fix-bug.workflow.md`: reproduce, classify, preserve or explicitly evolve the behavior contract, write regression evidence, then continue through the same approval-gated SDD/TDD cycle.
@@ -96,6 +111,7 @@ BDD owns shared business meaning and executable examples. SDD owns intent and tr
 Shared lifecycle files:
 
 - [common-sdd-agentic-discipline.md](./common/rules/common-sdd-agentic-discipline.md)
+- [common-sdd-documentation-gate.md](./common/rules/common-sdd-documentation-gate.md)
 - [common-sdd-spec-structure.md](./common/rules/common-sdd-spec-structure.md)
 - [common-sdd-spec-evolution.md](./common/rules/common-sdd-spec-evolution.md)
 - [common-workflow-taxonomy.md](./common/rules/common-workflow-taxonomy.md)
@@ -117,7 +133,7 @@ Shared lifecycle files:
 - [common-sdd-fix-bug.workflow.md](./common/workflows/common-sdd-fix-bug.workflow.md)
 - [common-sdd-refactor-lifecycle.workflow.md](./common/workflows/common-sdd-refactor-lifecycle.workflow.md)
 - [common-sdd-review-test-evidence.workflow.md](./common/workflows/common-sdd-review-test-evidence.workflow.md)
-- [common-sdd-code-quality-gate.workflow.md](./common/workflows/common-sdd-code-quality-gate.workflow.md)
+- [common-sdd-clean-up-gate.workflow.md](./common/workflows/common-sdd-clean-up-gate.workflow.md)
 - [common-sdd-coverage-gate.workflow.md](./common/workflows/common-sdd-coverage-gate.workflow.md)
 - [common-sdd-mutation-gate.workflow.md](./common/workflows/common-sdd-mutation-gate.workflow.md)
 - [common-sdd-critical-e2e.workflow.md](./common/workflows/common-sdd-critical-e2e.workflow.md)
@@ -156,8 +172,7 @@ specs/
 │   │   ├── traceability.yaml
 │   │   ├── verification.md
 │   │   └── history/
-│   └── completed/
-│       └── 0001-feature-slug/
+│   └── 0001-feature-slug-completed/
 └── archive/
 ```
 
@@ -181,9 +196,9 @@ Every task in `tasks.md` declares `track_id`, `parallelizable`, `depends_on`, `b
 
 Every task also declares its primary `workflow_id`, `workflow_phase`, and any supporting workflow IDs in `workflow-routing.md` and `traceability.yaml`.
 
-`change-summary.md` is the human-readable record of every planned and actual change. At 60% consumed context, the active spec is checkpointed under `handoffs/context-checkpoints/` and the user is asked to change context; the next AI reads that handoff first. After final verification and approval, `common-sdd-complete-spec.workflow.md` moves the feature folder to `specs/features/completed/<number>-<slug>/` and creates an AI context snapshot under `specs/context/ai-snapshots/`.
+`change-summary.md` is the human-readable record of every planned and actual change. At 60% consumed context, the active spec is checkpointed under `handoffs/context-checkpoints/` and the user is asked to change context; the next AI reads that handoff first. After final verification and approval, `common-sdd-complete-spec.workflow.md` renames the feature folder to `specs/features/<number>-<slug>-completed/` and creates an AI context snapshot under `specs/context/ai-snapshots/`.
 
-Every pull request runs `tools/validate-sdd-change.sh` through the `sdd-policy` check. Every spec completion runs `common-sdd-code-quality-gate.workflow.md`, `common-sdd-security-gate.workflow.md`, and `common-sdd-coverage-gate.workflow.md`; when production code is in scope, the complete project production scope must reach at least 90% before Gate 4. Mutation and critical E2E gates are selected by risk level.
+Every pull request runs `tools/validate-sdd-change.sh` through the `sdd-policy` check. Every spec completion runs `common-sdd-clean-up-gate.workflow.md`, `common-sdd-security-gate.workflow.md`, and `common-sdd-coverage-gate.workflow.md`; the clean-up gate must complete required Fowler refactors and confirm every in-scope code file is below 150 physical lines. When production code is in scope, the complete project production scope must reach at least 90% before Gate 4. Mutation and critical E2E gates are selected by risk level.
 
 ## Backend Workflow Model
 

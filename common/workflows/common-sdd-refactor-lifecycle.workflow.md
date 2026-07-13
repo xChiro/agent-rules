@@ -8,12 +8,13 @@ description: Behavior-preserving SDD lifecycle for production code, unit tests, 
 
 Use this workflow only when observable behavior must remain unchanged. If behavior, a public contract, or a User Story changes, use `common-sdd-evolve-spec.workflow.md` and `common-sdd-change-lifecycle.workflow.md` instead.
 
-When invoked by `common-sdd-code-quality-gate.workflow.md`, return to that gate after the refactor and rerun the complete quality analysis before security, coverage, or Gate 4.
+When invoked by `common-sdd-clean-up-gate.workflow.md`, return to that gate after the refactor and rerun the complete clean-up analysis before security, coverage, or Gate 4.
 
 ## Phase 1: Anchor The Refactor
 
 - Find the owning spec, User Stories, scenarios, tasks, tests, and latest history entry.
 - Read `workflow-routing.md` and confirm the primary refactor workflow plus supporting test-evidence and documentation workflows.
+- Add or confirm a `documentation` task governed by `RULE-COMMON_SDD_DOCUMENTATION_GATE` and routed to `WORKFLOW-COMMON_SDD_UPDATE_DOCUMENTATION_WORKFLOW`; it must cover changed structure, ownership, boundaries, repository maps, and developer guidance.
 - Prepare and show the proposed refactor spec/task update before writing it.
 - Ask for Gate 1 approval before adding a refactor task or changing any spec artifact.
 - After approval, add a small refactor task with `T-*` and `TEST-*` traceability.
@@ -63,7 +64,7 @@ Backend refactors use only two test suites:
 ## Phase 5: Converge
 
 - Update `tasks.md`, `parallel-tracks.md`, `traceability.yaml`, `verification.md`, architecture docs, and repository map when structure changed.
-- Update `workflow-routing.md` and invoke `common-sdd-update-documentation.workflow.md` for affected project or SDD documentation.
+- Update `workflow-routing.md` and pass `RULE-COMMON_SDD_DOCUMENTATION_GATE` by invoking `common-sdd-update-documentation.workflow.md` for every refactor. If its surface analysis finds no affected project documentation, record `no_documentation_change_reason` in `spec.md`, `verification.md`, and `change-summary.md`.
 - Add an append-only history entry when the refactor changes architecture or ownership.
 - Report protected behavior, structural changes, tests run, actual agent count, and unverified scope.
 
@@ -76,3 +77,4 @@ Backend refactors use only two test suites:
 - Relevant HTTP integration tests pass.
 - No architecture boundary was weakened.
 - Spec artifacts and implementation converge.
+- The documentation gate passed through `WORKFLOW-COMMON_SDD_UPDATE_DOCUMENTATION_WORKFLOW`, including an explicit inspected-surface/no-change record when no project documentation was affected.

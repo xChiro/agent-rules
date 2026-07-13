@@ -44,6 +44,7 @@ Do not switch workflows when a vertical slice crosses work types. Split it into 
 9. Add EF Core, REST/Lambda, messaging, and DI changes only when required.
 10. Make HTTP or message-boundary evidence green through real local resources.
 11. Refactor with tests green and converge the spec.
+12. Pass `RULE-COMMON_SDD_DOCUMENTATION_GATE` by invoking `WORKFLOW-COMMON_SDD_UPDATE_DOCUMENTATION_WORKFLOW` before completion; record affected surfaces or the workflow's explicit no-change result.
 
 C# backends have only unit tests and HTTP integration tests. Do not add direct EF Core/repository/controller/adapter integration suites.
 
@@ -69,5 +70,6 @@ C# backends have only unit tests and HTTP integration tests. Do not add direct E
 - Run focused unit test projects.
 - Run the focused HTTP integration test project.
 - Invoke `common-sdd-coverage-gate.workflow.md` and record `>= 90%` aggregate coverage for the complete project production scope with no affected-scope regression.
+- Invoke `common-sdd-update-documentation.workflow.md` through the common documentation gate after verification and before completion approval.
 - Run architecture, coverage, mutation, format, build, SAM/template, or security gates when touched or required by the spec.
 - Record commands and evidence in `verification.md`.

@@ -23,6 +23,6 @@ When new evidence may require a plan, scope, behavior, contract, architecture, r
 
 - Intent, behavior, contract, architecture, risk, or test-strategy changes require Gate 1 re-approval, then a new Gate 2/3 cycle before tests or production code continue.
 - Task ordering or implementation-detail changes that preserve approved behavior still require approval and traceable plan/task updates; repeat other gates when the impact analysis requires it.
-- A completed spec under `specs/features/completed/<number>-<slug>/` is audit evidence. Do not edit it silently; use a new active evolution or defect spec linked to the source.
+- A completed spec under `specs/features/<number>-<slug>-completed/` is audit evidence. Do not edit it silently; use a new active evolution or defect spec linked to the source.
 
 Never rewrite old history, change the risk level to avoid evidence, or mark a deviation as planned before approval.

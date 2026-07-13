@@ -20,7 +20,8 @@ Before production code:
 7. Invoke `common-sdd-review-test-evidence.workflow.md` and obtain Gate 3 before production code.
 8. Implement only enough code to pass, then refactor with tests green.
 9. Run `common-sdd-coverage-gate.workflow.md` before completion and record `>= 90%` project-wide production coverage with no affected-feature regression when production code is in scope.
-10. Run relevant gates and converge spec, tasks, parallel tracks, traceability, verification notes, and code.
+10. Pass `RULE-COMMON_SDD_DOCUMENTATION_GATE` through `WORKFLOW-COMMON_SDD_UPDATE_DOCUMENTATION_WORKFLOW`; record changed surfaces or its explicit no-change result.
+11. Run relevant gates and converge spec, tasks, parallel tracks, traceability, verification notes, documentation, and code.
 
 Apply `RULE-COMMON_TEST_ASSERTION_STRUCTURE`: arrange/fixtures and actions do not assert; all assertion APIs belong in the final `Then/Assert` section.
 

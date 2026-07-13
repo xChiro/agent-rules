@@ -29,6 +29,7 @@ Include:
 - Test ID strategy for acceptance and unit-level tests.
 - Proposed spec folder and exact artifact files.
 - Proposed `workflow-routing.md` with the primary and supporting workflow for every SDD phase and task.
+- Proposed documentation gate: `RULE-COMMON_SDD_DOCUMENTATION_GATE` with a final `documentation` task routed to `WORKFLOW-COMMON_SDD_UPDATE_DOCUMENTATION_WORKFLOW`; identify affected project/SDD documentation surfaces or the evidence required for a no-change outcome.
 - Sequential and parallel tasks, track IDs, dependencies, ownership, execution waves, merge order, and `max_parallel_agents`.
 - Primary `workflow_id`, `workflow_phase`, supporting workflow IDs, and rationale for each task.
 - Context budget plan: small task boundaries, current/next task state, and the checkpoint route if context reaches 60%.
@@ -195,7 +196,8 @@ Baseline:
 - Targeted unit tests.
 - Acceptance test or public-boundary test.
 - Build/typecheck/lint/format when available.
-- Mandatory `common-sdd-code-quality-gate.workflow.md` for every created/modified file, including names, size limits, ownership, Clean Code, SOLID, Clean Architecture, CQRS, complexity, duplication, and required behavior-preserving refactors.
+- Mandatory `common-sdd-clean-up-gate.workflow.md` for every created/modified file, including names, strict <150-line source-file limit, ownership, Clean Code, SOLID, Clean Architecture, CQRS, complexity, duplication, and required behavior-preserving refactors.
+- Mandatory `RULE-COMMON_SDD_DOCUMENTATION_GATE`: after behavior and tests are verified, invoke `common-sdd-update-documentation.workflow.md` before final clean-up, security, coverage, or completion approval.
 
 When relevant:
 
@@ -233,11 +235,11 @@ Before finishing, reconcile:
 
 If context reaches 60% before convergence, stop starting new tasks and invoke `common-sdd-context-checkpoint.workflow.md`. Update the active spec folder and request a new context; do not report the feature complete merely because the current context is ending.
 
-If behavior, architecture, testing, CI, deployment, public contracts, or repository structure changed, invoke `common-sdd-update-documentation.workflow.md` through a traceable `documentation` task before reporting completion. If no documentation surface is affected, record `no_documentation_change_reason` in `spec.md` and `verification.md`.
+Invoke `common-sdd-update-documentation.workflow.md` through the traceable `documentation` task for every change. If its surface analysis finds no affected project documentation, record `no_documentation_change_reason` in `spec.md`, `verification.md`, and `change-summary.md`; this explicit workflow result is the only allowed no-change exception.
 
-When all implementation and documentation tasks are complete, invoke `common-sdd-complete-spec.workflow.md` to obtain final completion approval, create the AI snapshot, update its index, and move the feature folder to `specs/features/completed/<number>-<slug>/`.
+When all implementation and documentation tasks are complete, invoke `common-sdd-complete-spec.workflow.md` to obtain final completion approval, create the AI snapshot, update its index, and rename the feature folder to `specs/features/<number>-<slug>-completed/`.
 
-Completion is blocked until the code-quality workflow passes for every created/modified file, the security workflow records no unresolved findings, and the coverage workflow records its command, scope, result, threshold, and exclusions in `verification.md` and `change-summary.md`; production scopes must reach `>= 90%`.
+Completion is blocked until the clean-up workflow passes for every created/modified file, every in-scope code file is below 150 physical lines, the security workflow records no unresolved findings, and the coverage workflow records its command, scope, result, threshold, and exclusions in `verification.md` and `change-summary.md`; production scopes must reach `>= 90%`.
 
 Final report should include:
 
@@ -250,11 +252,11 @@ Final report should include:
 - Gate 1, Gate 2, and Gate 3 decisions and evidence.
 - Coverage command, affected scope, measured percentage, `>= 90%` threshold, and exclusions.
 - Parallel track outcome and agent count if multiple tracks were used.
-- Code-quality gate result, reviewed file scope, metrics, findings, refactors, exceptions, and human decision.
+- Clean-up gate result, reviewed file scope, metrics, findings, refactors, exceptions, and human decision.
 - Security gate result, `security_role`, trust-boundary review, commands, findings, exceptions, and residual risk.
 - Refactors performed.
 - Files changed.
 - Residual risk or manual verification still needed.
 - Any spec-adjustment request, approved delta, repeated gates, and exact resume action.
-- Documentation task outcome or explicit `no_documentation_change_reason`.
+- Documentation gate outcome: changed surfaces and verification evidence, or the workflow's inspected-surface `no_documentation_change_reason`.
 - Completion approval, completed-spec path, snapshot ID/path, and snapshot-index evidence.

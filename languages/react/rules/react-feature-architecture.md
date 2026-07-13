@@ -12,7 +12,7 @@ globs: **/*.tsx,**/*.ts,**/*.css
 - Apply `common/rules/common-sdd-agentic-discipline.md` before this rule.
 - Create or evolve the owning User Story based spec before production code when behavior, contracts, architecture, or risk changes.
 - Apply mandatory Gate 1 before spec writes, Gate 2 before RED, and Gate 3 before Green, even for simple or low-risk changes.
-- Apply Gate 4 before marking the spec complete, creating the AI snapshot, or moving the feature to `specs/features/completed/<number>-<slug>/`.
+- Apply Gate 4 before marking the spec complete, creating the AI snapshot, or renaming the feature to `specs/features/<number>-<slug>-completed/`.
 - Keep artifact, task, track, and test IDs traceable through `traceability.yaml` and `parallel-tracks.md`.
 - Write BDD Given/When/Then acceptance evidence first, then the unit-level ATDD-style focused failing test for the next rule or boundary before production code.
 - Refactor only with tests green and converge spec history, tasks, parallel tracks, traceability, verification notes, and code.

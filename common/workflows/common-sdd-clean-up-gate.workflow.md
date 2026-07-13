@@ -1,23 +1,23 @@
 ---
-workflow_id: WORKFLOW-COMMON_SDD_CODE_QUALITY_GATE_WORKFLOW
+workflow_id: WORKFLOW-COMMON_SDD_CLEAN_UP_GATE_WORKFLOW
 trigger: manual
-description: Mandatory final code-quality review for every completed SDD spec, with Clean Code analysis, naming and size checks, architecture validation, and controlled refactoring.
+description: Mandatory final clean-up gate for every completed SDD spec, with Clean Code analysis, Fowler refactoring, ownership checks, and a strict source-file size limit.
 ---
 
-# Common SDD Code Quality Gate Workflow
+# Common SDD Clean Up Gate Workflow
 
-Run this workflow after the behavior is Green and before the final security, coverage, and Gate 4 completion steps. It is mandatory for every completed SDD spec. The gate reviews every file created or modified by the spec and may schedule behavior-preserving refactoring when quality findings require it.
+Run this workflow after the behavior is Green and before the final security, coverage, and Gate 4 completion steps. It is mandatory for every completed SDD spec. The gate reviews every file created or modified by the spec and performs the behavior-preserving refactoring required to leave the change clean, understandable, and below the source-file size limit.
 
-Load `common-code-quality-guardrails.md`, the applicable language rules, `common-architecture-guardrails.md`, and `common-sdd-refactor-lifecycle.workflow.md`. This workflow is language-neutral. Delegate implementation details to `go-sdd-refactor-code`, `csharp-sdd-refactor-code`, or the applicable React/Web workflow while keeping this common workflow as the quality-gate owner.
+Load `common-code-quality-guardrails.md`, the applicable language rules, `common-architecture-guardrails.md`, and `common-sdd-refactor-lifecycle.workflow.md`. This workflow is language-neutral. Delegate implementation details to `go-sdd-refactor-code`, `csharp-sdd-refactor-code`, or the applicable React/Web workflow while keeping this common workflow as the clean-up gate owner.
 
-## Quality Gate Principles
+## Clean Up Gate Principles
 
 1. Review the complete spec change set, not only the production files that caused the feature to pass.
 2. Apply repository and language rules first; common thresholds are the minimum review baseline.
-3. A file-size or naming violation is evidence to investigate, not a reason for blind micro-splitting.
-4. Refactoring is allowed only when behavior remains unchanged, tests are green, and the refactor lifecycle approvals are satisfied.
+3. Every in-scope source, test, configuration, CI, and script file must stay below 150 physical lines. A file at 150 lines or more is a blocker until it is refactored or explicitly excluded as generated/vendor/third-party/binary with human approval.
+4. Refactoring is part of this gate, not merely a recommendation. It is allowed only when behavior remains unchanged, tests are green, and the refactor lifecycle approvals are satisfied.
 5. If the finding requires a behavior, contract, security, data, or architecture decision change, stop and return to spec evolution instead of hiding it in a refactor.
-6. The final security and coverage gates run after this gate so they validate the final post-refactor code.
+6. The final security and coverage gates run after this gate so they validate the final post-clean-up code.
 
 ## Phase 1: Establish The Review Scope
 
@@ -107,11 +107,11 @@ Classify the result:
 
 ### Pass
 
-No blocker/high finding remains, all medium/low findings are either fixed or explicitly accepted with owner and expiry, and no behavior-preserving refactor is needed. Continue to Phase 6.
+No blocker/high finding remains, all medium/low findings are either fixed or explicitly accepted with owner and expiry, every in-scope code file is below 150 physical lines, and the clean-up pass is complete. Continue to Phase 6.
 
-### Refactor Required
+### Clean Up Required
 
-One or more findings require a structural improvement that preserves behavior. The gate is not complete with a list of findings: every `blocker`/`high` and every unapproved `medium` finding must be remediated before the gate can pass. The agent must execute the refactor through the lifecycle below unless the user or an authorized owner explicitly blocks or approves an exception. Before editing:
+One or more findings require a structural improvement that preserves behavior, or a file is at/above the 150-line limit. The gate is not complete with a list of findings: every blocker/high finding, every unapproved medium finding, and every file-size violation must be remediated before the gate can pass. The agent must execute the clean-up through the lifecycle below unless the user or an authorized owner explicitly blocks or approves an exception. Before editing:
 
 1. Add a small `T-*` refactor task and `CHG-*` change-summary row.
 2. Link every finding to a User Story/requirement/scenario when relevant, a `TEST-*` protection test, track, owned files, and verification command.
@@ -121,12 +121,12 @@ One or more findings require a structural improvement that preserves behavior. T
 
 ### Spec Or Behavior Change Required
 
-Stop the quality gate and return to `common-sdd-evolve-spec.workflow.md` and the normal SDD lifecycle if the proposed change would alter:
+Stop the clean-up gate and return to `common-sdd-evolve-spec.workflow.md` and the normal SDD lifecycle if the proposed change would alter:
 
 - User-visible behavior, an acceptance scenario, a public REST/Lambda/UI contract, authorization, security, data semantics, migration behavior, event semantics, or CQRS command/query responsibilities.
 - A test expectation rather than the structure that implements the existing expectation.
 
-The quality gate must never turn a behavior change into a refactor to avoid the RED and approval gates.
+The clean-up gate must never turn a behavior change into a refactor to avoid the RED and approval gates.
 
 ## Phase 5: Controlled Refactoring Loop
 
@@ -136,12 +136,12 @@ When refactoring is required:
 - Obtain the refactor lifecycle Gate 1 and Gate 2 approvals before creating or modifying protection tests.
 - Invoke `common-sdd-review-test-evidence.workflow.md` and obtain Gate 3 before production structure changes. Passing characterization evidence is acceptable when RED is not applicable; document why.
 - Make one rename, extraction, responsibility move, duplication removal, or boundary correction at a time.
-- For conditional smells, use one named Fowler refactoring at a time and record the before/after decision owner; do not replace a simple guard or closed classification with pattern ceremony.
+- For conditional smells, use one named Fowler refactoring at a time and record the before/after decision owner; prefer Extract Function, Decompose Conditional, Replace Nested Conditional with Guard Clauses, Consolidate Conditional Expression, Replace Conditional with Polymorphism/State/Strategy, Introduce Special Case, or Replace Parameter with Explicit Methods when the smell and domain variation justify them. Do not replace a simple guard or closed classification with pattern ceremony.
 - Keep Clean Architecture dependency direction, SOLID, CQRS, error identity, cancellation, resource ownership, and public contracts unchanged.
 - Run the smallest relevant tests after each change. Stop if any test fails unexpectedly.
 - Do not mix framework upgrades, broad formatting, migrations, security changes, or unrelated cleanup.
 
-After every refactor wave, rerun the complete quality analysis. A finding is not closed because a file became smaller; it is closed only when ownership, readability, architecture, and tests are demonstrably better.
+After every refactor wave, rerun the complete clean-up analysis. A finding is not closed because a file became smaller; it is closed only when ownership, readability, architecture, and tests are demonstrably better.
 
 ## Phase 6: Re-Verify The Final Code Set
 
@@ -153,7 +153,7 @@ Review the final diff again and record:
 - Refactor tasks, actual files changed, tests protecting behavior, and any remaining accepted quality exceptions.
 - Whether security or public-contract surfaces changed during refactoring. If yes, rerun the security gate or return to spec evolution as appropriate.
 
-Update `code-quality-review.md` to `status: passed` only when no blocker/high finding remains, all lower findings are fixed or approved, and the final code set is verified. Record the exact commands, versions, scopes, metrics, exceptions, and reports in `verification.md` and `change-summary.md`.
+Update `code-quality-review.md` to `status: passed` only when no blocker/high finding remains, all lower findings are fixed or approved, every in-scope code file is below 150 physical lines, and the final code set is verified. Record the exact commands, versions, scopes, metrics, exceptions, and reports in `verification.md` and `change-summary.md`.
 
 ## Phase 7: Human Quality Verification
 
@@ -162,12 +162,12 @@ Show the user:
 - `code-quality-review.md`, complete file scope, limits, names, ownership, findings, and exclusions.
 - Quality commands and concise results.
 - Refactors performed, tests protecting unchanged behavior, and remaining exceptions.
-- Confirmation that no behavior, contract, security, data, or CQRS meaning changed under the quality gate.
+- Confirmation that no behavior, contract, security, data, or CQRS meaning changed under the clean-up gate.
 
 Ask explicitly:
 
 ```text
-The final code-quality review is complete and all required refactors are verified. May I record the quality gate as passed and continue to the security gate, coverage gate, and Gate 4?
+The final clean-up gate is complete and all required Fowler-style refactors are verified. May I record the clean-up gate as passed and continue to the security gate, coverage gate, and Gate 4?
 ```
 
 If rejected, update only the authorized spec, review, test, or refactor artifacts, rerun the relevant evidence, and request verification again.
@@ -177,19 +177,20 @@ If rejected, update only the authorized spec, review, test, or refactor artifact
 Update:
 
 - `code-quality-review.md` with the final status, metrics, findings, refactors, exceptions, and decision.
-- `verification.md` with `WORKFLOW-COMMON_SDD_CODE_QUALITY_GATE_WORKFLOW`, commands, results, file scope, and human decision.
+- `verification.md` with `WORKFLOW-COMMON_SDD_CLEAN_UP_GATE_WORKFLOW`, commands, results, file scope, and human decision.
 - `change-summary.md` with quality findings, refactor changes, and evidence rows.
-- `workflow-routing.md` and `traceability.yaml` with the quality gate, refactor workflows, `QUAL-*`, `QUALITY-FINDING-*`, `T-*`, and `TEST-*` IDs.
+- `workflow-routing.md` and `traceability.yaml` with the clean-up gate, refactor workflows, `QUAL-*`, `QUALITY-FINDING-*`, `T-*`, and `TEST-*` IDs.
 - `history/` with any structural ownership or refactor decision.
 
-Only after this gate passes may the completion workflow run the final security gate, coverage gate, Gate 4, snapshot, and move to `specs/features/completed/`.
+Only after this gate passes may the completion workflow run the final security gate, coverage gate, Gate 4, snapshot, and add the `-completed` suffix to the feature folder.
 
 ## Definition Of Done
 
 - Every spec-created or spec-modified file was reviewed or explicitly excluded with evidence.
 - File names, symbols, folders, responsibilities, and test names follow the applicable language and project conventions.
-- File/function/type limits, duplication, complexity, dead code, Clean Code, SOLID, Clean Architecture, and CQRS checks pass or have approved exceptions.
-- Any necessary refactor followed `common-sdd-refactor-lifecycle.workflow.md`, with tests green and Gate 3 evidence before production structure changes.
+- Every in-scope source, test, configuration, CI, and script file is below 150 physical lines; generated/vendor/third-party/binary exclusions are documented and approved.
+- Duplication, complexity, dead code, Clean Code, SOLID, Clean Architecture, and CQRS checks pass or have approved exceptions.
+- Any necessary refactor followed `common-sdd-refactor-lifecycle.workflow.md`, used a named behavior-preserving Fowler transformation where applicable, and kept tests green with Gate 3 evidence before production structure changes.
 - No behavior, contract, security, data, or authorization change was hidden as a quality refactor.
 - `code-quality-review.md`, `verification.md`, `change-summary.md`, routing, traceability, history, and code converge.
 - Security and coverage gates run against the final post-refactor code before Gate 4.

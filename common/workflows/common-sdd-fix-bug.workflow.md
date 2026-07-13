@@ -55,6 +55,7 @@ Prepare and show:
 - The defect classification, expected behavior, reproduction evidence, suspected root cause, non-goals, risks, rollback, and stop conditions.
 - The architecture impact: SOLID responsibility, Clean Architecture boundary, CQRS command/query side, HTTP/local-resource boundary, persistence, events, UI, or CI.
 - The test strategy: acceptance/public-boundary regression, focused unit/component test, HTTP integration only when applicable, and deterministic gates.
+- The mandatory documentation gate: `RULE-COMMON_SDD_DOCUMENTATION_GATE`, with a `documentation` task routed to `WORKFLOW-COMMON_SDD_UPDATE_DOCUMENTATION_WORKFLOW` for the defect record, regression evidence, affected project/SDD docs, and append-only history.
 - Sequential and parallel tasks, exact ownership, execution waves, `max_parallel_agents`, agent slots, dependencies, `can_run_with`, and merge order. Default `max_parallel_agents: 1`.
 - `workflow-routing.md` entries for diagnosis, spec update, RED, Gate 3, language implementation, coverage, documentation, and completion.
 
@@ -138,7 +139,7 @@ T006 Run targeted tests and relevant HTTP integration tests.
 T007 Refactor only with tests green.
 T008 Run coverage and deterministic quality gates.
 T009 Update documentation and converge all SDD artifacts.
-T010 Complete the spec, snapshot it, and move it to `specs/features/completed/<number>-<slug>/` after Gate 4.
+T010 Complete the spec, snapshot it, and rename it to `specs/features/<number>-<slug>-completed/` after Gate 4.
 ```
 
 Split further when a task crosses unrelated scenarios, actors, bounded contexts, architecture boundaries, or ownership. Every task declares `story_id`, `requirement_id`, `scenario_id` or `regression_id`, `test_id` when applicable, `change_id`, `track_id`, `workflow_id`, `workflow_phase`, `supporting_workflow_ids`, `work_type`, `parallelizable`, `depends_on`, `blocked_by`, `can_run_with`, owned files/modules, execution wave, agent slot, and verification method.
@@ -249,9 +250,10 @@ Run checks matching the defect surface:
 - Regression acceptance/public-boundary evidence.
 - HTTP integration tests for REST/Lambda/local-resource/DI/persistence wiring.
 - Build, typecheck, lint, format, architecture/dependency, schema, security, performance, and observability checks when applicable.
-- Mandatory `common-sdd-code-quality-gate.workflow.md` for every created/modified file; any behavior-preserving cleanup uses the refactor lifecycle.
+- Mandatory `common-sdd-clean-up-gate.workflow.md` for every created/modified file; any behavior-preserving clean up uses the refactor lifecycle and the <150-line source-file check.
 - Mandatory `common-sdd-security-gate.workflow.md` with declared `security_role`, changed trust boundaries, and no unresolved Critical/High findings.
 - Mandatory `common-sdd-coverage-gate.workflow.md` with `>= 90%` aggregate coverage for the complete project production scope and no affected-scope regression when production code is in scope.
+- Mandatory `common-sdd-update-documentation.workflow.md` through `RULE-COMMON_SDD_DOCUMENTATION_GATE` after the fix is verified and before completion gates; inspect the defect record, regression contract, SDD artifacts, project docs, and operational guidance.
 - CRAP/complexity and mutation testing or targeted mutation review for high-risk business rules when available.
 - Repeat-run evidence for a `flaky-or-nondeterministic` defect, including the deterministic condition that is now protected.
 
@@ -268,8 +270,8 @@ Before reporting completion:
 - `tasks.md`, `parallel-tracks.md`, `workflow-routing.md`, and `traceability.yaml` reflect actual tracks, agents, workflows, tests, and merge order.
 - Any context checkpoint is recorded with its handoff path and exact resume action; no unfinished diagnosis is left only in chat context.
 - `verification.md` records Gate 1, Gate 2, Gate 3, the mandatory coverage result, and all relevant gates.
-- Documentation uses `common-sdd-update-documentation.workflow.md`, or the explicit `no_documentation_change_reason` is recorded.
-- Completed active defect specs use `common-sdd-complete-spec.workflow.md` for Gate 4, AI snapshot, index update, and `git mv` to `specs/features/completed/<number>-<slug>/`.
+- The documentation gate passed through `WORKFLOW-COMMON_SDD_UPDATE_DOCUMENTATION_WORKFLOW`; if no project documentation surface is affected, its workflow analysis and `no_documentation_change_reason` are recorded in `spec.md`, `verification.md`, and `change-summary.md`.
+- Completed active defect specs use `common-sdd-complete-spec.workflow.md` for Gate 4, AI snapshot, index update, and `git mv` to `specs/features/<number>-<slug>-completed/`.
 - A completed source spec is never rewritten to erase the bug history; links and append-only history explain the relationship.
 
 ## Stop Conditions
@@ -294,8 +296,8 @@ Stop and ask for a new decision when:
 - Gate 3 approved the actual test evidence before production code.
 - The smallest root-cause fix preserves SOLID, Clean Architecture, CQRS, and public contracts.
 - Relevant unit and HTTP integration suites pass; no second backend infrastructure suite was added.
-- Final code-quality review passes for all created/modified files and any necessary refactor is traceable.
+- Final clean-up gate passes for all created/modified files, every in-scope code file is below 150 physical lines, and any necessary refactor is traceable.
 - Final security review passes with a declared role, no unresolved Critical/High findings, and documented OAuth/OIDC or web-session evidence when applicable.
 - Coverage is measured at `>= 90%` for the complete project production scope when production code is in scope, and the affected scope does not regress.
-- Documentation, spec, history, traceability, verification, and workflow routing converge.
-- Gate 4 completes the active defect spec, creates the AI snapshot, and moves it to `specs/features/completed/<number>-<slug>/`.
+- Documentation, spec, history, traceability, verification, and workflow routing converge through `RULE-COMMON_SDD_DOCUMENTATION_GATE`.
+- Gate 4 completes the active defect spec, creates the AI snapshot, and renames it to `specs/features/<number>-<slug>-completed/`.
