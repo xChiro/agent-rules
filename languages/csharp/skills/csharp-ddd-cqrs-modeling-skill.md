@@ -2,19 +2,15 @@
 skill_id: SKILL-CSHARP_DDD_CQRS_MODELING_SKILL
 name: csharp-ddd-cqrs-modeling
 trigger: model_decision
-description: C# DDD/CQRS/value object skill for modeling business concepts, invariants, focused ports, domain events, and application orchestration.
-globs: **/*.cs
+description: "C# DDD/CQRS/value object skill for modeling business concepts, invariants, focused ports, domain events, and application orchestration."
+globs: "**/*.cs"
 ---
 
 # C# DDD CQRS Modeling Skill
 
-## SDD Baseline
+## SDD Integration
 
-- Follow `common-sdd-agentic-discipline.md` for every behavior-changing task.
-- Keep specs versioned under `specs/features/<number>-<slug>/` when the project supports SDD artifacts.
-- Apply mandatory Gate 1 before spec writes, Gate 2 before RED, and Gate 3 before Green, even for simple or low-risk changes.
-- Start with BDD Given/When/Then acceptance evidence, then unit-level ATDD-style focused failing test code, then production code.
-- Refactor only with tests green and converge specs, tasks, parallel tracks, traceability, verification notes, and code.
+Load this skill only for C# Domain/Application modeling after `RULE-COMMON_SDD_AGENTIC_DISCIPLINE`. It adds DDD/CQRS technique and cannot redefine common gates, traceability, layer order, or convergence.
 
 Use this skill when modeling or changing domain/application behavior.
 

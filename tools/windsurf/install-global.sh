@@ -9,6 +9,8 @@ system_home="${SYSTEM_WINDSURF_HOME:-/Library/Application Support/Windsurf}"
 backup_root="$windsurf_home/agent-rules-backups/$(date +%Y%m%d-%H%M%S)"
 canonical="$windsurf_home/common"
 
+bash "$repo_root/tools/validate-agent-catalog.sh"
+
 archive_path() {
   local path="$1"
   local label="$2"
@@ -88,6 +90,12 @@ fi
 mkdir -p "$windsurf_home/memories"
 cp "$script_dir/global-rules.md" "$windsurf_home/memories/global_rules.md"
 ln -s "memories/global_rules.md" "$windsurf_home/global_rules.md"
+
+if [[ "${SKIP_MCP_CONFIG:-0}" == "1" ]]; then
+  echo "Skipped MCP JSON configuration (SKIP_MCP_CONFIG=1)."
+else
+  "$script_dir/configure-mcp.sh"
+fi
 
 archive_path "$codeium_home/common" "codeium-common"
 archive_path "$codeium_home/global_workflows" "codeium-global-workflows"

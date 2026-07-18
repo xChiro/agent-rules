@@ -1,20 +1,15 @@
 ---
 rule_id: RULE-CSHARP_EFCORE_DATA_ACCESS
 trigger: model_decision
-description: C# EF Core and DataAccess adapter rules for Clean Architecture, mapping, migrations, queries, commands, and persistence DTOs.
-globs: **/*DataAccess/**/*.cs,**/*DbContext.cs,**/*Configuration.cs,**/Migrations/**/*.cs
+description: "C# EF Core and DataAccess adapter rules for Clean Architecture, mapping, migrations, queries, commands, and persistence DTOs."
+globs: "**/*DataAccess/**/*.cs,**/*DbContext.cs,**/*Configuration.cs,**/Migrations/**/*.cs"
 ---
 
 # C# EF Core Data Access
 
-## SDD Baseline
+## SDD Integration
 
-- Apply `common/rules/common-sdd-agentic-discipline.md` before this rule.
-- Create or evolve the owning User Story based spec before production code when behavior, contracts, architecture, or risk changes.
-- Apply mandatory Gate 1 before spec writes, Gate 2 before RED, and Gate 3 before Green, even for simple or low-risk changes.
-- Keep artifact, task, track, and test IDs traceable through `traceability.yaml` and `parallel-tracks.md`.
-- Write BDD Given/When/Then acceptance evidence first, then the unit-level ATDD-style focused failing test for the next rule or boundary before production code.
-- Refactor only with tests green and converge spec history, tasks, parallel tracks, traceability, verification notes, and code.
+Apply the primary C# SDD workflow and `RULE-COMMON_INSIDE_OUT_DEVELOPMENT` before this adapter rule. This file adds EF Core details only; it cannot move persistence concerns inward or bypass Boundary and Infrastructure gates.
 
 DataAccess is an adapter. It implements Application ports and maps between domain/application models and persistence models.
 

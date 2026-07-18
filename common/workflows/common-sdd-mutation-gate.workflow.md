@@ -1,14 +1,14 @@
 ---
 workflow_id: WORKFLOW-COMMON_SDD_MUTATION_GATE_WORKFLOW
 trigger: manual
-description: Risk-based mutation testing gate for proving that tests detect meaningful changes to critical behavior.
+description: "Risk-based mutation testing gate for proving that tests detect meaningful changes to critical behavior."
 ---
 
 # Common SDD Mutation Gate
 
-Run this workflow after focused tests are GREEN and before Gate 4 for L2 non-trivial business logic and every L3 change. L0 documentation and L1 changes are exempt unless the spec escalates them.
+Run this workflow after focused tests are GREEN and before final validation for L2 non-trivial business logic and every L3 change. L0 documentation and L1 changes are exempt unless the spec escalates them.
 
-Mutation-killing assertions must remain in the test's `Then/Assert` section; do not hide assertions in setup, fixtures, or action helpers.
+Mutation-killing assertions must remain in the test's `// Assert` section; do not hide assertions in setup, fixtures, or action helpers.
 
 ## Scope
 
@@ -50,7 +50,7 @@ Every surviving or timed-out mutant must be:
 - killed by a meaningful behavior test;
 - documented as an intentional equivalent mutant with evidence;
 - excluded by an existing repository rule with a reason; or
-- recorded as an explicitly owned residual risk that blocks Gate 4 for L3 changes.
+- recorded as an explicitly owned residual risk that blocks final validation for L3 changes.
 
 Never delete or weaken a test merely to improve the mutation score. Prefer tests that assert business outcomes and edge partitions rather than implementation details.
 
@@ -59,4 +59,4 @@ Never delete or weaken a test merely to improve the mutation score. Prefer tests
 - The mutation command and scope are reproducible.
 - L2 non-trivial and L3 required mutants are resolved or explicitly justified.
 - `verification.md`, `change-summary.md`, and `red-green-refactor.md` contain the evidence.
-- Gate 4 is not requested while unexplained critical survivors remain.
+- Final validation is not requested while unexplained critical survivors remain.

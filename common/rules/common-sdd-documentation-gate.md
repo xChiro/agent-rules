@@ -1,12 +1,12 @@
 ---
 rule_id: RULE-COMMON_SDD_DOCUMENTATION_GATE
 trigger: always_on
-description: Mandatory documentation convergence gate for every SDD lifecycle, evolution, bug fix, refactor, and completion.
+description: "Mandatory documentation convergence gate for every SDD lifecycle, evolution, bug fix, refactor, and validation review."
 ---
 
 # Common SDD Documentation Gate
 
-Every SDD change must pass a documentation gate before it can be reported complete. This applies to `feature`, `bug-fix`, `refactor`, `pipeline`, and `documentation` changes, including spec creation, spec evolution, defect fixes, refactors, and completion.
+Every SDD change must pass a documentation gate before its validation status is recorded. This applies to `feature`, `bug-fix`, `refactor`, `pipeline`, and `documentation` changes, including spec creation, spec evolution, defect fixes, and refactors.
 
 The gate always uses the canonical `WORKFLOW-COMMON_SDD_UPDATE_DOCUMENTATION_WORKFLOW` (`common-sdd-update-documentation.workflow.md`). Do not create language-specific or lifecycle-specific documentation workflows when this workflow exists.
 
@@ -24,7 +24,7 @@ The documentation task owns convergence of the SDD artifacts, project documentat
 
 ## Gate Execution
 
-After the behavior, tests, and relevant verification are green, and before the final completion workflow:
+After the behavior, tests, and relevant verification are green, and before final validation review:
 
 1. Invoke `WORKFLOW-COMMON_SDD_UPDATE_DOCUMENTATION_WORKFLOW`.
 2. Inspect the real repository and update only affected documentation surfaces.
@@ -34,13 +34,13 @@ After the behavior, tests, and relevant verification are green, and before the f
 
 The gate is not passed by merely adding a documentation task or mentioning the workflow in chat. The workflow must be invoked and its result recorded. If the workflow determines that no project documentation surface is affected, record `no_documentation_change_reason` in `spec.md`, `verification.md`, and `change-summary.md`, including the inspected surfaces and evidence. This is an explicit gate outcome, not an omitted gate.
 
-## Completion Rules
+## Validation Rules
 
 - `common-sdd-create-spec.workflow.md` must route the final documentation task before RED is started.
 - `common-sdd-evolve-spec.workflow.md` must rerun the gate when the approved spec, behavior, contract, architecture, risk, test strategy, or repository structure changes.
 - `common-sdd-fix-bug.workflow.md` must run the gate for the defect record, regression evidence, affected docs, and append-only history.
 - `common-sdd-refactor-lifecycle.workflow.md` must run the gate when structure, ownership, boundaries, repository maps, or developer guidance changes.
 - `common-sdd-change-lifecycle.workflow.md` and language implementation/refactor adapters must preserve the documentation task and route it to this workflow.
-- `common-sdd-complete-spec.workflow.md` must block Gate 4 until this workflow has passed or the explicit no-change outcome is recorded.
+- `common-sdd-verify-spec.workflow.md` must block `status: verified` until this workflow has passed or the explicit no-change outcome is recorded.
 
 No SDD lifecycle may bypass this gate because a change appears small, mechanical, internal, or documentation-free.

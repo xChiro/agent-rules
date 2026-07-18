@@ -1,7 +1,7 @@
 ---
 workflow_id: WORKFLOW-COMMON_REST_API_DESIGN_WORKFLOW
 trigger: model_decision
-description: Design or evolve a resource-oriented REST contract with ATDD/TDD, compatibility, and clean boundary rules.
+description: "Design or evolve a resource-oriented REST contract with ATDD/TDD, compatibility, and clean boundary rules."
 ---
 
 # Common REST API Design Workflow
@@ -13,12 +13,12 @@ Use this as a supporting workflow for `rest-endpoint`, `lambda-rest-endpoint`, a
 1. Invoke `WORKFLOW-COMMON_BDD_SPECIFICATION_WORKFLOW` and write the business-readable scenario from value and concrete examples.
 2. Obtain Gate 1 for the spec and Gate 2 before creating or running tests.
 3. Define the smallest resource/contract partition: one behavior, one endpoint change, or one compatibility decision.
-4. Create acceptance/public-boundary RED, then the focused unit-level `TEST-*` RED.
-5. Invoke `WORKFLOW-COMMON_SDD_REVIEW_TEST_EVIDENCE_WORKFLOW`; obtain Gate 3 before production code.
-6. Implement the smallest adapter/application change, make the boundary test GREEN, and refactor only while green.
+4. Complete affected domain and application `TEST-*` RED/GREEN/refactor cycles and pass `LAYER-GATE-APPLICATION`.
+5. Create acceptance RED before outer production: use the real public boundary for `integration/http`, or the affected Application use case plus real local resource for `integration/infrastructure`; invoke `WORKFLOW-COMMON_SDD_REVIEW_TEST_EVIDENCE_WORKFLOW` as Gate 3-BOUNDARY with the scope recorded.
+6. Implement the smallest infrastructure adapter, delivery interface, and composition change in that order; make the relevant test GREEN with the real implementation/resource and refactor only while green.
 7. Run the applicable HTTP integration, contract, security, quality, and mandatory coverage gates; mutation and critical-E2E gates remain selected by risk.
 
-No controller, router, handler, DTO, schema, or infrastructure production code is changed before the current failing unit-level test exists and Gate 3 is recorded.
+No controller, router, handler, DTO implementation, schema wiring, or infrastructure production code is changed before the core gate and the applicable Gate 3-BOUNDARY evidence are recorded. Contract design may occur in the approved spec without creating production delivery code.
 
 ## Contract Checklist
 
@@ -54,7 +54,7 @@ transport adapter -> application port/use case -> domain
 ## Evidence And Completion
 
 - Acceptance evidence proves the observable public contract through the closest stable boundary.
-- Unit tests prove domain/application rules; HTTP integration tests prove routing, serialization, auth context, DI, persistence wiring, and error mapping.
+- Unit tests prove only domain/application rules; `integration/http` proves routing, serialization, auth context, DI, persistence wiring, and error mapping through the real public path. `integration/infrastructure` invokes the use case and proves real adapter/resource wiring when affected.
 - Update OpenAPI/schema or equivalent checked-in contract artifacts when the public contract changes.
 - Record RED -> GREEN -> REFACTOR in `red-green-refactor.md`, with one entry per behavior partition.
 - Record workflow routing, test IDs, commands, gate decisions, compatibility impact, and residual risk in the active spec.

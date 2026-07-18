@@ -1,7 +1,7 @@
 ---
 workflow_id: WORKFLOW-REACT_REST_API_CLIENT_WORKFLOW
 trigger: model_decision
-description: Implement a React + TypeScript + Vite REST client boundary with typed DTO mapping, safe configuration, and ATDD/TDD evidence.
+description: "Implement a React + TypeScript + Vite REST client boundary with typed DTO mapping, safe configuration, and ATDD/TDD evidence."
 ---
 
 # React REST API Client Workflow
@@ -22,7 +22,7 @@ Always load:
 1. Record this workflow as primary and the common REST workflow as supporting in `workflow-routing.md`.
 2. Write the abstract business scenario and obtain Gate 1 before spec writes; obtain Gate 2 before RED.
 3. Confirm the REST contract: resource, method, request/response DTOs, error codes, auth/session context, pagination, cancellation, retry/idempotency, and compatibility.
-4. Create the smallest acceptance/component/route RED and the focused pure test RED for the next mapping, validator, reducer, or async-state rule. Apply `RULE-COMMON_TEST_ASSERTION_STRUCTURE`: keep all `expect`/`assert`/matcher calls in `Then/Assert`. Invoke the test-evidence workflow and obtain Gate 3.
+4. Create the smallest acceptance/component/route RED and the focused pure test RED for the next mapping, validator, reducer, or async-state rule. Apply `RULE-COMMON_TEST_ASSERTION_STRUCTURE` and `RULE-COMMON_TEST_DATA_AND_DOUBLE_PATTERNS`: use exact `// Arrange`, `// Act`, and `// Assert` sections, one physical-line Act interaction, fresh typed data, and assertions only in `// Assert`. Invoke the test-evidence workflow and obtain Gate 3.
 5. Implement the narrow boundary: typed API client/service, runtime validation of untrusted data, DTO-owned mapping functions, and a focused hook that exposes UI-facing state/commands.
 6. Keep HTTP and transport details out of JSX/presentational components. Components render; hooks coordinate; services communicate; DTO modules translate.
 7. Use `unknown` at the external boundary, narrow it with a parser/type guard/schema already accepted by the repository, and preserve strict TypeScript. Do not use `any` to bypass a contract.

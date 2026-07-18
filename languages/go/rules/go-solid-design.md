@@ -1,20 +1,15 @@
 ---
 rule_id: RULE-GO_SOLID_DESIGN
-trigger: always_on
-description: Go SOLID principles for Clean Architecture projects
-globs: **/*.go
+trigger: model_decision
+description: "Go SOLID principles for Clean Architecture projects"
+globs: "**/*.go"
 ---
 
 # Go SOLID Design
 
-## SDD Baseline
+## SDD Integration
 
-- Apply `common/rules/common-sdd-agentic-discipline.md` before this rule.
-- Create or evolve the owning User Story based spec before production code when behavior, contracts, architecture, or risk changes.
-- Apply mandatory Gate 1 before spec writes, Gate 2 before RED, and Gate 3 before Green, even for simple or low-risk changes.
-- Keep artifact, task, track, and test IDs traceable through `traceability.yaml` and `parallel-tracks.md`.
-- Write BDD Given/When/Then acceptance evidence first, then the unit-level ATDD-style focused failing test for the next rule or boundary before production code.
-- Refactor only with tests green and converge spec history, tasks, parallel tracks, traceability, verification notes, and code.
+Apply `RULE-COMMON_SDD_AGENTIC_DISCIPLINE` before this design specialization. SOLID informs each opened layer but never replaces common test-first gates, YAGNI, or convergence.
 
 
 SOLID principles applied to Go following Clean Architecture definitions.
@@ -25,8 +20,8 @@ Apply SOLID through idiomatic Go: small packages, explicit dependencies, composi
 
 **Definition (Uncle Bob, Clean Architecture)**: A module should be responsible to one, and only one, actor.
 
-### Method-Level SRP (CRITICAL REQUIREMENT)
-**STRICT RULE**: Each method must have exactly one cohesive reason to change.
+### Method-Level Cohesion
+Methods should be cohesive and should not mix unrelated actors, policies, layer concerns, or side effects. Do not interpret SRP as a rule that every method must contain only one operation or that every multi-step workflow must be split into artificial helpers.
 
 **Violations**:
 - ❌ `validateAndExtractData()` - Validates AND extracts (2 responsibilities)
@@ -43,7 +38,7 @@ Apply SOLID through idiomatic Go: small packages, explicit dependencies, composi
 
 **Senior Interpretation**:
 - Do not split a cohesive function only because it validates, transforms local data, and returns a value.
-- Split when different actors, policies, layer concerns, side effects, or reusable domain concepts are mixed.
+- Split when different actors, policies, layer concerns, side effects, or reusable domain concepts are mixed; the SRP decision belongs primarily at the module/type boundary.
 - Prefer a clear 25-line cohesive function over five vague helpers that hide the workflow.
 
 ### Actor Definition
@@ -58,7 +53,7 @@ Any entity that needs the system to change:
 - **Module**: Any cohesive unit of code (function, class, package, microservice)
 - **One Actor**: Each module serves needs of only one stakeholder entity
 - **Change Reasons**: Module has only one reason to change, driven by one actor
-- **Method Focus**: Each method has exactly one reason to exist
+- **Method Focus**: Each method is cohesive and supports the responsibility of its owning module; SRP is evaluated by actor and reason to change, not by method length or statement count.
 
 ### Examples
 
@@ -101,9 +96,11 @@ func (p *PayPalProcessor) Process(amount float64) error { /* ... */ }
 ```
 
 ```go
-// ✅ Simpler when there is no current variation
-type PaymentService struct {
-    gateway *StripeGateway
+// ✅ Simpler when pure policy has no current variation or external boundary
+type FeeCalculator struct{}
+
+func (FeeCalculator) Calculate(subtotal int64) int64 {
+    return subtotal / 100
 }
 ```
 
@@ -182,13 +179,13 @@ High-level modules should not depend on low-level modules. Both should depend on
 ### Example
 ```go
 // ✅ High-level use case depends on abstraction
-type EnrollMemberUseCase struct {
+type MemberEnroller struct {
     createCmd commands.CreateMemberCommand  // Interface
     validator validation.ValidateUniqueness // Interface
 }
 
 // ❌ High-level use case depends on concrete implementation
-type EnrollMemberUseCase struct {
+type MemberEnrollerWithConcreteDependency struct {
     repo *SQLMemberRepository  // Concrete type - violates DIP
 }
 ```

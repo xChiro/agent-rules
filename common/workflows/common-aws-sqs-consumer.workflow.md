@@ -1,7 +1,7 @@
 ---
 workflow_id: WORKFLOW-COMMON_AWS_SQS_CONSUMER_WORKFLOW
 trigger: model_decision
-description: Add or evolve an AWS SQS consumer backed by Lambda with idempotent batch processing, safe retries, DLQ handling, and TDD.
+description: "Add or evolve an AWS SQS consumer backed by Lambda with idempotent batch processing, safe retries, DLQ handling, and TDD."
 ---
 
 # Common AWS SQS Consumer Workflow
@@ -12,10 +12,13 @@ Use for `message-consumer` work where Lambda consumes Amazon SQS. Invoke `WORKFL
 
 1. Invoke `WORKFLOW-COMMON_BDD_SPECIFICATION_WORKFLOW` and describe the business outcome of processing a valid message.
 2. Define queue ownership, message contract, idempotency key, batch behavior, retry/DLQ policy, ordering, concurrency limit, and downstream capacity.
-3. Obtain Gate 1 and Gate 2; create acceptance/public-boundary or consumer RED and focused application/consumer `TEST-*` RED.
-4. Invoke `WORKFLOW-COMMON_SDD_REVIEW_TEST_EVIDENCE_WORKFLOW`; obtain Gate 3.
-5. Implement the thin event-source adapter and one application operation; make valid, invalid, duplicate, and failure cases GREEN.
-6. Create or update the source queue, DLQ, redrive policy, event-source mapping, IAM, alarms, and IaC settings only through checked-in infrastructure; validate them, then run mandatory quality, security, coverage, and operational gates, with mutation selected by risk.
+3. Obtain Gate 1 and Gate 2; create focused Domain/Application RED for valid, invalid, duplicate, and failure policies.
+4. Obtain Gate 3-DOMAIN and/or Gate 3-APPLICATION as affected, implement the core operation, and pass `LAYER-GATE-APPLICATION`.
+5. Create executable consumer-boundary RED and obtain Gate 3-BOUNDARY.
+6. Implement infrastructure dependencies, the thin event-source adapter, and composition/IaC in that order; make boundary evidence GREEN.
+7. Create or update the source queue, DLQ, redrive policy, event-source mapping, IAM, alarms, and IaC settings only through checked-in infrastructure; validate them, then run mandatory quality, security, coverage, and operational gates, with mutation selected by risk.
+
+Every Domain, Application, and consumer-boundary command follows `RULE-COMMON_TEST_LAYER_ISOLATION`. The consumer boundary owns queue/DLQ namespace, messages, event-source lifecycle, readiness, and cleanup and must pass without any core test process running first.
 
 ## Queue And Lambda Configuration
 

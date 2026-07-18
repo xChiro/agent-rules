@@ -1,23 +1,15 @@
 ---
 rule_id: RULE-REACT_FEATURE_ARCHITECTURE
-trigger: always_on
-description: Senior React and TypeScript feature architecture rules with SDD, ATDD-first behavior evidence, composable patterns, and no forced backend-style Clean Architecture.
-globs: **/*.tsx,**/*.ts,**/*.css
+trigger: model_decision
+description: "Senior React and TypeScript feature architecture rules with SDD, ATDD-first behavior evidence, composable patterns, and no forced backend-style Clean Architecture."
+globs: "**/*.tsx,**/*.ts,**/*.css"
 ---
 
 # React Feature Architecture
 
-## SDD Baseline
+## SDD Integration
 
-- Apply `common/rules/common-sdd-agentic-discipline.md` before this rule.
-- Create or evolve the owning User Story based spec before production code when behavior, contracts, architecture, or risk changes.
-- Apply mandatory Gate 1 before spec writes, Gate 2 before RED, and Gate 3 before Green, even for simple or low-risk changes.
-- Apply Gate 4 before marking the spec complete, creating the AI snapshot, or renaming the feature to `specs/features/<number>-<slug>-completed/`.
-- Keep artifact, task, track, and test IDs traceable through `traceability.yaml` and `parallel-tracks.md`.
-- Write BDD Given/When/Then acceptance evidence first, then the unit-level ATDD-style focused failing test for the next rule or boundary before production code.
-- Refactor only with tests green and converge spec history, tasks, parallel tracks, traceability, verification notes, and code.
-- Run the security gate for authentication, authorization, cookies, browser storage, API boundaries, secrets, or public exposure.
-- For REST-client work, apply `react-vite-api-client.md` and invoke `WORKFLOW-REACT_REST_API_CLIENT_WORKFLOW` with `WORKFLOW-COMMON_REST_API_DESIGN_WORKFLOW`.
+Apply `RULE-COMMON_SDD_AGENTIC_DISCIPLINE` and `WORKFLOW-REACT_IMPLEMENT_FEATURE_WORKFLOW`; this rule adds React architecture only and cannot relax common gates or convergence. Load the common test rules for frontend tests, the security rule/gate for browser trust boundaries, and the React REST-client plus common REST workflows only when those boundaries are affected.
 
 
 These rules define how an AI coding agent must create, review, and refactor React applications.
@@ -46,7 +38,8 @@ Use Clean Architecture principles only when they reduce complexity:
 - Unit-test pure mappers, reducers, validators, formatters, permission rules, and state transitions before changing production code.
 - Test custom hooks through observable results and user actions; do not assert private hook implementation details or effect call counts.
 - Test reusable component contracts through role-, label-, and text-based queries and keyboard interactions.
-- Apply `common-test-assertion-structure.md`: keep `expect`/`assert`/matcher calls only in the final `Then/Assert` section; arrange helpers and action helpers do not assert.
+- Apply `common-test-assertion-structure.md`: use BDD Given/When/Then behavior names and exact `// Arrange`, `// Act`, and `// Assert` comments; `// Act` has exactly one physical-line SUT/user action/public command, and `expect`/`assert`/matcher calls stay only in `// Assert`.
+- Use fresh typed Object Mothers/factory functions for domain/UI data, small builders for meaningful variants, and focused SUT factories for hooks/services. Helpers return data/state and never assert or execute hidden interactions.
 - Use snapshot tests only for stable, intentional serialized output; do not use snapshots as a substitute for behavior assertions.
 - Do not add backend-style use cases or ports just to satisfy testing discipline.
 

@@ -1,7 +1,7 @@
 ---
 workflow_id: WORKFLOW-CSHARP_REST_API_WORKFLOW
 trigger: model_decision
-description: Implement or evolve a C# REST or API Gateway/Lambda boundary through the common REST and SDD test-first workflows.
+description: "Implement or evolve a C# REST or API Gateway/Lambda boundary through the common REST and SDD test-first workflows."
 ---
 
 # C# REST API Workflow
@@ -25,13 +25,14 @@ For `lambda-rest-endpoint`, also load `WORKFLOW-COMMON_AWS_LAMBDA_REST_WORKFLOW`
 1. Record this workflow as primary and the common REST/Lambda workflows as supporting in `workflow-routing.md`.
 2. Write the abstract BDD scenario and obtain Gate 1 before spec writes; obtain Gate 2 before RED.
 3. Model resources, methods, DTOs, errors/Problem Details, auth context, pagination/idempotency, compatibility, and OpenAPI through the common REST workflow.
-4. Create the smallest public HTTP RED, then the focused domain/application `TEST-*` RED. Invoke the test-evidence workflow and obtain Gate 3.
-5. Implement the smallest change: request/response DTOs, one application port/use case, and one thin controller, Minimal API, or Lambda adapter. Keep ASP.NET, API Gateway, Lambda, EF Core, AWS SDK, and transport types out of domain/application.
-6. Keep `CancellationToken` flowing through application ports and I/O. Put `ToApplication`/`FromApplication` on HTTP DTOs and `FromDomain`/`ToDomain` on persistence DTOs.
-7. For Lambda, use the common Lambda workflow: explicit payload version, trusted authorizer context, reusable clients outside invocation, no request state in static/global objects, bounded timeout/concurrency, least-privilege IAM, and cost evidence.
-8. Make HTTP integration evidence GREEN through `HttpClient`/hosted local resources or the Lambda HTTP emulator. Do not call controllers/handlers directly and do not create another backend runtime suite.
-9. Refactor while green; update OpenAPI, IaC, `red-green-refactor.md`, `verification.md`, traceability, and residual-risk records.
-10. Invoke the required quality, security, and coverage workflows; mutation, E2E, and policy workflows remain selected by risk.
+4. Complete affected Domain and Application RED/GREEN/refactor cycles and pass `LAYER-GATE-APPLICATION`.
+5. Create the smallest public HTTP RED, or the use-case-driven Infrastructure RED when an adapter/resource is the affected boundary, and obtain Gate 3-BOUNDARY with the integration scope recorded.
+6. Implement the smallest outer change in order: EF/infrastructure adapter, request/response DTO and delivery adapter, then composition/DI/IaC. Make Infrastructure RED GREEN against the real local resource. Keep ASP.NET, API Gateway, Lambda, EF Core, AWS SDK, and transport types out of domain/application.
+7. Keep `CancellationToken` flowing through application ports and I/O. Put `ToApplication`/`FromApplication` on HTTP DTOs and `FromDomain`/`ToDomain` on persistence DTOs.
+8. For Lambda, use the common Lambda workflow: explicit payload version, trusted authorizer context, reusable clients outside invocation, no request state in static/global objects, bounded timeout/concurrency, least-privilege IAM, and cost evidence.
+9. Make HTTP integration evidence GREEN through `HttpClient`/hosted local resources or the Lambda HTTP emulator. Do not call controllers/handlers directly and do not create another backend runtime suite.
+10. Refactor while green; update OpenAPI, IaC, `red-green-refactor.md`, `verification.md`, traceability, layer gates, and residual-risk records.
+11. Invoke the required quality, security, and coverage workflows; mutation, E2E, and policy workflows remain selected by risk.
 
 ## Done When
 

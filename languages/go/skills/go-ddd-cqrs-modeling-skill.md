@@ -1,20 +1,16 @@
 ---
 skill_id: SKILL-GO_DDD_CQRS_MODELING_SKILL
 name: go-ddd-cqrs-modeling
-trigger: always_on
-description: Go DDD, Clean Architecture, CQRS, and value-object modeling skill.
-globs: **/*.go
+trigger: model_decision
+description: "Go DDD, Clean Architecture, CQRS, and value-object modeling skill."
+globs: "**/*.go"
 ---
 
 # Go DDD CQRS Modeling Skill
 
-## SDD Baseline
+## SDD Integration
 
-- Follow `common-sdd-agentic-discipline.md` for every behavior-changing task.
-- Keep specs versioned under `specs/features/<number>-<slug>/` when the project supports SDD artifacts.
-- Apply mandatory Gate 1 before spec writes, Gate 2 before RED, and Gate 3 before Green, even for simple or low-risk changes.
-- Start with BDD Given/When/Then acceptance evidence, then unit-level ATDD-style focused failing test code, then production code.
-- Refactor only with tests green and converge specs, tasks, parallel tracks, traceability, verification notes, and code.
+Load this skill only for Go Domain/Application modeling after `RULE-COMMON_SDD_AGENTIC_DISCIPLINE`. It adds DDD/CQRS technique and cannot redefine common gates, traceability, layer order, or convergence.
 
 
 Model the business explicitly. Invalid states should be difficult or impossible to create.
@@ -49,6 +45,8 @@ Model the business explicitly. Invalid states should be difficult or impossible 
 - Queries return DTOs for read models or domain objects only when behavior needs them.
 - Validation ports answer one business question.
 - One port per behavior; no god repository with unused CRUD methods.
+- Each command, query, or validation port has exactly one method for that behavior; compose focused ports when a use case needs multiple behaviors.
+- Each named CQRS struct and interface lives in its own `snake_case.go` file. Do not group multiple named CQRS types in one file.
 
 ## Error Strategy
 

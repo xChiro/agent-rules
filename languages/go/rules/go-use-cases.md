@@ -1,41 +1,49 @@
 ---
 rule_id: RULE-GO_USE_CASES
 trigger: model_decision
-description: Go use case rules for Clean Architecture and CQRS
-globs: **/*.go
+description: "Go use case rules for Clean Architecture and CQRS"
+globs: "**/*.go"
 ---
 
 # Go Use Cases
 
-## SDD Baseline
+## SDD Integration
 
-- Apply `common/rules/common-sdd-agentic-discipline.md` before this rule.
-- Create or evolve the owning User Story based spec before production code when behavior, contracts, architecture, or risk changes.
-- Apply mandatory Gate 1 before spec writes, Gate 2 before RED, and Gate 3 before Green, even for simple or low-risk changes.
-- Keep artifact, task, track, and test IDs traceable through `traceability.yaml` and `parallel-tracks.md`.
-- Write BDD Given/When/Then acceptance evidence first, then the unit-level ATDD-style focused failing test for the next rule or boundary before production code.
-- Refactor only with tests green and converge spec history, tasks, parallel tracks, traceability, verification notes, and code.
+Apply `RULE-COMMON_SDD_AGENTIC_DISCIPLINE` and `RULE-COMMON_INSIDE_OUT_DEVELOPMENT`. This rule specializes Application use cases in Go; Gate 3-APPLICATION, traceability, and convergence remain owned by the common lifecycle.
 
 
 When creating a new Use Case, follow this exact sequence for CQRS and Clean Architecture compliance with YAGNI principles.
 
+## Use Case Naming
+
+Name the Application use case with an agent noun that expresses the capability it owns:
+
+- `PartyCreator`, not `CreatePartyUseCase`;
+- `MemberEnroller`, not `CreateMemberUseCase`;
+- `OrderCanceller`, not `CancelOrderService`.
+
+Use `PascalCase` for the Go type and a matching `snake_case.go` file. Keep `UseCase`, `Service`, `Handler`, and verb-only names for technical adapters only when the repository has an established exception. A command/query request or port may retain its CQRS-oriented name, but the orchestrating use case must keep the agent-noun name.
+
 Also follow `go-advanced-practices.md` for context, error handling, interfaces, concurrency, and advanced Go patterns.
+Apply `common-test-data-and-double-patterns.md`: use fresh Object Mothers/Test Data Builders and a focused SUT factory; keep doubles at outgoing CQRS/application ports.
 
 For changed backend business behavior, use ATDD plus TDD: Red, Green, Refactor.
 
 ## Phase 1: Requirements Analysis
 - Identify the **Actor** requesting the change
 - Define the **Responsibility** of the new component
-- Confirm it adheres to the 150-line file limit
+- Confirm every in-scope file stays below the strict 150-physical-line limit
 - Determine CQRS operations (commands/queries/validation)
 - **YAGNI Check**: Only create what's actually needed now
 
 ## Phase 2: Red - Expected Behavior Test
-Create test file in `tests/{domain}/application/{use_case}/` using snake_case function names.
+Create the unit test file in `tests/unit/{domain}/application/{use_case}/` using snake_case function names.
 
 ### Mandatory Requirements
-- **Assertion library**: MUST use `github.com/stretchr/testify/assert`
-- **File size limit**: ≤150 lines per test file
+- **Test toolchain**: MUST use Go's standard `testing` package for the runner, `testify/assert` or `testify/require` for assertions, and hand-written doubles; production APIs under test may be imported, but no generated mocks or mocking frameworks
+- **Error assertions**: MUST NOT use `require.NoError(t, err)`; use an explicit context-rich `if err != nil` check with `t.Fatalf` when continuation is unsafe, or `assert.NoError` when continuation is safe
+- **Test doubles**: Hand-write only the outgoing-port stubs, fakes, spies, or mocks required by the scenario
+- **File size limit**: <150 physical lines per test file
 - **Function size limit**: ≤20 lines per test function
 - **Single Responsibility**: Each test function must test exactly ONE scenario
 - **YAGNI**: Only test current functionality
@@ -50,9 +58,10 @@ Create test file in `tests/{domain}/application/{use_case}/` using snake_case fu
 ### Test Structure Template
 ```go
 func Test_given_[condition]_when_[action]_then_[expected](t *testing.T) {
-    // Arrange: Setup CQRS mocks and request
-    // Act: Execute single use case call
-    // Assert: Verify behavior and mock interactions
+    // Arrange
+    // Act
+    response, err := useCase.Execute(ctx, request)
+    // Assert
 }
 ```
 
@@ -72,6 +81,9 @@ ports/
     └── validate_{entity}_{property}_uniqueness.go
 ```
 
+- Each named CQRS `struct` and `interface` must be in its own `snake_case.go` file. Do not combine multiple named architectural types in one file.
+- Each CQRS command, query, or validation interface must expose exactly one method representing one behavior. Compose multiple focused interfaces in the use case when more than one behavior is required.
+
 ### Interface Naming Rules
 - **Commands**: `{Action}{Entity}Command` → `CreateMemberCommand`
 - **Queries**: `{Get/List/Search}{Entity}By{Criteria}` → `GetMemberByID`
@@ -83,6 +95,7 @@ ports/
 - **Delete unused ports**: Remove interfaces without implementations
 - **Keep interfaces small**: Single responsibility per interface
 - **One interface per file**: Following CQRS rules
+- **One method per CQRS interface**: Never create a multi-method command/query port or a god repository
 - **Protect real boundaries**: Create ports for persistence, messaging, sessions, clocks, external APIs, or substitutable policies
 - **Avoid decorative ports**: Do not create ports for private helpers or concrete collaborators that do not cross a boundary
 
@@ -105,17 +118,17 @@ type CreateMemberResponse struct {
 
 ### Use Case Struct
 ```go
-// usecase.go
-type CreateMemberUseCase struct {
+// member_enroller.go
+type MemberEnroller struct {
     createMember CreateMemberCommand
     validateEmail ValidateMemberEmailUniqueness
 }
 
-func NewCreateMemberUseCase(
+func NewMemberEnroller(
     createMember CreateMemberCommand,
     validateEmail ValidateMemberEmailUniqueness,
-) *CreateMemberUseCase {
-    return &CreateMemberUseCase{
+) *MemberEnroller {
+    return &MemberEnroller{
         createMember: createMember,
         validateEmail: validateEmail,
     }
@@ -124,7 +137,7 @@ func NewCreateMemberUseCase(
 
 ### Use Case Logic
 ```go
-func (uc *CreateMemberUseCase) Execute(ctx context.Context, req CreateMemberRequest) (CreateMemberResponse, error) {
+func (uc *MemberEnroller) Execute(ctx context.Context, req CreateMemberRequest) (CreateMemberResponse, error) {
     member, err := uc.buildMember(req)
     if err != nil {
         return CreateMemberResponse{}, err
@@ -141,7 +154,7 @@ func (uc *CreateMemberUseCase) Execute(ctx context.Context, req CreateMemberRequ
     return newCreateMemberResponse(member), nil
 }
 
-func (uc *CreateMemberUseCase) buildMember(req CreateMemberRequest) (domain.Member, error) {
+func (uc *MemberEnroller) buildMember(req CreateMemberRequest) (domain.Member, error) {
     handlerName, err := domain.NewHandlerName(req.HandlerName)
     if err != nil {
         return domain.Member{}, fmt.Errorf("invalid handler name: %w", err)
@@ -155,7 +168,7 @@ func (uc *CreateMemberUseCase) buildMember(req CreateMemberRequest) (domain.Memb
     return domain.NewMember(handlerName, externalID), nil
 }
 
-func (uc *CreateMemberUseCase) ensureEmailIsUnique(ctx context.Context, email domain.Email) error {
+func (uc *MemberEnroller) ensureEmailIsUnique(ctx context.Context, email domain.Email) error {
     isUnique, err := uc.validateEmail.Execute(ctx, email)
     if err != nil {
         return fmt.Errorf("failed to validate email uniqueness: %w", err)
@@ -172,20 +185,22 @@ func newCreateMemberResponse(member domain.Member) CreateMemberResponse {
 }
 ```
 
-## Phase 5: Manual Mock Implementation
+## Manual Test Doubles Created During Phase 2
 
-### Mock File Structure
+Create these test-only types before Gate 3-APPLICATION. They may initially fail compilation because the intended application API does not exist yet; record that narrow compile failure as RED.
+
+### Test Double File Structure
 ```
-tests/{domain}/application/{use_case}/mocks/
+tests/unit/{domain}/application/{use_case}/doubles/
 ├── types.go                              # Shared verification types
-├── mock_create_member_command.go
-└── mock_validate_member_email_uniqueness.go
+├── spy_create_member_command.go
+└── stub_validate_member_email_uniqueness.go
 ```
 
-### Mock Implementation Pattern
+### Hand-Written Double Pattern
 ```go
-// mock_create_member_command.go
-type MockCreateMemberCommand struct {
+// spy_create_member_command.go
+type CreateMemberCommandSpy struct {
     // Configuration
     Error error
 
@@ -197,23 +212,24 @@ type CreateMemberCall struct {
     Member domain.Member
 }
 
-func (m *MockCreateMemberCommand) Execute(ctx context.Context, member domain.Member) error {
+func (m *CreateMemberCommandSpy) Execute(ctx context.Context, member domain.Member) error {
     m.Calls = append(m.Calls, CreateMemberCall{Member: member})
     return m.Error
 }
 ```
 
-### YAGNI Mock Rules
-- **Only mock ports**: That are actually used by the use case
-- **Keep mocks simple**: Manual mocks preferred
-- **Delete unused mocks**: Remove mocks for unused ports
-- **One mock per interface**: Following CQRS rules
+### YAGNI Test Double Rules
+- **Double only outgoing ports**: Use only ports actually consumed by the use case
+- **Keep doubles simple**: Manual doubles are mandatory; do not use generators or mocking frameworks
+- **Delete unused doubles**: Remove doubles for unused ports
+- **One focused double per outgoing port when needed**: Name it by role and observable purpose
+- **No test assertions in helpers**: Mothers, builders, fixtures, and doubles return data/errors/captured calls; they never call `testing.T` or assertion APIs
 
 ## Phase 6: Refactor
 Check for:
-- **File size limits**: ≤150 lines per file
+- **File size limits**: <150 physical lines per file
 - **Function size limits**: ≤20 lines per function
-- **Single responsibility**: Each file has one purpose, each method has ONE responsibility
+- **Actor-based SRP**: Each module/type serves one actor and one reason to change, following the Clean Architecture definition; do not reduce SRP to one method or one statement per type
 - **CQRS compliance**: Commands vs queries separated
 - **Naming conventions**: Following rules
 - **YAGNI compliance**: Delete unused code
@@ -237,15 +253,15 @@ Check for:
 - Do not log and return the same error inside use cases unless the use case is the final process boundary
 
 ### Dependency Injection
-- Use constructor functions `NewUseCase(dep1, dep2) *UseCase`
+- Use constructor functions named after the agent-noun type, such as `NewMemberEnroller(...) *MemberEnroller`
 - Depend on interfaces at real boundaries, not for every private helper
 - Define interfaces in the application layer, implement in infrastructure
 - Use concrete types inside the same package when no boundary or substitution exists
 
 - Use individual tests for business-significant scenarios
 - Use table-driven tests for compact validation matrices where each row follows the same rule
-- Manual mocks over heavy mocking frameworks
-- Arrange/Act/Assert structure with clear comments
+- Small hand-written stubs, fakes, or spies over mocking frameworks
+- Given/When/Then behavior with exact `// Arrange`, `// Act`, and `// Assert` comments; `// Act` has one executable statement on one physical line
 - Test edge cases before happy paths
 
 ### Clean Architecture Compliance
@@ -280,7 +296,7 @@ This protocol ensures:
 2. **Clean Architecture Compliance**: Proper layer separation
 3. **CQRS Implementation**: Commands vs queries vs validation
 4. **Domain-Driven Design**: Business logic in domain entities
-5. **Manual Testing**: Simple, explicit mocks
+5. **Manual Test Doubles**: Simple, explicit hand-written doubles
 6. **Code Quality**: Size limits and naming conventions
 7. **YAGNI Compliance**: Only what's needed now
 8. **Screaming Architecture**: Structure communicates purpose

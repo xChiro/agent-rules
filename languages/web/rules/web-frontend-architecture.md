@@ -1,20 +1,15 @@
 ---
 rule_id: RULE-WEB_FRONTEND_ARCHITECTURE
-description: Generic web frontend rules for static HTML/CSS/TypeScript projects without React-specific architecture.
-globs: **/*.html,**/*.css,**/*.ts,**/*.js,**/*.json
+trigger: model_decision
+description: "Generic web frontend rules for static HTML/CSS/TypeScript projects without React-specific architecture."
+globs: "**/*.html,**/*.css,**/*.ts,**/*.js,**/*.json"
 ---
 
 # Web Frontend Architecture
 
-## SDD Baseline
+## SDD Integration
 
-- Apply `common/rules/common-sdd-agentic-discipline.md` before this rule.
-- Create or evolve the owning User Story based spec before production code when behavior, contracts, architecture, or risk changes.
-- Apply mandatory Gate 1 before spec writes, Gate 2 before RED, and Gate 3 before Green, even for simple or low-risk changes.
-- Keep artifact, task, track, and test IDs traceable through `traceability.yaml` and `parallel-tracks.md`.
-- Write BDD Given/When/Then acceptance evidence first, then the unit-level ATDD-style focused failing test for the next rule or boundary before production code.
-- Refactor only with tests green and converge spec history, tasks, parallel tracks, traceability, verification notes, and code.
-- Apply `common/rules/common-security-and-identity.md` and `common-sdd-security-gate.workflow.md` for auth, sessions, cookies, secrets, API calls, or public exposure.
+Apply `RULE-COMMON_SDD_AGENTIC_DISCIPLINE` and `WORKFLOW-WEB_IMPLEMENT_FRONTEND_CHANGE_WORKFLOW`; this rule adds lightweight-web architecture only and cannot relax common gates or convergence. Load the common test rules for frontend tests and the security rule/gate only for auth, sessions, cookies, secrets, API calls, or public exposure.
 
 
 Use these rules for static sites or lightweight TypeScript/web projects that are not React applications.
@@ -49,5 +44,6 @@ Use these rules for static sites or lightweight TypeScript/web projects that are
 - Keep DTO types and their boundary mapping functions colocated in the DTO module. A database, HTTP, or message DTO owns conversion to/from the application/UI model; do not create a global mapper utility for one DTO boundary.
 - Keep DTO mapping pure and structural. It must not perform I/O, authorization, logging, orchestration, or business policy. Use a boundary-local companion only for generated DTOs or deliberate multi-source projections.
 - Handle loading, empty, and error states when the page calls an API.
-- Apply `common-test-assertion-structure.md` to frontend tests: keep all assertion APIs in `Then/Assert`, never in setup or action helpers.
+- Apply `common-test-assertion-structure.md` to frontend tests: use BDD Given/When/Then behavior names and exact `// Arrange`, `// Act`, and `// Assert` comments; `// Act` has exactly one physical-line SUT/user action/public command, and assertion APIs stay only in `// Assert`.
+- Use fresh typed Object Mothers/factory functions for UI data, small builders for variants, and scoped fixtures for browser/resource lifecycle. Helpers return data/state and never assert or perform hidden interactions.
 - Authenticated web apps use server-managed `HttpOnly`, `Secure`, `SameSite` session cookies by default. Never store access, refresh, or ID tokens in browser-readable storage.

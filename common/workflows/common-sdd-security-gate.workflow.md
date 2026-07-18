@@ -1,30 +1,30 @@
 ---
 workflow_id: WORKFLOW-COMMON_SDD_SECURITY_GATE_WORKFLOW
 trigger: manual
-description: Mandatory final security review for every completed SDD spec, including OAuth 2.0, OIDC, web session cookies, secrets, authorization, and supply-chain evidence.
+description: "Mandatory final security review before an SDD spec enters verified status, including OAuth 2.0, OIDC, web session cookies, secrets, authorization, and supply-chain evidence."
 ---
 
 # Common SDD Security Gate Workflow
 
-Run this workflow after Green, Refactor, relevant tests, documentation convergence, and before Gate 4 completion approval. It is mandatory for every completed SDD spec. A spec with no security-sensitive change still runs the scope review and records `security_role: none` with the reason security impact is unchanged.
+Run this workflow after Green, Refactor, relevant tests, documentation convergence, and before final validation review. It is mandatory before an SDD spec enters verified status. A spec with no security-sensitive change still runs the scope review and records `security_role: none` with the reason security impact is unchanged.
 
 Load `common-security-and-identity.md` for the detailed baseline. This workflow is language-neutral and applies to Go, C#, React, Web, REST, Lambda, CI, persistence, messaging, and local-resource changes. It supplements, but does not replace, the existing SDD, test, architecture, coverage, and PR-review workflows.
 
 ## Security Gate Principles
 
-1. Security review is a completion gate, not an optional scanner step.
+1. Security review is a validation gate, not an optional scanner step.
 2. Review the diff, trust boundaries, identity role, data, configuration, dependencies, and operational behavior together.
 3. Do not invent or hand-roll OAuth, OIDC, JWT validation, cryptography, session protocols, or password storage.
 4. OAuth 2.0 authorization, OIDC authentication, resource-server token validation, and identity-server responsibilities must be explicitly separated.
 5. Authenticated web applications use server-managed sessions or a BFF with `HttpOnly` cookies by default. Tokens must not be accessible to browser JavaScript.
 6. Do not suppress, delete, weaken, or reclassify a security test or finding to obtain a green result.
-7. Security findings must be fixed or explicitly accepted by an authorized security owner with expiry and mitigation; unresolved findings block completion. The agent cannot approve its own exception.
+7. Security findings must be fixed or explicitly accepted by an authorized security owner with expiry and mitigation; unresolved findings block final validation. The agent cannot approve its own exception.
 
 ## Phase 1: Prepare The Security Review
 
 Read:
 
-- The active spec or defect spec, `change-summary.md`, `plan.md`, `acceptance.feature`, `tasks.md`, `workflow-routing.md`, `traceability.yaml`, `verification.md`, history, and latest AI snapshot.
+- The active spec or defect spec, `change-summary.md`, `plan.md`, `acceptance.feature`, `tasks.md`, `workflow-routing.md`, `traceability.yaml`, `verification.md`, and history.
 - The complete diff from the approved baseline, including deleted files, generated files, dependency manifests, lockfiles, CI/IaC, environment configuration, schemas, contracts, and deployment settings.
 - The applicable `common-security-and-identity.md`, REST rules, HTTP integration harness, language rules, and local project security policy.
 
@@ -38,9 +38,13 @@ Use stable metadata:
 
 ```yaml
 feature_id: FEAT-0001
+feature_title: Enforce notification retry limits
 spec_id: SPEC-0001
+spec_title: Notification retry-limit behavior
 artifact_id: ART-0001-SECURITY-REVIEW
+artifact_title: Notification retry-limit security review
 security_review_id: SEC-0001-001
+security_review_title: Review retry-limit trust-boundary impact
 status: proposed
 security_role: oauth-client | resource-server | identity-server | none
 ```
@@ -110,12 +114,13 @@ Use repository-native commands and CI tools. Do not invent commands or report an
 - Browser/component tests for cookie/session behavior where the frontend owns the visible flow.
 - CI permission and secret-boundary review for workflow changes. Pull-request code must not receive deployment credentials.
 
-The security workflow does not create a third backend runtime test suite. Security behavior belongs in the existing `unit` and `http-integration` suites, plus static/operational gates.
+The security workflow does not create a third backend runtime test suite. Security behavior belongs in the existing `unit` and `integration` suites, plus static/operational gates.
 
 Record for each control:
 
 ```text
 control_id: SEC-CHECK-001
+control_title: Scan the changed scope for exposed secrets
 command: <exact native command>
 tool_version: <version>
 scope: <files/modules/environment>
@@ -129,17 +134,17 @@ An unavailable scanner is not a pass. Record the manual alternative, residual ri
 
 For every finding record:
 
-- `FINDING-*` ID, severity, source/control, affected file/module, exploit path, and evidence.
+- `FINDING-*` ID, human-readable finding title, severity, source/control, affected file/module, exploit path, and evidence.
 - Whether it is a real issue, false positive, accepted baseline, or duplicate, with reasoning.
 - Fix task, owning track, test/security evidence, and verification result.
 - Residual risk, security owner, expiry, mitigation, and follow-up spec for any accepted exception.
 
-Completion rules:
+Validation rules:
 
-- Critical and High findings block completion until fixed and verified.
-- Medium and Low findings block completion when unresolved, unreviewed, unowned, or without mitigation and expiry. An authorized security owner may accept them explicitly; the agent may not.
+- Critical and High findings block final validation until fixed and verified.
+- Medium and Low findings block final validation when unresolved, unreviewed, unowned, or without mitigation and expiry. An authorized security owner may accept them explicitly; the agent may not.
 - A scanner suppression must be narrow, justified, reviewed, expiry-bound when possible, and recorded. Do not suppress a finding merely because the code is inconvenient to change.
-- If a security fix changes behavior, a public contract, authentication flow, permissions, data exposure, or architecture, return to the SDD spec/Gate 1 and then the RED/Gate 3 sequence.
+- If a security fix changes behavior, a public contract, authentication flow, permissions, data exposure, or architecture, return to the SDD spec/Gate 1 and then repeat the inside-out RED/scoped Gate 3 sequence for every affected layer.
 
 ## Phase 6: Human Security Verification
 
@@ -154,12 +159,12 @@ Show the user/security owner:
 Ask explicitly:
 
 ```text
-The final security review is complete. No unresolved Critical/High findings remain and all exceptions are explicitly owned. May I record the security gate as passed and continue to Gate 4 completion?
+The final security review is verified. No unresolved Critical/High findings remain and all exceptions are explicitly owned. May I record the security gate as passed and continue to final validation?
 ```
 
 If security verification is rejected, update only the authorized spec/security/test artifacts, remediate the finding through the SDD lifecycle, rerun evidence, and request verification again.
 
-## Phase 7: Record And Route Completion
+## Phase 7: Record And Route Validation
 
 Update:
 
@@ -169,7 +174,7 @@ Update:
 - `workflow-routing.md` and `traceability.yaml` with the security gate and `SEC-*`, `SEC-CHECK-*`, and `FINDING-*` IDs.
 - `history/` with the review decision and any accepted residual risk.
 
-Only after the security gate passes may `common-sdd-complete-spec.workflow.md` request Gate 4, create the AI snapshot, update its index, and rename the feature to `specs/features/<number>-<slug>-completed/`.
+Only after the security gate passes may `common-sdd-verify-spec.workflow.md` record `status: verified`.
 
 ## Definition Of Done
 
@@ -181,4 +186,4 @@ Only after the security gate passes may `common-sdd-complete-spec.workflow.md` r
 - Applicable security scans, dependency checks, IaC checks, and unit/HTTP integration security tests passed or have documented authorized exceptions.
 - No unresolved Critical/High findings exist; all lower-severity exceptions are owned, mitigated, expiry-bound, and traceable.
 - `security-review.md`, `verification.md`, `change-summary.md`, routing, traceability, and history converge.
-- Gate 4 proceeds only after this workflow and any required coverage gate pass.
+- Final validation proceeds only after this workflow and any required coverage gate pass.

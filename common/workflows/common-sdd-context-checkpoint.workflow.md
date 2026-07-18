@@ -1,12 +1,12 @@
 ---
 workflow_id: WORKFLOW-COMMON_SDD_CONTEXT_CHECKPOINT_WORKFLOW
 trigger: automatic
-description: Pause work at the context budget threshold and create a resumable spec-folder handoff for the next AI agent.
+description: "Pause work at the context budget threshold and create a resumable spec-folder handoff for the next AI agent."
 ---
 
 # Common SDD Context Checkpoint Workflow
 
-Invoke this workflow when consumed context reaches 60%, when the host warns about compaction, or when the agent can no longer retain the complete active-spec state with confidence. The checkpoint is an operational pause, not feature completion.
+Invoke this workflow when consumed context reaches 60%, when the host warns about compaction, or when the agent can no longer retain the full active-spec state with confidence. The checkpoint is an operational pause and does not change the lifecycle status.
 
 ## Threshold Policy
 
@@ -20,8 +20,8 @@ If the host exposes a context meter, pass it to `tools/create-sdd-context-checkp
 ## Preconditions
 
 - An active spec folder exists under `specs/features/<number>-<slug>/`.
-- The current task has a stable `T-*` ID and a single concrete outcome.
-- The agent knows the exact next task or can record a blocker and the user decision required.
+- The current task has a stable `T-*` ID, an action-oriented human title, and a single concrete outcome.
+- The agent knows the exact next task ID and title or can record a blocker title and the user decision required.
 - No new production scope is started after the threshold is reached.
 
 ## Phase 1 — Finish Only The Safe Atomic Step
@@ -34,7 +34,7 @@ If the host exposes a context meter, pass it to `tools/create-sdd-context-checkp
 
 Update the active spec before asking for the context change:
 
-- `tasks.md`: mark completed/in-progress/blocked work and identify the exact next task;
+- `tasks.md`: mark done/in-progress/blocked work and identify the exact next task;
 - `change-summary.md`: record actual files, decisions, deviations, and remaining work;
 - `verification.md`: record commands, results, failures, exceptions, and checkpoint ID;
 - `traceability.yaml`: keep task, test, artifact, and workflow links current;
@@ -49,7 +49,9 @@ tools/create-sdd-context-checkpoint.sh \
   --spec specs/features/<number>-<slug> \
   --context-used "$CONTEXT_USED_PERCENT" \
   --current-task T-<NNNN>-<NNN> \
+  --current-task-title "<action and current outcome>" \
   --next-task T-<NNNN>-<NNN> \
+  --next-task-title "<action and next outcome>" \
   --state-file /path/to/context-state.md
 ```
 
@@ -76,7 +78,7 @@ The next AI reads the latest checkpoint, verifies `git status`, reruns the recor
 ## Done
 
 - The active spec is internally consistent enough for another AI to resume.
-- The next task and exact first action are explicit.
+- The current and next task IDs and human-readable titles, plus the exact first action, are explicit.
 - Commands, evidence, gates, blockers, ownership, and must-not-touch boundaries are recorded.
 - The user received a clear request to change context and the checkpoint path.
-- No feature is marked complete and no snapshot is created solely because of a context checkpoint.
+- No lifecycle status is changed solely because of a context checkpoint; the checkpoint is an operational handoff, not spec evidence.

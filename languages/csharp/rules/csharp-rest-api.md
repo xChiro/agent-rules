@@ -1,20 +1,15 @@
 ---
 rule_id: RULE-CSHARP_REST_API
 trigger: model_decision
-description: C# ASP.NET Core and API Gateway/Lambda REST rules for thin boundaries, contracts, and HTTP integration.
-globs: **/*Controller.cs,**/*Controllers/**/*.cs,**/*WebApi/**/*.cs,**/*Lambda*.cs,**/Program.cs,template.yaml
+description: "C# ASP.NET Core and API Gateway/Lambda REST rules for thin boundaries, contracts, and HTTP integration."
+globs: "**/*Controller.cs,**/*Controllers/**/*.cs,**/*WebApi/**/*.cs,**/*Lambda*.cs,**/Program.cs,template.yaml"
 ---
 
 # C# REST API
 
-## SDD Baseline
+## SDD Integration
 
-- Apply `common/rules/common-sdd-agentic-discipline.md` before this rule.
-- Create or evolve the owning User Story based spec before production code when behavior, contracts, architecture, or risk changes.
-- Apply mandatory Gate 1 before spec writes, Gate 2 before RED, and Gate 3 before Green, even for simple or low-risk changes.
-- Keep artifact, task, track, and test IDs traceable through `traceability.yaml` and `parallel-tracks.md`.
-- Write BDD Given/When/Then acceptance evidence first, then the unit-level ATDD-style focused failing test for the next rule or boundary before production code.
-- Refactor only with tests green and converge spec history, tasks, parallel tracks, traceability, verification notes, and code.
+Apply the primary C# SDD workflow plus `WORKFLOW-COMMON_REST_API_DESIGN_WORKFLOW`. This rule adds ASP.NET/Lambda adapter details only; common core and Boundary gates remain authoritative.
 
 HTTP is a boundary. Keep controllers and endpoints thin.
 
@@ -117,7 +112,7 @@ Prefer RFC 9457 `ProblemDetails` for new contracts unless the repository has an 
 
 ## Tests
 
-Backends have only unit tests and HTTP integration tests. Add HTTP integration coverage when changing:
+Backends have only unit tests and one integration project. For REST services the HTTP scope enters through HTTP; add integration/http coverage when changing:
 
 - route
 - status code

@@ -1,7 +1,7 @@
 ---
 rule_id: RULE-COMMON_AGENT_ROLES_AND_HANDOFFS
-trigger: always_on
-description: Role contracts and evidence handoffs for Architect, Tester, Coder, and Reviewer agents working under SDD.
+trigger: model_decision
+description: "Role contracts and evidence handoffs for Architect, Tester, Coder, and Reviewer agents working under SDD."
 ---
 
 # Agent Roles And Handoffs
@@ -45,15 +45,17 @@ Handoff output: approved plan, risk level, owned boundaries, test strategy, and 
 
 Owns:
 
-- BDD/acceptance scenario evidence;
-- focused unit/component RED test;
-- HTTP integration or critical E2E RED when the boundary applies;
-- deterministic fixtures, fakes, isolation, and `TEST-*` traceability;
-- Gate 2 preparation and Gate 3 evidence.
+- abstract BDD/acceptance scenario evidence before executable tests;
+- Domain RED first when domain policy is affected;
+- Application RED after the domain gate, using only hand-written doubles for outgoing ports;
+- executable HTTP/message/component RED only after `LAYER-GATE-APPLICATION` when the boundary applies;
+- deterministic fixtures, hand-written fakes/spies, isolation, and `TEST-*` traceability;
+- Gate 2 preparation and scoped Gate 3-DOMAIN, Gate 3-APPLICATION, or Gate 3-BOUNDARY evidence.
 
 Must not:
 
-- edit production behavior before Gate 3;
+- edit production behavior before the corresponding scoped Gate 3;
+- prepare executable outer-boundary RED before the affected Domain/Application core gate;
 - weaken an assertion to make it pass;
 - mock away the boundary the test is supposed to prove;
 - claim GREEN from a compile-only or shallow test.
@@ -64,7 +66,8 @@ Handoff output: failing tests, commands, intended failure explanation, fixtures,
 
 Owns:
 
-- the smallest production change after Gate 3;
+- the smallest production change after the corresponding scoped Gate 3;
+- Domain GREEN before Application GREEN, followed by infrastructure, delivery interface, and composition/IaC only after the core gate;
 - preserving the approved architecture and public contract;
 - GREEN implementation, DTO/adapter boundaries, and test-driven refactoring;
 - focused verification and updated Red → Green → Refactor evidence.
@@ -88,7 +91,7 @@ Owns:
 - confirming project-wide coverage, touched-scope non-regression, and required gates;
 - confirming the active spec and latest context checkpoint are synchronized before a context handoff or resume;
 - confirming no plan/intent drift was silently absorbed and required adjustment gates were repeated;
-- recording findings by severity and approving or rejecting Gate 4 readiness.
+- recording findings by severity and approving or rejecting final validation readiness.
 
 Must not:
 
@@ -102,7 +105,8 @@ Handoff output: review findings, evidence links, required actions, and `REVIEWER
 ## Role Transition Rules
 
 - Architect → Tester requires Gate 1 approval.
-- Tester → Coder requires Gate 3 approval with actual RED evidence.
+- Tester → Coder is repeated per affected scope and requires the corresponding Gate 3 approval with actual RED evidence.
+- A handoff for infrastructure, delivery interface, or composition additionally requires `LAYER-GATE-APPLICATION` and Gate 3-BOUNDARY when outer behavior changes.
 - Coder → Reviewer requires GREEN, refactor, security, mutation/E2E, and coverage evidence appropriate to the risk level.
-- Reviewer → completion requires all findings resolved or explicitly accepted by the authorized owner; Gate 4 still requires human approval.
+- Reviewer → final validation requires all findings resolved or explicitly accepted by the authorized owner; human review remains required.
 - A rejected handoff returns only to the role that owns the missing evidence; it does not skip backward gates.

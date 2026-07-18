@@ -1,51 +1,56 @@
 ---
 workflow_id: WORKFLOW-COMMON_SDD_REVIEW_TEST_EVIDENCE_WORKFLOW
 trigger: manual
-description: Human review gate for acceptance and ATDD-style RED evidence before production code is written.
+description: "Reusable human review gate for actual RED evidence before each affected layer GREEN."
 ---
 
 # Common SDD Review Test Evidence Workflow
 
-Invoke this workflow after Gate 2, once the acceptance/public-boundary test and the focused unit-level test have been created and executed. It is the final human check before Green. Final security review is a separate mandatory completion gate handled by `common-sdd-security-gate.workflow.md`.
+Invoke this workflow after Gate 2 whenever an affected scope reaches RED and before production changes for that scope. Invoke it as Gate 3-DOMAIN, Gate 3-APPLICATION, or Gate 3-BOUNDARY. Approval for one scope does not authorize a later layer. Final security review is a separate mandatory validation gate handled by `common-sdd-security-gate.workflow.md`.
 
-Load `RULE-COMMON_TEST_ASSERTION_STRUCTURE` and reject assertion APIs outside the test's `Then/Assert` section unless a documented repository/framework exception is approved.
+Load `RULE-COMMON_TEST_ASSERTION_STRUCTURE` and reject assertion APIs outside the test's `// Assert` section unless a documented repository/framework exception is approved.
 
 ## Preconditions
 
 - Gate 1 approved the spec writes.
 - Gate 2 approved starting RED.
-- The acceptance, HTTP integration, component, or closest boundary test exists and has a stable `TEST-*` ID.
-- The focused unit/domain/application/component test exists and has a stable `TEST-*` ID.
+- `gate_scope: domain | application | boundary` is recorded.
+- The focused test for that scope exists and has a stable `TEST-*` ID.
+- Prior required layer gates are `passed` or evidence-backed `not_affected`.
 - `red-green-refactor.md` exists from `common/templates/red-green-refactor-report.md` and records the current behavior partition, risk level, and RED evidence fields.
-- No production code was changed for the current slice.
-- The tests were run and the expected RED evidence was captured, or an explicit boundary exception is documented.
+- No production code was changed for the current scope.
+- The test was run and the expected RED evidence was captured, or an explicit boundary exception is documented.
 
 ## Review Package
 
 Show the user:
 
 - Spec, User Story, requirement, scenario, task, track, and test IDs.
+- Gate scope and the production layer this decision will authorize.
 - Exact test files and changed lines.
 - Given/When/Then explanation of each test.
-- The `Given/Arrange`, `When/Act`, and `Then/Assert` sections, with every assertion located in the final section.
+- BDD `Given/When/Then` behavior naming and the executable `// Arrange`, `// Act`, and `// Assert` sections, with exactly one physical-line SUT/use-case/public-boundary call in `// Act` and every assertion in `// Assert`.
 - Commands executed and concise failure output.
 - Why each failure demonstrates the intended missing behavior.
 - Assertions, edge cases, happy path, and state/resource side effects covered.
-- Fakes, spies, fixtures, local resources, and isolation strategy.
+- Hand-written stubs, fakes, spies, mocks, fixtures, local resources, and isolation strategy.
+- The layer's `standalone_test_command`, `depends_on_test_layer: none`, owned mutable state, setup/cleanup, and proof that no earlier test layer prepared its process or state.
+- For application scope, confirmation that doubles replace only outgoing application ports and contain no assertions or business rules.
+- For `integration_scope: infrastructure`, confirmation that the test invokes the Application use case, uses the real adapter and owned local resource, and simulates only third-party APIs with WireMock or a small hand-written HTTP stub.
 - Confirmation that no production file was changed before RED.
 - Parallel-track ownership and files that must remain untouched.
 - The concise `red-green-refactor.md` entry for this cycle, including:
   - `RED`: test IDs, command, expected failure, and why the failure proves the missing behavior.
   - `GREEN`: the minimal production change and the passing command/result (complete after implementation).
-  - `REFACTOR`: behavior-preserving cleanup, design/architecture checks, and the final green result (complete before Gate 4).
+  - `REFACTOR`: behavior-preserving cleanup, design/architecture checks, and the final green result before final validation.
 
-## Gate 3: Approve Test Evidence Before Green
+## Gate 3-<SCOPE>: Approve Test Evidence Before That Scope GREEN
 
 Ask explicitly:
 
 ```text
-The acceptance and focused ATDD-style tests are written and RED.
-May I modify production code and continue to Green?
+The <domain|application|boundary> test evidence is written and RED.
+May I modify production code for this scope and continue to Green?
 ```
 
 Do not edit, generate, or refactor production code until the user approves.
@@ -63,9 +68,10 @@ If the test passes before production code changes, investigate whether the behav
 
 Record in `verification.md`:
 
-- Gate 3 request timestamp or history reference.
+- Scoped Gate 3 name and request timestamp or history reference.
 - User decision and any requested test changes.
-- Test IDs, commands, expected failure reason, and final RED result.
+- Test IDs, commands, expected failure reason, final RED result, and prior layer-gate status.
+- Standalone clean-state result plus combined-suite result; record shuffle/repeat evidence when risk requires it.
 - The report path and `RED` section from `red-green-refactor.md`.
 - Boundary exceptions and residual risk.
 

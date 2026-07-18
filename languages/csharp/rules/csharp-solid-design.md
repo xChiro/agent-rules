@@ -1,20 +1,15 @@
 ---
 rule_id: RULE-CSHARP_SOLID_DESIGN
-trigger: always_on
-description: C# SOLID rules for Clean Architecture projects, including actor-based SRP from Clean Architecture.
-globs: **/*.cs
+trigger: model_decision
+description: "C# SOLID rules for Clean Architecture projects, including actor-based SRP from Clean Architecture."
+globs: "**/*.cs"
 ---
 
 # C# SOLID Design
 
-## SDD Baseline
+## SDD Integration
 
-- Apply `common/rules/common-sdd-agentic-discipline.md` before this rule.
-- Create or evolve the owning User Story based spec before production code when behavior, contracts, architecture, or risk changes.
-- Apply mandatory Gate 1 before spec writes, Gate 2 before RED, and Gate 3 before Green, even for simple or low-risk changes.
-- Keep artifact, task, track, and test IDs traceable through `traceability.yaml` and `parallel-tracks.md`.
-- Write BDD Given/When/Then acceptance evidence first, then the unit-level ATDD-style focused failing test for the next rule or boundary before production code.
-- Refactor only with tests green and converge spec history, tasks, parallel tracks, traceability, verification notes, and code.
+Apply `RULE-COMMON_SDD_AGENTIC_DISCIPLINE` before this design specialization. SOLID informs each opened layer but never replaces common test-first gates, YAGNI, or convergence.
 
 Apply SOLID to protect change boundaries, not to make the code look abstract. Prefer explicit, simple C# over design-pattern ceremony.
 

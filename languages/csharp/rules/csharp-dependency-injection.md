@@ -1,33 +1,31 @@
 ---
 rule_id: RULE-CSHARP_DEPENDENCY_INJECTION
 trigger: model_decision
-description: C# dependency injection, composition root, options, service lifetime, and registration rules for Clean Architecture.
-globs: **/*ServiceCollectionExtensions.cs,**/Program.cs,**/*.cs
+description: "C# dependency injection, composition root, options, service lifetime, and registration rules for Clean Architecture."
+globs: "**/*ServiceCollectionExtensions.cs,**/Program.cs,**/*.cs"
 ---
 
 # C# Dependency Injection
 
-## SDD Baseline
+## SDD Integration
 
-- Apply `common/rules/common-sdd-agentic-discipline.md` before this rule.
-- Create or evolve the owning User Story based spec before production code when behavior, contracts, architecture, or risk changes.
-- Apply mandatory Gate 1 before spec writes, Gate 2 before RED, and Gate 3 before Green, even for simple or low-risk changes.
-- Keep artifact, task, track, and test IDs traceable through `traceability.yaml` and `parallel-tracks.md`.
-- Write BDD Given/When/Then acceptance evidence first, then the unit-level ATDD-style focused failing test for the next rule or boundary before production code.
-- Refactor only with tests green and converge spec history, tasks, parallel tracks, traceability, verification notes, and code.
+Apply `RULE-COMMON_SDD_AGENTIC_DISCIPLINE` and `RULE-COMMON_INSIDE_OUT_DEVELOPMENT`. This rule adds .NET composition details only; DI remains an outer concern and cannot bypass common gates or layer order.
 
 DI should make dependencies explicit and composition clear. It must not hide design problems behind a container.
 
-## Composition Root
+## Module-Owned Composition
 
-The executable host owns composition:
+Every business module owns its dependency graph. The executable host is only the final aggregator:
 
-- `Program.cs`
-- WebApi project startup
-- worker/host startup
-- module-level `ServiceCollectionExtensions`
+- each module defines layer-specific extension methods for Domain, Application, Infrastructure, and Interface;
+- each module defines one `Add<Module>Module` extension that invokes those layer methods in composition order;
+- `Program.cs`, WebApi startup, Lambda bootstrap, or worker startup calls module entry points and host-wide concerns only;
+- the host must not enumerate a module's use cases, repositories, clients, handlers, or consumers individually;
+- modules must not resolve or register another module's internals; integration occurs through explicit public application contracts or messages.
 
-Library/core projects may expose registration methods, but they must not build the provider.
+To keep both inner layers framework-free, place the Domain and Application `IServiceCollection` extension files in a module-local outer composition assembly/project such as `<Product>.<Module>.Composition`. Those methods may register concrete inner services, but Domain and Application never reference Microsoft DI. Infrastructure and Interface extensions may live in their owning outer projects when that does not reverse dependencies, or beside the inner-layer extensions in Composition.
+
+Library/layer registration methods must not build the provider.
 
 Do not call:
 
@@ -96,24 +94,65 @@ Do not create interfaces only because DI can register them.
 - Avoid passing raw `IConfiguration` deep into adapters.
 - Fail fast for missing required settings.
 
-## ServiceCollectionExtensions
+## Required Extension Method Per Layer
 
-Registration methods should be small and focused:
+Every module provides these four extension methods, even when one currently has no registrations. A no-op Domain extension documents intentional purity and gives the module one stable composition contract; do not add fake services to make it non-empty.
 
 ```csharp
-public static IServiceCollection AddFleetTracking(this IServiceCollection services)
+public static class FleetTrackingDependencyInjection
 {
-    services.AddScoped<ITelemetryProcessor, TelemetryProcessor>();
-    return services;
+    public static IServiceCollection AddFleetTrackingDomain(
+        this IServiceCollection services)
+    {
+        return services;
+    }
+
+    public static IServiceCollection AddFleetTrackingApplication(
+        this IServiceCollection services)
+    {
+        services.AddScoped<ITelemetryProcessor, TelemetryProcessor>();
+        return services;
+    }
+
+    public static IServiceCollection AddFleetTrackingInfrastructure(
+        this IServiceCollection services,
+        IConfiguration configuration)
+    {
+        services.AddFleetTrackingDataAccess(configuration);
+        services.AddFleetTrackingMessaging(configuration);
+        return services;
+    }
+
+    public static IServiceCollection AddFleetTrackingInterface(
+        this IServiceCollection services)
+    {
+        services.AddScoped<TelemetryEndpoint>();
+        return services;
+    }
+
+    public static IServiceCollection AddFleetTrackingModule(
+        this IServiceCollection services,
+        IConfiguration configuration)
+    {
+        return services
+            .AddFleetTrackingDomain()
+            .AddFleetTrackingApplication()
+            .AddFleetTrackingInfrastructure(configuration)
+            .AddFleetTrackingInterface();
+    }
 }
 ```
 
 Rules:
 
-- Register core services in the core module extension.
-- Register DataAccess adapters in the DataAccess extension.
-- Register message bus adapters in the message bus extension.
-- Keep executable host responsible for calling the extensions in the final composition order.
+- Use the canonical names `Add<Module>Domain`, `Add<Module>Application`, `Add<Module>Infrastructure`, `Add<Module>Interface`, and `Add<Module>Module`.
+- A layer extension registers only types owned by that module and layer.
+- The Domain layer method registers domain services, the Application method registers use cases, Infrastructure registers port implementations/clients, and Interface registers controllers/endpoints/consumers; the extension source itself remains in an allowed outer project.
+- Infrastructure may delegate to smaller module-local DataAccess or Messaging extensions; those remain implementation details of `Add<Module>Infrastructure`.
+- The module extension invokes layer extensions in Domain → Application → Infrastructure → Interface order.
+- The executable host invokes `Add<Module>Module` once per installed module; it never reaches into layer-specific registrations.
+- Keep module registration deterministic and idempotent where the underlying Microsoft registrations allow it; use `TryAdd*` for shared module services when duplicate calls are possible.
+- Validate module options at startup and keep configuration sections module-owned.
 
 ## Decorator Wiring
 
@@ -137,6 +176,14 @@ Rules:
 - Do not call `BuildServiceProvider()` to resolve decorators.
 - Avoid nested decorators unless each layer has a current, named operational concern.
 
+## Module Wiring Verification
+
+- Test each `Add<Module><Layer>` extension against a fresh `ServiceCollection`; assert only registrations owned by that layer/module.
+- Test `Add<Module>Module` by building a provider in test code, creating every public module entry point, and verifying configured lifetimes when wiring risk is non-trivial.
+- Verify the executable host calls each installed `Add<Module>Module` once and contains no module-internal service registration.
+- A no-op Domain extension is verified by confirming it succeeds without adding framework dependencies to the Domain assembly.
+- Registration tests belong to the existing integration project, normally its Infrastructure scope; they do not create a third suite or project.
+
 ## Done Criteria
 
 - Dependencies are explicit.
@@ -145,3 +192,5 @@ Rules:
 - No hidden config reads in core code.
 - Lifetimes match the dependency behavior.
 - Registration is tested when wiring risk is non-trivial.
+- Every installed module exposes and tests its four layer extension methods plus its `Add<Module>Module` aggregator.
+- `Program.cs` contains no individual registrations for module-owned domain, application, infrastructure, or interface types.

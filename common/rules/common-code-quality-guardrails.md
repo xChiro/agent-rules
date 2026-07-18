@@ -1,7 +1,7 @@
 ---
 rule_id: RULE-COMMON_CODE_QUALITY_GUARDRAILS
-trigger: clean_up_gate
-description: Cross-language Clean Code, naming, strict source-file size, complexity, duplication, SOLID, Clean Architecture, CQRS, and Fowler refactoring guardrails.
+trigger: model_decision
+description: "Cross-language Clean Code, naming, strict maintained-file size, complexity, duplication, SOLID, Clean Architecture, CQRS, and Fowler refactoring guardrails."
 ---
 
 # Common Clean Up Guardrails
@@ -12,7 +12,7 @@ Load this rule for the final clean-up gate. The gate reviews every file created 
 
 - Determine the exact baseline commit and changed file set from the spec, `change-summary.md`, and Git diff. Do not silently review only the files that are convenient.
 - Review all created files and every modified file that belongs to the spec. Review adjacent files only when needed to prove a dependency, naming, ownership, or architecture violation.
-- Exclude generated, vendor, third-party, and formatter-owned files only when the repository identifies them and the exclusion is recorded in `code-quality-review.md`. Source, test, configuration, CI, and script files have no size exception.
+- Generated, vendor, third-party, binary, and formatter-owned files may be excluded from the size threshold only when the repository identifies them and the exclusion is recorded with path, reason, owner, and explicit human approval in `code-quality-review.md`. Maintained source, test, configuration, CI, and script files have no other size exception.
 - A quality exception needs a reason, owner, expiry or follow-up spec, and explicit human approval. The agent cannot approve an exception for its own change.
 - Do not use line counts as a reason for mechanical micro-splitting. A split must improve naming, ownership, testability, or boundary clarity.
 
@@ -26,7 +26,7 @@ Use native repository metrics when available. Otherwise count physical lines wit
 | Function/method/handler | <= 20 lines | > 30 lines |
 | Type/class/component responsibility | one primary responsibility | multiple unrelated actors or reasons to change |
 
-The mandatory threshold means the gate must produce a blocker finding and refactor the file before completion. A source file with exactly 150 lines fails because the requirement is fewer than 150 lines. Do not satisfy the limit with blind micro-splitting: each extracted file must improve naming, ownership, testability, or boundary clarity. Generated, vendor, third-party, binary, and formatter-owned files may be excluded only with a documented path, reason, owner, and human approval.
+The mandatory threshold means the gate must produce a blocker finding and refactor the file before final validation. An in-scope maintained file with exactly 150 lines fails because the requirement is fewer than 150 lines. Do not satisfy the limit with blind micro-splitting: each extracted file must improve naming, ownership, testability, or boundary clarity. Generated, vendor, third-party, binary, and formatter-owned files may be excluded only with a documented path, reason, owner, and human approval.
 
 ## Naming And File Ownership
 
@@ -36,27 +36,41 @@ The mandatory threshold means the gate must produce a blocker finding and refact
 - Commands, queries, handlers, policies, DTOs, ports, adapters, events, and tests use names that distinguish intent and side effects. Do not hide a command inside a query name or a query inside a command name.
 - Test names describe Given/When/Then behavior and map to stable `TEST-*` IDs. Do not name tests after private methods, line numbers, or implementation trivia.
 - File names, folder names, namespaces/packages, exported symbols, and spec task names must agree. Do not add a file with a misleading generic name to avoid moving or splitting ownership.
+- Domain/Application naming must remain technology-neutral. Reject provider names such as `DynamoDB`, `Cosmos`, `Kafka`, `SQS`, `SNS`, `Redis`, `PostgreSQL`, `EF Core`, or `AWS` in inner-layer file names, namespaces/packages, types, ports, methods, DTOs, events, and errors; keep those names in outer adapters, mapping, and composition.
 
 ## Clean Code And SOLID
 
-- Keep one responsibility per function, type, module, component, and file. Separate parsing, authorization, business decisions, persistence, mapping, transport, logging, and orchestration.
+- Apply SRP at the module boundary as Robert C. Martin defines it in *Clean Architecture*: a module should be responsible to one, and only one, actor. Record the actor and its reasons to change. Functions and methods should remain cohesive, but SRP does not require one statement, one method, or artificial micro-splitting.
+- Separate parsing, authorization, business decisions, persistence, mapping, transport, logging, and orchestration when they serve different actors or change for different reasons.
 - Remove dead code, unused imports/dependencies, commented-out code, speculative branches, duplicate constants, magic values, and unused extension points.
 - Prefer simple control flow, guard clauses, explicit data transformations, and domain names over comments that explain confusing code.
 - Avoid `if/else` trees and `switch`/`case` chains as an extensibility mechanism. Simple guard clauses, validation/error checks, and small closed classifications are allowed when they are the clearest code.
 - Repeated, nested, type/status-driven, or policy-heavy branching is a refactoring smell: move variation to a named function, decision object, strategy/dispatch map, polymorphism, state, or special case only when a real boundary or variation exists.
 - Keep error handling at the correct boundary. Do not swallow errors, duplicate mapping decisions, leak provider details, or log the same failure repeatedly.
-- Apply SOLID pragmatically: narrow responsibilities, consumer-owned interfaces, dependency inversion, substitutable adapters, and no god interfaces.
+- Apply all five SOLID principles as mandatory design checks: actor-based SRP, OCP at real variation boundaries, LSP-compatible ports/adapters, ISP through focused consumer-owned interfaces, and DIP from policy/use cases toward abstractions with details implementing them. The implementation must remain idiomatic and must not add speculative abstractions or SOLID theater.
 - Do not add generic repositories, mediators, factories, wrappers, registries, or abstractions solely to satisfy a metric or hypothetical future use.
 - Remove duplication of business rules, validation, authorization, mapping, error decisions, session handling, and infrastructure setup. Keep intentional duplication when an abstraction would couple unrelated actors and record the reason.
+- Review duplication both textually and semantically across the complete changed scope and adjacent owners. Remove meaningful duplication, give the rule one owner, and record the detector/search command, removals, exclusions, and intentionally retained similarities in `code-quality-review.md`.
+
+## Spaghetti Code And Code Smells
+
+- Search changed code and its neighboring owners for spaghetti code and actionable smells, not only formatter or lint violations.
+- Treat long/deeply nested control flow, mixed policy/I/O/mapping, god functions or types, hidden mutable state, temporal coupling, feature envy, shotgun surgery, primitive obsession at boundaries, boolean flags that change behavior, duplicated branches, dead code, and catch-all `Manager`/`Helper`/`Utils` abstractions as review findings.
+- For each finding record the concrete evidence, affected actor, owning boundary, selected behavior-preserving Fowler refactoring, and focused verification. Clean blocker/high findings and unapproved medium findings before the gate passes.
+- Prefer guard clauses, Extract Function, Decompose Conditional, Move Function, Split Phase, Replace Conditional with Polymorphism/State/Strategy, or Introduce Special Case only when the code has a real responsibility or variation boundary. Do not add ceremony or micro-split merely to reduce line count.
 
 ## Clean Architecture And CQRS
 
+- Backend projects must follow Clean Architecture: Domain owns business policy; Application owns named use cases and consumer-owned ports; Infrastructure implements those ports and performs I/O; Interface adapters translate public input/output; Composition wires the concrete graph last. Dependencies point inward.
+- Every actor-visible backend behavior is owned by a named Application use case. A use case orchestrates the workflow through Domain behavior and Application ports; it must not know HTTP, persistence models, cloud SDKs, framework types, or deployment details.
 - Domain and application remain independent from transport, persistence, framework, cloud SDK, UI, logging implementation, and deployment details.
+- This independence includes names: inner-layer symbols describe business intent or a port capability, not a concrete provider. A provider-specific adapter may implement the neutral port, but the provider name must not leak inward.
 - Interface adapters translate requests, sessions, DTOs, errors, and responses; they do not own business policy.
 - Infrastructure implements application-owned ports and performs I/O; it does not move business decisions outward.
 - Commands change state and own authorization/validation decisions; queries read explicit projections and do not mutate state.
 - Do not share command-side mutable state with query projections without an explicit consistency and ownership decision.
 - Check dependency direction, cycles, forbidden references, package/module ownership, and composition-root registration.
+- For every changed module and use case, record the actor, reasons to change, use-case owner, port ownership, and evidence for SRP, OCP, LSP, ISP, and DIP. A missing principle review is a clean-up finding.
 - For REST/Lambda changes, handlers remain thin and the public boundary is covered by the existing HTTP integration suite.
 
 ## Complexity, Tests, And Verification
@@ -91,7 +105,7 @@ Reference: Martin Fowler's `Refactoring` uses small behavior-preserving transfor
 
 The clean-up gate must identify and complete the required refactoring; a findings-only review does not pass. The actual edit follows `common-sdd-refactor-lifecycle.workflow.md` and the language refactor adapter. Before production refactoring:
 
-1. Protect current behavior with existing characterization or unit/HTTP/component tests.
+1. Protect current behavior with existing characterization tests, the relevant unit suite, or the applicable integration scope; frontend component tests remain in their project scope.
 2. Ask for the refactor workflow approvals required by the repository's SDD gates.
 3. Make one structural change at a time.
 4. Run focused tests after each change, then all affected tests and gates.

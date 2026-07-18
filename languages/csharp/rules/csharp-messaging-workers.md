@@ -1,21 +1,15 @@
 ---
 rule_id: RULE-CSHARP_MESSAGING_WORKERS
 trigger: model_decision
-description: C# message bus, RabbitMQ, hosted service, SignalR sender, idempotency, and worker boundary rules.
-globs: **/*MessageBus*/**/*.cs,**/*HostedService.cs,**/*Consumer*.cs,**/*Producer*.cs,**/*SignalR*.cs
+description: "C# message bus, RabbitMQ, hosted service, SignalR sender, idempotency, and worker boundary rules."
+globs: "**/*MessageBus*/**/*.cs,**/*HostedService.cs,**/*Consumer*.cs,**/*Producer*.cs,**/*SignalR*.cs"
 ---
 
 # C# Messaging Workers
 
-## SDD Baseline
+## SDD Integration
 
-- Apply `common/rules/common-sdd-agentic-discipline.md` before this rule.
-- Create or evolve the owning User Story based spec before production code when behavior, contracts, architecture, or risk changes.
-- Apply mandatory Gate 1 before spec writes, Gate 2 before RED, and Gate 3 before Green, even for simple or low-risk changes.
-- Keep artifact, task, track, and test IDs traceable through `traceability.yaml` and `parallel-tracks.md`.
-- Write BDD Given/When/Then acceptance evidence first, then the unit-level ATDD-style focused failing test for the next rule or boundary before production code.
-- Refactor only with tests green and converge spec history, tasks, parallel tracks, traceability, verification notes, and code.
-- Route `sns-publisher` through `WORKFLOW-COMMON_AWS_SNS_PUBLISH_WORKFLOW` and `sqs-consumer` through `WORKFLOW-COMMON_AWS_SQS_CONSUMER_WORKFLOW`; record the selected workflow in `workflow-routing.md`.
+Apply `RULE-COMMON_SDD_AGENTIC_DISCIPLINE` and the matching messaging workflow. Route `sns-publisher` through `WORKFLOW-COMMON_AWS_SNS_PUBLISH_WORKFLOW` and `sqs-consumer` through `WORKFLOW-COMMON_AWS_SQS_CONSUMER_WORKFLOW`; this rule adds C# worker details and does not redefine common gates or layer order.
 
 Messaging adapters translate external messages into application requests and own broker concerns.
 

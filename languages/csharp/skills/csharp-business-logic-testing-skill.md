@@ -2,23 +2,22 @@
 skill_id: SKILL-CSHARP_BUSINESS_LOGIC_TESTING_SKILL
 name: csharp-business-logic-testing
 trigger: model_decision
-description: C# business logic testing skill for implementing backend behavior through focused tests, minimal production code, refactoring, and 90%+ project-wide production coverage.
-globs: **/*.cs,**/*Test.cs,**/*Tests.cs
+description: "C# business logic testing skill for implementing backend behavior through focused tests, minimal production code, refactoring, and 90%+ project-wide production coverage."
+globs: "**/*.cs,**/*Test.cs,**/*Tests.cs"
 ---
 
 # C# Business Logic Testing Skill
 
-## SDD Baseline
+## SDD Integration
 
-- Follow `common-sdd-agentic-discipline.md` for every behavior-changing task.
-- Keep specs versioned under `specs/features/<number>-<slug>/` when the project supports SDD artifacts.
-- Apply mandatory Gate 1 before spec writes, Gate 2 before RED, and Gate 3 before Green, even for simple or low-risk changes.
-- Start with BDD Given/When/Then acceptance evidence, then unit-level ATDD-style focused failing test code, then production code.
-- Refactor only with tests green and converge specs, tasks, parallel tracks, traceability, verification notes, and code.
+Load this skill only for C# Domain/Application test work after `RULE-COMMON_SDD_AGENTIC_DISCIPLINE`. It adds testing technique; the common lifecycle owns BDD, gates, traceability, layer order, and convergence.
 
 Use ATDD plus TDD for backend business behavior. Capture expected business behavior with focused tests before changing production logic. Start from the actor-visible outcome, then implement the smallest useful behavior and refactor with tests passing.
 
-Keep all `Assert`, `Should`, `Throws`, or equivalent calls in the final `Then/Assert` section. Setup, fixtures, fakes, and action helpers return values/errors; they never assert.
+Keep all `Assert`, `Should`, `Throws`, or equivalent calls in the final `// Assert` section. Setup, fixtures, fakes, and action helpers return values/errors; they never assert.
+
+Apply `RULE-COMMON_TEST_LAYER_ISOLATION`: Domain, Application, and HTTP Boundary projects/filters each pass alone in a fresh process; no layer consumes another layer's fixtures, host, output, environment mutation, or mutable state.
+Apply `RULE-COMMON_TEST_DATA_AND_DOUBLE_PATTERNS`: use fresh Object Mothers/Test Data Builders, focused SUT factories, scoped fixtures, and manual outgoing-port doubles.
 
 ## TDD Cycle
 
@@ -31,19 +30,20 @@ Keep all `Assert`, `Should`, `Throws`, or equivalent calls in the final `Then/As
 ## Test Selection
 
 - Use unit tests for domain/application behavior.
-- Use HTTP integration tests for EF Core, WebApi/Lambda, local-resource, and DI wiring.
+- Use integration tests for EF Core, WebApi/Lambda, messaging, local-resource, and DI wiring; HTTP is the `integration/http` scope and use-case-driven real adapter/resource checks use `integration/infrastructure`.
 - Use the existing test framework and assertion library.
 - Prefer project-local manual fakes, stubs, or spies for outgoing ports.
 - Do not use Moq, NSubstitute, FakeItEasy, JustMock, or similar mocking libraries.
 - Do not mock entities or value objects.
-- Maintain 90%+ aggregate project-wide production coverage; domain/application unit coverage must also remain at least 90%, and HTTP integration tests do not replace core coverage.
+- Maintain 90%+ aggregate project-wide production coverage; domain/application unit coverage must also remain at least 90%, and integration tests do not replace core coverage.
 
 ## Test Shape
 
-- Use Given-When-Then naming or the local established naming.
+- Use Given-When-Then naming; a local naming convention may not remove the Given/When/Then behavior meaning.
 - Arrange only data and dependencies.
-- Act with one behavior call when practical.
-- In `Then/Assert`, assert observable outcome, persisted call, emitted event, exception, or response contract.
+- Build Arrange data with fresh Mothers/builders; helpers return values/errors and never assert or execute the SUT.
+- Act must contain exactly one executable statement on one physical line with the SUT/use-case behavior call.
+- In `// Assert` (Then), assert observable outcome, persisted call, emitted event, exception, or response contract.
 - Name the system under test `SUT` in new test classes unless local convention uses another casing.
 
 ## Edge Cases First
@@ -66,5 +66,6 @@ Then add the happy path.
 - Production change is minimal.
 - Refactor did not change behavior.
 - Tests for the touched scope pass.
-- Project-wide production coverage remains at 90%+; domain/application unit coverage remains at 90%+ or improves in touched projects.
+- Project-wide production coverage and domain/application unit coverage remain at 90% or higher, with no touched-scope regression.
 - No unused test doubles, ports, request fields, or helpers remain.
+- Every affected layer's standalone command and the combined command pass with `depends_on_test_layer: none`.

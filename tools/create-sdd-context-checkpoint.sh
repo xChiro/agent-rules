@@ -12,7 +12,9 @@ cd "$repo_root"
 spec_dir=""
 context_used="${CONTEXT_USED_PERCENT:-}"
 current_task=""
+current_task_title=""
 next_task=""
+next_task_title=""
 state_file=""
 checkpoint_id=""
 
@@ -24,8 +26,11 @@ Options:
   --spec <directory>       Active specs/features/<number>-<slug> directory.
   --context-used <0-100>   Observed or conservatively estimated context use.
   --current-task <T-ID>    Current microtask.
+  --current-task-title <text>
+                           Human-readable action and outcome for the current task.
   --next-task <T-ID|BLOCKED>
                            Exact next task or blocker state.
+  --next-task-title <text> Human-readable action/outcome or blocker description.
   --state-file <file>      Concise factual state to include in the handoff.
   --checkpoint-id <id>     Optional stable CHECKPOINT-* ID.
   --help                   Show this help.
@@ -48,8 +53,16 @@ while [[ $# -gt 0 ]]; do
       current_task="${2:?missing value for --current-task}"
       shift 2
       ;;
+    --current-task-title)
+      current_task_title="${2:?missing value for --current-task-title}"
+      shift 2
+      ;;
     --next-task)
       next_task="${2:?missing value for --next-task}"
+      shift 2
+      ;;
+    --next-task-title)
+      next_task_title="${2:?missing value for --next-task-title}"
       shift 2
       ;;
     --state-file)
@@ -80,7 +93,9 @@ fail() {
 [[ -n "$spec_dir" ]] || fail "--spec is required"
 [[ -n "$context_used" ]] || fail "--context-used or CONTEXT_USED_PERCENT is required"
 [[ -n "$current_task" ]] || fail "--current-task is required"
+[[ -n "$current_task_title" ]] || fail "--current-task-title is required"
 [[ -n "$next_task" ]] || fail "--next-task is required"
+[[ -n "$next_task_title" ]] || fail "--next-task-title is required"
 [[ -n "$state_file" ]] || fail "--state-file is required"
 
 if ! [[ "$context_used" =~ ^[0-9]+$ ]] || (( context_used < 0 || context_used > 100 )); then
@@ -136,9 +151,13 @@ frontmatter_value() {
 }
 
 feature_id="$(frontmatter_value feature_id)"
+feature_title="$(frontmatter_value feature_title)"
 spec_id="$(frontmatter_value spec_id)"
+spec_title="$(frontmatter_value spec_title)"
 feature_id="${feature_id:-FEAT-UNKNOWN}"
 spec_id="${spec_id:-SPEC-UNKNOWN}"
+[[ -n "$feature_title" ]] || fail "spec.md is missing feature_title metadata"
+[[ -n "$spec_title" ]] || fail "spec.md is missing spec_title metadata"
 
 timestamp="$(date -u +%Y%m%d-%H%M%S)"
 checkpoint_id="${checkpoint_id:-CHECKPOINT-$timestamp}"
@@ -168,22 +187,41 @@ trap cleanup EXIT
 {
   awk \
     -v handoff_id="$handoff_id" \
+    -v handoff_title="Continue $current_task_title" \
     -v feature_id="$feature_id" \
+    -v feature_title="$feature_title" \
     -v spec_id="$spec_id" \
+    -v spec_title="$spec_title" \
     -v artifact_id="$artifact_id" \
+    -v artifact_title="Context continuation handoff for $feature_title" \
     -v checkpoint_id="$checkpoint_id" \
+    -v checkpoint_title="Pause after $current_task_title" \
     -v context_used="$context_used" \
     -v current_task="$current_task" \
-    -v next_task="$next_task" '
+    -v current_task_title="$current_task_title" \
+    -v next_task="$next_task" \
+    -v next_task_title="$next_task_title" '
+      function replace_literal(needle, value, position) {
+        while ((position = index($0, needle)) > 0) {
+          $0 = substr($0, 1, position - 1) value substr($0, position + length(needle))
+        }
+      }
       {
         gsub(/HANDOFF-<FEAT>-CONTEXT-<NNN>/, handoff_id)
+        replace_literal("Continue <human-readable current work>", handoff_title)
         gsub(/FEAT-<NNNN>/, feature_id)
+        replace_literal("<human-readable feature title>", feature_title)
         gsub(/SPEC-<NNNN>/, spec_id)
+        replace_literal("<human-readable spec title>", spec_title)
         gsub(/ART-<FEAT>-CONTEXT-HANDOFF/, artifact_id)
+        replace_literal("Context continuation handoff for <feature title>", artifact_title)
         gsub(/CHECKPOINT-<YYYYMMDD>-<HHMMSS>/, checkpoint_id)
+        replace_literal("Pause after <human-readable completed outcome>", checkpoint_title)
         gsub(/<PERCENT>/, context_used)
         gsub(/CURRENT-TASK-ID/, current_task)
+        replace_literal("<human-readable current task title>", current_task_title)
         gsub(/NEXT-TASK-ID/, next_task)
+        replace_literal("<human-readable next task title or blocker>", next_task_title)
         print
       }
     ' "$template"
@@ -191,8 +229,8 @@ trap cleanup EXIT
   cat "$state_file"
   printf '\n\n## Generated Checkpoint Metadata\n\n'
   printf -- '- Generated at (UTC): `%s`\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-  printf -- '- Current task: `%s`\n' "$current_task"
-  printf -- '- Next task: `%s`\n' "$next_task"
+  printf -- '- Current task: `%s` — %s\n' "$current_task" "$current_task_title"
+  printf -- '- Next task: `%s` — %s\n' "$next_task" "$next_task_title"
   printf -- '- Context use observed/estimated: `%s%%`\n' "$context_used"
 } > "$tmp_handoff"
 mv "$tmp_handoff" "$handoff_path"
@@ -203,8 +241,8 @@ handoff_relative="${handoff_path#"$repo_root/"}"
   printf '# Latest Context Handoff\n\n'
   printf -- '- Checkpoint: `%s`\n' "$checkpoint_id"
   printf -- '- Handoff: [%s](./context-checkpoints/%s.md)\n' "$handoff_relative" "$checkpoint_id"
-  printf -- '- Current task: `%s`\n' "$current_task"
-  printf -- '- Next task: `%s`\n' "$next_task"
+  printf -- '- Current task: `%s` — %s\n' "$current_task" "$current_task_title"
+  printf -- '- Next task: `%s` — %s\n' "$next_task" "$next_task_title"
   printf -- '- Context use: `%s%%`\n' "$context_used"
   printf -- '- Read this file first, then the active spec at `%s`.\n' "$spec_relative"
 } > "$tmp_latest"
@@ -220,8 +258,8 @@ append_record() {
   {
     printf '\n\n## Context Checkpoint `%s`\n\n' "$checkpoint_id"
     printf -- '- Context use observed/estimated: `%s%%`\n' "$context_used"
-    printf -- '- Current task: `%s`\n' "$current_task"
-    printf -- '- Next task: `%s`\n' "$next_task"
+    printf -- '- Current task: `%s` — %s\n' "$current_task" "$current_task_title"
+    printf -- '- Next task: `%s` — %s\n' "$next_task" "$next_task_title"
     printf -- '- Handoff: `%s`\n' "$handoff_relative"
   } >> "$target"
 }

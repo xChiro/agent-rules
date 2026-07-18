@@ -1,7 +1,7 @@
 ---
 workflow_id: WORKFLOW-COMMON_BDD_SPECIFICATION_WORKFLOW
 trigger: manual
-description: Business-first BDD specification using shared language, concrete examples, executable behavior, and living documentation.
+description: "Business-first BDD specification using shared language, concrete examples, executable behavior, and living documentation."
 ---
 
 # Common BDD Specification Workflow
@@ -52,8 +52,9 @@ Those details belong in the technical plan, test implementation, architecture ru
 ## Test-First Boundary
 
 - The scenario is the business specification; acceptance evidence proves it at the closest stable boundary.
-- After acceptance RED, TDD takes one failing behavior partition at a time.
+- For backend work, the business model is made explicit before technical layers; TDD then opens domain and application one failing behavior partition at a time. Executable boundary RED follows the core gate only when outer production changes.
 - Tests describe behavior and remain independent of internal structure; production code is written only to pass the current failing test.
+- Test layers remain execution-independent: Domain, Application, and Boundary each run from clean state with no state or ordering dependency on another test layer.
 
 ## Quality Check
 
@@ -69,9 +70,9 @@ Before approval, confirm:
 ## SDD Integration
 
 - Gate 1 approves the value, stories, examples, scenarios, risks, and scope before spec writes.
-- Gate 2 approves the acceptance scenarios before RED.
-- Acceptance RED proves the scenario is meaningful; a passing test before implementation requires investigation.
-- Gate 3 reviews the acceptance evidence and focused test evidence before production code.
+- Gate 2 approves the acceptance scenarios and inside-out RED plan.
+- Gate 3-DOMAIN and Gate 3-APPLICATION review focused core RED before each core Green.
+- Gate 3-BOUNDARY reviews executable acceptance RED before affected outer production. When outer production is `not_affected`, existing boundary evidence remains GREEN verification and the gate is recorded `not_affected` without manufacturing RED.
 - GREEN and REFACTOR update the scenario traceability and living documentation.
 - A changed business outcome returns to this workflow before implementation resumes.
 

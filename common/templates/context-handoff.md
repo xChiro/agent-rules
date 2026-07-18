@@ -1,12 +1,19 @@
 ---
 handoff_id: HANDOFF-<FEAT>-CONTEXT-<NNN>
+handoff_title: Continue <human-readable current work>
 feature_id: FEAT-<NNNN>
+feature_title: <human-readable feature title>
 spec_id: SPEC-<NNNN>
+spec_title: <human-readable spec title>
 artifact_id: ART-<FEAT>-CONTEXT-HANDOFF
+artifact_title: Context continuation handoff for <feature title>
 checkpoint_id: CHECKPOINT-<YYYYMMDD>-<HHMMSS>
+checkpoint_title: Pause after <human-readable completed outcome>
 context_used_percent: <PERCENT>
 current_task_id: CURRENT-TASK-ID
+current_task_title: <human-readable current task title>
 next_task_id: NEXT-TASK-ID
+next_task_title: <human-readable next task title or blocker>
 status: ready_for_next_context
 ---
 

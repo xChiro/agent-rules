@@ -1,14 +1,14 @@
 ---
 rule_id: RULE-COMMON_SDD_SPEC_STRUCTURE
-trigger: always_on
-description: Folder structure, traceability, and history rules for SDD specs.
+trigger: model_decision
+description: "Folder structure, traceability, and history rules for SDD specs."
 ---
 
 # Common SDD Spec Structure
 
 Every project that uses SDD should keep specs as versioned engineering artifacts. The spec directory is not scratchpad context; it is the source of intent, behavior, constraints, and verification evidence. An active spec is mutable through the controlled `common-sdd-evolve-spec.workflow.md` protocol; its history remains append-only and plan drift requires approval.
 
-Defect changes use the same folder shape as feature changes with `change_type: bug-fix`. They additionally include `bug-report.md` when the defect needs reproduction, classification, impact, or root-cause evidence. Use `BUG-*` for the defect, `REG-*` for regression evidence, and link the defect to its owning or source `FEAT-*`/`SPEC-*`. A completed source spec is never rewritten to erase a defect; create a new active defect spec when the source is completed.
+Defect changes use the same folder shape as feature changes with `change_type: bug-fix`. They additionally include `bug-report.md` when the defect needs reproduction, classification, impact, or root-cause evidence. Use `BUG-*` for the defect, `REG-*` for regression evidence, and link the defect to its owning or source `FEAT-*`/`SPEC-*`. A verified, superseded, or retired source spec is never rewritten to erase a defect; create a new active defect spec when the source no longer owns the change.
 
 ## Recommended Structure
 
@@ -22,15 +22,14 @@ specs/
 │   ├── domain-glossary.md
 │   ├── architecture.md
 │   ├── repository-map.md
-│   ├── operations.md
-│   └── ai-snapshots/
+│   └── operations.md
 ├── features/
 │   ├── 0001-feature-slug/
 │   │   ├── spec.md
 │   │   ├── bug-report.md             # defect specs only
 │   │   ├── change-summary.md
 │   │   ├── acceptance.feature
-│   │   ├── invariants.md
+│   │   ├── invariants.md              # required when domain is affected
 │   │   ├── plan.md
 │   │   ├── spec-adjustment-request.md # only when discovery changes the plan
 │   │   ├── security-review.md
@@ -51,12 +50,12 @@ specs/
 │   │   └── history/
 │   │       ├── 2026-07-10-created.md
 │   │       └── 2026-07-12-command-broadcast-change.md
-│   └── 0001-squad-radio-completed/
+│   └── 0001-squad-radio/
 └── archive/
     └── 0000-retired-feature/
 ```
 
-Use `specs/features/<number>-<slug>/` for active feature specs. After Gate 4 approval, rename verified features with Git to `specs/features/<number>-<slug>-completed/`. Use `archive/` only when a feature is retired, obsolete, or no longer drives implementation. Keep AI snapshots under `specs/context/ai-snapshots/`.
+Use `specs/features/<number>-<slug>/` for every living feature spec. Keep the path stable across drafting, implementation, validation, evolution, and maintenance. Use `archive/` only when a feature is retired, obsolete, or no longer drives implementation. Existing legacy paths may remain for historical compatibility; do not create status-specific folder names.
 
 ## Spec And Artifact IDs
 
@@ -84,17 +83,57 @@ Feature-level IDs:
 - Context checkpoint IDs: `CHECKPOINT-20260711-120000`.
 - RED/Green/Refactor cycle IDs: `CYCLE-0001-001`.
 - Change IDs: `CHG-0001-001`.
-- Artifact IDs: `ART-0001-SPEC`, `ART-0001-CHANGE-SUMMARY`, `ART-0001-ACCEPTANCE`, `ART-0001-PLAN`, `ART-0001-SECURITY-REVIEW`, `ART-0001-TASKS`, `ART-0001-WORKFLOW-ROUTING`, `ART-0001-TRACKS`, `ART-0001-TRACEABILITY`, `ART-0001-VERIFICATION`, `ART-0001-RED-GREEN-REFACTOR`, `ART-0001-HANDOFF`, `ART-0001-CONTEXT-HANDOFF`, `ART-0001-HIST-YYYYMMDD`.
-- Snapshot IDs: `SNAP-YYYYMMDD-001`.
+- Artifact IDs: `ART-0001-SPEC`, `ART-0001-CHANGE-SUMMARY`, `ART-0001-ACCEPTANCE`, `ART-0001-INVARIANTS`, `ART-0001-PLAN`, `ART-0001-SECURITY-REVIEW`, `ART-0001-TASKS`, `ART-0001-WORKFLOW-ROUTING`, `ART-0001-TRACKS`, `ART-0001-TRACEABILITY`, `ART-0001-VERIFICATION`, `ART-0001-RED-GREEN-REFACTOR`, `ART-0001-HANDOFF`, `ART-0001-CONTEXT-HANDOFF`, `ART-0001-HIST-YYYYMMDD`.
+
+## Human-Readable Titles For Every Stable ID
+
+Every defined SDD element must pair its stable machine ID with a concise human-readable title. This applies to features, specs, artifacts, bugs, regressions, security and quality reviews/checks/findings, User Stories, requirements, scenarios, tasks, tracks, tests, changes, cycles, handoffs, checkpoints, adjustments, invariants, ADRs, and any future stable-ID element type. Agent rules, workflows, and skills follow the same contract through their frontmatter ID plus their human-readable Markdown heading or `name`.
+
+Use this canonical display form in Markdown headings, lists, plans, status reports, approval gates, and handoffs:
+
+```text
+<STABLE-ID> — <human-readable title>
+T-0001-001 — Add the focused retry-policy RED test
+REQ-0001-002 — Reject retries after the configured limit
+TEST-0001-003 — Retry exhaustion returns the domain error
+```
+
+The title is part of the element definition, not part of the ID. In structured metadata keep them as separate fields so tools can resolve the ID without parsing prose:
+
+```yaml
+task_id: T-0001-001
+task_title: Add the focused retry-policy RED test
+```
+
+Apply these rules:
+
+- A definition always includes both ID and title. A reference may use only the stable ID when its definition is linked or in the same artifact.
+- Human-facing tables include separate `ID` and `Title` columns; prose may use the canonical `<ID> — <title>` display form.
+- Titles are specific and intent-revealing. Do not use `Task 1`, `Requirement`, `Test`, filenames, workflow names, or an ID repeated as the title.
+- Feature, spec, story, requirement, scenario, regression, invariant, and test titles describe observable behavior or business intent.
+- Task and change titles start with an action verb and state one concrete outcome.
+- Track titles describe owned responsibility or boundary. Review, finding, handoff, checkpoint, cycle, artifact, adjustment, and ADR titles state their purpose or decision.
+- IDs remain stable when wording improves. Change an ID only when the element's intent changes materially; record that evolution in append-only history.
+- Keep the same title for the same ID across `spec.md`, `change-summary.md`, `acceptance.feature`, `plan.md`, `tasks.md`, `workflow-routing.md`, `parallel-tracks.md`, `traceability.yaml`, `verification.md`, reports, handoffs, and history.
+
+Gherkin keeps the scenario ID in a tag or comment and the human title in the `Scenario`/`Scenario Outline` line:
+
+```gherkin
+@SCN_0001_001
+Scenario: Reject a retry after the configured limit
+```
 
 Markdown artifacts should start with metadata:
 
 ```yaml
 ---
 feature_id: FEAT-0001
+feature_title: Enforce notification retry limits
 spec_id: SPEC-0001
+spec_title: Notification retry-limit behavior
 change_type: feature
 artifact_id: ART-0001-PLAN
+artifact_title: Notification retry-limit implementation plan
 status: draft
 created: 2026-07-10
 updated: 2026-07-10
@@ -105,8 +144,11 @@ Gherkin artifacts should use comments when frontmatter is not supported:
 
 ```gherkin
 # feature_id: FEAT-0001
+# feature_title: Enforce notification retry limits
 # spec_id: SPEC-0001
+# spec_title: Notification retry-limit behavior
 # artifact_id: ART-0001-ACCEPTANCE
+# artifact_title: Notification retry-limit acceptance scenarios
 ```
 
 Contracts, schemas, diagrams, ADRs, generated files, and manual QA notes also need artifact IDs when they are part of the spec. A file without an ID is not a stable SDD artifact.
@@ -121,25 +163,29 @@ Use frontmatter IDs:
 ---
 rule_id: RULE-<SCOPE>_<NAME>
 ---
+# Human-Readable Rule Title
 ```
 
 ```yaml
 ---
 workflow_id: WORKFLOW-<SCOPE>_<NAME>_WORKFLOW
 ---
+# Human-Readable Workflow Title
 ```
 
 ```yaml
 ---
 skill_id: SKILL-<SCOPE>_<NAME>_SKILL
+name: human-readable-skill-name
 ---
+# Human-Readable Skill Title
 ```
 
 Reference these IDs when a spec, history entry, or repository decision depends on a specific rule, workflow, or skill. Do not rely only on filename prose for durable traceability.
 
 ## Documentation Gate
 
-Every SDD spec includes a traceable documentation task governed by `RULE-COMMON_SDD_DOCUMENTATION_GATE` and `WORKFLOW-COMMON_SDD_UPDATE_DOCUMENTATION_WORKFLOW`. This applies to spec creation, evolution, bug fixes, refactors, implementation changes, pipeline changes, and completion. The task records the affected project/SDD documentation surfaces and verification evidence; when no project documentation surface is affected, it records `no_documentation_change_reason` in `spec.md`, `verification.md`, and `change-summary.md` after the workflow's surface analysis.
+Every SDD spec includes a traceable documentation task governed by `RULE-COMMON_SDD_DOCUMENTATION_GATE` and `WORKFLOW-COMMON_SDD_UPDATE_DOCUMENTATION_WORKFLOW`. This applies to spec creation, evolution, bug fixes, refactors, implementation changes, pipeline changes, and final validation. The task records the affected project/SDD documentation surfaces and verification evidence; when no project documentation surface is affected, it records `no_documentation_change_reason` in `spec.md`, `verification.md`, and `change-summary.md` after the workflow's surface analysis.
 
 ## Feature Spec Files
 
@@ -148,11 +194,11 @@ Minimum useful spec:
 - `spec.md`: User Stories, actor, objective, requirements, out-of-scope, edge cases, non-functional constraints, and open questions.
 - `change-summary.md`: human-readable summary of every planned and actual change, affected files, tests, workflows, documentation, risks, and rollback.
 - `bug-report.md`: defect classification, reproduction evidence, actual/expected behavior, impact, root-cause analysis, and links to regression evidence. Required for defect specs when those details are not already captured in `change-summary.md`.
-- `acceptance.feature`: BDD Given/When/Then scenarios or the local executable acceptance format.
-- `plan.md`: architecture, contracts, data, risks, testing strategy, observability, and rollout/rollback when relevant.
-- `security-review.md`: final security scope, identity role, trust boundaries, OAuth/OIDC and web-session evidence when applicable, scan commands, findings, exceptions, and security-gate decision. Every completed spec must contain it, including a `security_role: none` review when security impact is unchanged.
-- `code-quality-review.md`: final review of every spec-created or spec-modified file, names, limits, ownership, Clean Code/SOLID/Clean Architecture/CQRS checks, findings, refactors, exceptions, and quality-gate decision. Every completed spec must contain it.
-- `tasks.md`: ordered small tasks, each traceable to a requirement and verification method. Each task has one concrete outcome, `done_when`, `verification_command`, `next_step`, and explicit ownership/dependencies.
+- `acceptance.feature`: BDD Given/When/Then scenarios for every meaningful User Story; executable acceptance mappings may be added later without replacing the business-language scenario.
+- `plan.md`: a mandatory **Domain Model And Business Policy** section before architecture, followed by contracts, data, risks, testing strategy, observability, rollout/rollback, and **Development Sequence And Layer Gates** with canonical `layer_scope` YAML when backend code is in scope; `domain: not_affected` also requires `domain_not_affected_reason`.
+- `security-review.md`: final security scope, identity role, trust boundaries, OAuth/OIDC and web-session evidence when applicable, scan commands, findings, exceptions, and security-gate decision. Every spec entering `verified` must contain it, including a `security_role: none` review when security impact is unchanged.
+- `code-quality-review.md`: final review of every spec-created or spec-modified file, names, limits, ownership, Clean Code/SOLID/Clean Architecture/CQRS checks, findings, refactors, exceptions, and quality-gate decision. Every spec entering `verified` must contain it.
+- `tasks.md`: inside-out ordered small tasks, each traceable to a requirement and verification method. Each backend task declares `development_layer`, `layer_gate`, one concrete outcome, `done_when`, `verification_command`, `next_step`, and explicit ownership/dependencies.
 - `workflow-routing.md`: selected primary/supporting workflows for each SDD phase and task, with rationale.
 - `parallel-tracks.md`: safe concurrent work plan, maximum agent count, track ownership, dependencies, write boundaries, and merge order.
 - `traceability.yaml`: requirement -> scenario -> task -> test -> contract/metric links.
@@ -165,7 +211,7 @@ Minimum useful spec:
 
 Add optional files only when useful:
 
-- `invariants.md` for domain rules that must always hold.
+- `invariants.md` for domain rules that must always hold; required when the domain layer is `affected`, omitted when `domain: not_affected` is justified in `spec.md` and `plan.md`.
 - `research.md` for tradeoffs, unknowns, spikes, and rejected options.
 - `data-model.md` for entities, persistence shape, migrations, or state machines.
 - `contracts/` for OpenAPI, AsyncAPI, JSON Schema, event schemas, or CLI contracts.
@@ -177,7 +223,7 @@ Add optional files only when useful:
 
 ## Context Continuity
 
-Context checkpoints are interim handoffs, not completed snapshots. At 60% consumed context, stop starting new tasks and update the active spec before requesting a context change. The checkpoint must leave `tasks.md`, `change-summary.md`, `verification.md`, `workflow-routing.md`, and `traceability.yaml` consistent enough for another AI to resume without reconstructing hidden context. Use `WORKFLOW-COMMON_SDD_CONTEXT_CHECKPOINT_WORKFLOW` and `tools/create-sdd-context-checkpoint.sh` when a context meter is available.
+Context checkpoints are interim handoffs, not lifecycle evidence. At 60% consumed context, stop starting new tasks and update the active spec before requesting a context change. The checkpoint must leave `tasks.md`, `change-summary.md`, `verification.md`, `workflow-routing.md`, and `traceability.yaml` consistent enough for another AI to resume without reconstructing hidden context. Use `WORKFLOW-COMMON_SDD_CONTEXT_CHECKPOINT_WORKFLOW` and `tools/create-sdd-context-checkpoint.sh` when a context meter is available.
 
 ## Human Change Summary
 
@@ -211,9 +257,11 @@ Business problem, actor, and expected outcome.
 
 ## Tests Before Production Code
 
-- `SCN-*` acceptance or public-boundary test: path, workflow, expected RED.
-- `TEST-*` unit/component test: path, workflow, expected RED.
-- Gate 3 evidence required before Green.
+- `SCN-*` abstract acceptance scenario and its later executable public-boundary mapping.
+- Domain/Application `TEST-*`: path, workflow, expected RED, hand-written doubles, and resulting layer gate.
+- Boundary `TEST-*`: path, workflow, expected RED after the core gate when outer behavior changes.
+- Per-layer isolation: `standalone_test_command`, `depends_on_test_layer: none`, owned state, setup/cleanup, and clean-process evidence.
+- Scoped Gate 3 evidence required before each affected Green.
 
 ## Documentation And Operations
 
@@ -229,11 +277,11 @@ Business problem, actor, and expected outcome.
 ## Execution Order
 
 1. Spec and acceptance artifacts.
-2. Acceptance/public-boundary RED.
-3. Unit-level ATDD RED.
-4. Gate 3 review.
-5. Production implementation.
-6. Refactor, verification, documentation, and convergence.
+2. Domain RED, Gate 3-DOMAIN, GREEN/refactor, and `LAYER-GATE-DOMAIN`.
+3. Application RED with hand-written outgoing-port doubles, Gate 3-APPLICATION, GREEN/refactor, and `LAYER-GATE-APPLICATION`.
+4. Executable public-boundary RED and Gate 3-BOUNDARY only when outer production is affected; otherwise existing boundary evidence runs GREEN and the scope is `not_affected`.
+5. Infrastructure, delivery interface, and composition/IaC GREEN, in that order.
+6. Boundary GREEN, refactor, verification, documentation, and convergence.
 
 ## Actual Result
 
@@ -244,22 +292,22 @@ Rules:
 
 - Every planned production, test, infrastructure, CI, documentation, contract, migration, and operational change gets a `CHG-*` row.
 - Every row names affected files/modules, primary workflow, track, sequence, and verification evidence.
-- `status: proposed` is used before Gate 1; `approved` after Gate 1; `implemented` only after Green; `verified` after Converge.
+- `status: proposed` describes the read-only Gate 1 proposal or a pre-existing draft; `approved` is written after Gate 1; `implemented` only after Green; `verified` only after Converge and the final evidence review approves it.
 - Do not hide deviations. Add them to `Actual Result` and history.
 
-## Completion And AI Context Snapshots
+## Spec Status And Context
 
-Completion is separate from spec creation. A feature remains under `specs/features/<number>-<slug>/` while it is active. After implementation and Converge pass, invoke `WORKFLOW-COMMON_SDD_COMPLETE_SPEC_WORKFLOW`.
+The spec is a living source of truth. Use these lifecycle states in `spec.md` and `change-summary.md`:
 
-That workflow first runs `WORKFLOW-COMMON_SDD_CLEAN_UP_GATE_WORKFLOW` and requires a passed `code-quality-review.md` for every created or modified file, including confirmation that every in-scope code file is below 150 physical lines. It then runs `WORKFLOW-COMMON_SDD_SECURITY_GATE_WORKFLOW`, any required mutation/critical-E2E gate, and the mandatory `WORKFLOW-COMMON_SDD_COVERAGE_GATE_WORKFLOW` with `>= 90%` project coverage and no affected-scope regression when production code is in scope. After all required gates pass, it obtains final human completion approval, updates `change-summary.md` to `status: verified`, renames the folder to `specs/features/<number>-<slug>-completed/`, and creates an AI context snapshot at:
+- `draft`: the intent is being shaped and has not been proposed for implementation.
+- `proposed`: the requirements, scenarios, constraints, and open questions are ready for review.
+- `approved`: the intent and plan are approved for implementation.
+- `implemented`: the approved behavior is implemented, but validation evidence is still open.
+- `verified`: the implementation, tests, architecture, documentation, and risk-selected gates agree with the spec, and the final evidence review explicitly approved recording that state.
+- `superseded`: another spec replaces this intent; link both specs and preserve history.
+- `retired`: the behavior is intentionally removed or no longer maintained; record the decision and impact.
 
-```text
-specs/context/ai-snapshots/YYYY-MM-DD-<feature-slug>-snapshot.md
-```
-
-Every snapshot has a `SNAP-*` ID, source feature/spec IDs, source commit when available, final behavior and architecture summary, workflow/test evidence, documentation and operational constraints, known non-goals, residual risks, and links to the completed spec. Update `specs/context/ai-snapshots/index.md` whenever a snapshot is created.
-
-Snapshots are derived context for agents and humans. They never replace `spec.md`, `change-summary.md`, contracts, decisions, verification, or append-only history. Never include secrets, credentials, private endpoints, or unbounded generated output.
+Use `WORKFLOW-COMMON_SDD_VERIFY_SPEC_WORKFLOW` for the final evidence review. It records `verified` in the stable spec path; it does not move directories or derive folder names from lifecycle status. Context checkpoints under `handoffs/context-checkpoints/` remain operational handoffs and never replace the active spec, traceability, verification, or append-only history. A repository may maintain an optional context summary for onboarding, but it is not lifecycle evidence.
 
 ## User Story Format
 
@@ -304,24 +352,27 @@ Before creating the spec folder or modifying any existing spec file, the agent m
 
 After the approved folders and artifacts are created or modified, the agent must present the resulting spec and ask for explicit approval to begin the RED phase. Until that second approval, the agent must not create, modify, or run acceptance, HTTP integration, component, or unit test code.
 
-After the acceptance and focused unit-level tests are RED, the agent must present the actual test files, commands, failures, assertions, and confirmation that production files are unchanged. The agent must ask for explicit approval before Green. This is Gate 3 and applies to feature work and refactors that add or change test protection.
+After each affected scope reaches RED, the agent must present the actual test files, commands, failures, assertions, prior layer gates, and confirmation that production files for that scope are unchanged. The agent must ask for explicit approval before that scope's Green. This reusable Gate 3 is recorded as Gate 3-DOMAIN, Gate 3-APPLICATION, or Gate 3-BOUNDARY.
 
 These gates apply even when the change is simple or unambiguous. Approval to discuss or plan is not approval to write spec files; approval to write spec files is not approval to start RED; approval to start RED is not approval to edit production code.
 
-## Unit Tests Before Production Code
+## Inside-Out Tests Before Production Code
 
-Production code must not be edited until the current behavior has a failing unit-level test.
+Production code for a layer must not be edited until the current behavior has failing evidence at that layer and the prior inner gate has passed.
 
 Required order for each implementation slice:
 
-1. BDD acceptance scenario or public-boundary acceptance evidence exists.
-2. The acceptance evidence is confirmed RED when practical.
-3. A unit/domain/application/component test is written with a stable `TEST-*` ID.
-4. The unit-level test is confirmed RED for the intended rule.
-5. Gate 3 approves the test evidence.
-6. Only then may production code change.
+1. An abstract BDD acceptance scenario exists.
+2. A domain unit test is RED and Gate 3-DOMAIN approves it when domain changes.
+3. Domain GREEN/refactor passes `LAYER-GATE-DOMAIN`.
+4. An application unit test is RED and Gate 3-APPLICATION approves it when application changes.
+5. Application GREEN/refactor passes `LAYER-GATE-APPLICATION`.
+6. When outer production is affected, the executable public-boundary test is RED and Gate 3-BOUNDARY approves it; otherwise existing boundary evidence is GREEN verification and Boundary is `not_affected`.
+7. Affected infrastructure, delivery interfaces, and module-owned composition/IaC may then change in that order until the boundary is GREEN.
 
-Acceptance evidence alone is not enough for business logic implementation. If a true unit test is impossible because the behavior only exists at a UI, CLI, generated-code, or HTTP boundary, write the closest unit-level/component test and document the exception in `verification.md`.
+Boundary evidence alone is not enough for business-logic implementation. If a layer is genuinely unaffected, record `status: not_affected`, the reason, and existing evidence instead of inventing code or tests. If a true unit test is impossible because behavior only exists at a UI, CLI, generated-code, or HTTP boundary, start at the closest affected boundary and document the exception in `verification.md`.
+
+The order above is an implementation sequence, not a test-runtime dependency. Domain, Application, and Boundary must each expose a focused command that passes from a clean process without another layer running first. Apply `RULE-COMMON_TEST_LAYER_ISOLATION` and record standalone plus combined results.
 
 ## Architecture Principles
 
@@ -334,6 +385,7 @@ Default principles:
 - Follow Clean Architecture boundaries for backend/domain work: domain and application stay independent from transport, persistence, framework, cloud SDK, UI, and deployment concerns.
 - Follow CQRS when the project architecture uses it: commands change state, queries read state, and command-side decisions do not leak into query projections without an explicit mapping.
 - Keep business rules in the owning domain/application/use case or frontend behavior boundary, not in adapters, controllers, views, persistence models, or framework callbacks.
+- Name Application use cases with agent nouns that reveal the capability and actor-facing responsibility, for example `PartyCreator`, `MemberEnroller`, or `OrderCanceller`; use `party-creator` in human-facing slugs. Do not use generic `*UseCase`, `*Service`, or `*Handler` names for the use case itself.
 - Keep boundary mapping owned by the DTO that represents the external shape: persistence DTOs map domain values to database schemas and back, transport DTOs map requests/responses, and message DTOs map event payloads. Keep these functions colocated with the DTO and free of I/O, authorization, orchestration, and business policy.
 - Do not add speculative layers, generic repositories, mediators, factories, or extension points unless the spec explains the current behavior or risk they protect.
 
@@ -353,6 +405,10 @@ Each task should represent one of:
 
 Backend tasks also declare one canonical `work_type` from `common-workflow-taxonomy.md`. The work type selects focused language rules and the supporting boundary workflow when applicable; it does not replace the primary language SDD workflow.
 
+Backend tasks additionally declare `development_layer` and `layer_gate`. Outer production tasks must depend on `LAYER-GATE-APPLICATION`; composition/IaC tasks also depend on the infrastructure and interface gates when those layers are affected. Composition is owned per business module; the executable root only invokes module composition entry points.
+
+Every test task additionally declares `test_layer`, `standalone_test_command`, `depends_on_test_layer: none`, `isolation_scope`, owned mutable state, setup/cleanup, and the clean-state done condition.
+
 Boundary routing examples:
 
 - `rest-endpoint`: `WORKFLOW-COMMON_REST_API_DESIGN_WORKFLOW` + the language REST adapter.
@@ -365,7 +421,7 @@ Split a task when it touches unrelated actors, unrelated scenarios, multiple bou
 
 ## Workflow Routing
 
-Every spec must contain `workflow-routing.md`. It is the routing table for the agent and must be reviewed at Gate 1 before spec writes and again at Gate 2 before RED.
+Every spec must contain `workflow-routing.md`. Review its proposed contents at Gate 1 before spec writes; after writing the file, review the recorded routing again at Gate 2 before RED.
 
 Each phase and task has one primary workflow. Supporting workflows may be listed when they add a focused procedure without changing ownership.
 
@@ -385,13 +441,13 @@ phases:
     reason: Discover value, examples, abstract business scenarios, and executable acceptance intent.
   - phase: test-evidence-review
     workflow_id: WORKFLOW-COMMON_SDD_REVIEW_TEST_EVIDENCE_WORKFLOW
-    reason: Review acceptance and unit RED before Green.
+    reason: Review scoped Domain, Application, or Boundary RED before that scope's Green.
   - phase: clean-up-gate
     workflow_id: WORKFLOW-COMMON_SDD_CLEAN_UP_GATE_WORKFLOW
-    reason: Review all changed files, complete required Fowler refactors, and confirm the strict <150-line source-file limit before final security and coverage gates.
+    reason: Review all changed files, complete required Fowler refactors, and confirm the strict <150-line limit for maintained source, test, configuration, CI, and script files before final security and coverage gates.
   - phase: security-gate
     workflow_id: WORKFLOW-COMMON_SDD_SECURITY_GATE_WORKFLOW
-    reason: Review changed trust boundaries, identity, secrets, web sessions, and security evidence before completion approval.
+    reason: Review changed trust boundaries, identity, secrets, web sessions, and security evidence before final validation.
   - phase: coverage-gate
     workflow_id: WORKFLOW-COMMON_SDD_COVERAGE_GATE_WORKFLOW
     reason: Prove at least 90% project-wide coverage after the final quality and security review when production code is in scope.
@@ -410,13 +466,15 @@ phases:
   - phase: documentation
     workflow_id: WORKFLOW-COMMON_SDD_UPDATE_DOCUMENTATION_WORKFLOW
     reason: Reconcile project and SDD documentation.
-  - phase: complete
-    workflow_id: WORKFLOW-COMMON_SDD_COMPLETE_SPEC_WORKFLOW
-    reason: Verify, snapshot, index, and add the `-completed` suffix to the feature folder.
+  - phase: final-validation
+    workflow_id: WORKFLOW-COMMON_SDD_VERIFY_SPEC_WORKFLOW
+    reason: Validate convergence and record the spec status without moving the feature folder.
 tasks:
   - task_id: T-0001-001
     workflow_id: WORKFLOW-GO_SDD_IMPLEMENT_CHANGE_WORKFLOW
-    workflow_phase: acceptance-red
+    workflow_phase: domain-red
+    development_layer: domain
+    layer_gate: LAYER-GATE-DOMAIN
     supporting_workflow_ids:
       - WORKFLOW-COMMON_SDD_REVIEW_TEST_EVIDENCE_WORKFLOW
 ```
@@ -429,19 +487,19 @@ Use these routing rules:
 - Defect diagnosis and fix: `WORKFLOW-COMMON_SDD_FIX_BUG_WORKFLOW`; language implementation workflows are supporting adapters, not replacements for the common defect lifecycle.
 - Feature, integration, or pipeline implementation: the language `*-sdd-implement-change` workflow.
 - Behavior-preserving refactor: the language `*-sdd-refactor-code` workflow.
-- Acceptance and unit RED review: `WORKFLOW-COMMON_SDD_REVIEW_TEST_EVIDENCE_WORKFLOW`.
-- Final coverage: `WORKFLOW-COMMON_SDD_COVERAGE_GATE_WORKFLOW`, mandatory for every completed spec and at `>= 90%` when production code is in scope.
+- Scoped Domain, Application, or Boundary RED review: `WORKFLOW-COMMON_SDD_REVIEW_TEST_EVIDENCE_WORKFLOW`.
+- Final coverage: `WORKFLOW-COMMON_SDD_COVERAGE_GATE_WORKFLOW`, mandatory for every spec entering `verified` status and at `>= 90%` when production code is in scope.
 - Mutation evidence: `WORKFLOW-COMMON_SDD_MUTATION_GATE_WORKFLOW` for L2 non-trivial logic and all L3 changes.
-- Critical user journeys: `WORKFLOW-COMMON_SDD_CRITICAL_E2E_WORKFLOW` for L3 and explicitly critical flows.
+- Critical user journeys: `WORKFLOW-COMMON_SDD_CRITICAL_E2E_WORKFLOW` for every L3 change; marking a flow critical escalates it to L3.
 - CI/PR structural validation: `WORKFLOW-COMMON_SDD_VALIDATE_CHANGE_WORKFLOW` through the `sdd-policy` check.
 - Context continuity: `WORKFLOW-COMMON_SDD_CONTEXT_CHECKPOINT_WORKFLOW` at 60% consumed context or a compaction warning.
-- Final security review: `WORKFLOW-COMMON_SDD_SECURITY_GATE_WORKFLOW`, mandatory before Gate 4 even when the scope is recorded as `security_role: none`.
-- Final clean up: `WORKFLOW-COMMON_SDD_CLEAN_UP_GATE_WORKFLOW`, mandatory for every completed spec and before security/coverage re-verification.
+- Final security review: `WORKFLOW-COMMON_SDD_SECURITY_GATE_WORKFLOW`, mandatory before final validation even when the scope is recorded as `security_role: none`.
+- Final clean up: `WORKFLOW-COMMON_SDD_CLEAN_UP_GATE_WORKFLOW`, mandatory for every spec entering `verified` status and before security/coverage re-verification.
 - HTTP infrastructure setup/evidence: the language implementation workflow with `common-http-integration-harness.md` as a supporting rule.
 - GitHub Actions: `WORKFLOW-COMMON_SDD_CREATE_GITHUB_ACTIONS_PIPELINE_WORKFLOW` plus the applicable language/service profile.
 - Documentation: `WORKFLOW-COMMON_SDD_UPDATE_DOCUMENTATION_WORKFLOW`.
-- Documentation gate: `RULE-COMMON_SDD_DOCUMENTATION_GATE` requires the documentation workflow before final quality, security, coverage, or completion approval.
-- Completion, snapshot, and rename with the `-completed` suffix: `WORKFLOW-COMMON_SDD_COMPLETE_SPEC_WORKFLOW`.
+- Documentation gate: `RULE-COMMON_SDD_DOCUMENTATION_GATE` requires the documentation workflow before final quality, security, coverage, or validation review.
+- Final evidence review: `WORKFLOW-COMMON_SDD_VERIFY_SPEC_WORKFLOW` records `verified` in the stable feature folder.
 
 Do not infer a workflow from a file path. Use the stable `workflow_id` and record why it is the most specific applicable procedure.
 
@@ -500,13 +558,13 @@ merge_policy: sequential
 
 ## Tracks
 
-### TRK-0001-001: Acceptance Harness
+### TRK-0001-001: Public-Boundary Evidence
 
 - Agent slot: agent-1
 - Tasks: T-0001-001, T-0001-002
 - Owns:
   - specs/features/0001-feature-slug/acceptance.feature
-  - tests/acceptance/
+  - tests/integration/http/squad_radio/
 - Must not touch:
   - src/infrastructure/
 - Can start when:
@@ -636,8 +694,8 @@ requirements:
     changes:
       - CHG-0001-001
     tests:
-      TEST-0001-001: tests/acceptance/squad_radio.feature
-      TEST-0001-002: tests/unit/radio_access_policy_test.go
+      TEST-0001-001: tests/integration/http/squad_radio/access_test.go
+      TEST-0001-002: tests/unit/radio/domain/radio_access_policy_test.go
     contracts: []
     metrics: []
 parallel_tracks:
@@ -646,7 +704,7 @@ parallel_tracks:
     tasks:
       - T-0001-001
     owns:
-      - tests/acceptance/squad_radio.feature
+      - tests/integration/http/squad_radio/access_test.go
 workflows:
   spec-create:
     workflow_id: WORKFLOW-COMMON_SDD_CREATE_SPEC_WORKFLOW
@@ -662,30 +720,26 @@ workflows:
     workflow_id: WORKFLOW-COMMON_SDD_COVERAGE_GATE_WORKFLOW
   documentation:
     workflow_id: WORKFLOW-COMMON_SDD_UPDATE_DOCUMENTATION_WORKFLOW
-  completion:
-    workflow_id: WORKFLOW-COMMON_SDD_COMPLETE_SPEC_WORKFLOW
-snapshots:
-  SNAP-20260710-001:
-    path: specs/context/ai-snapshots/2026-07-10-squad-radio-snapshot.md
-    source_spec: SPEC-0001
+  final-validation:
+    workflow_id: WORKFLOW-COMMON_SDD_VERIFY_SPEC_WORKFLOW
 ```
 
 ## Verification And Convergence
 
-Before reporting done:
+Before reporting the spec as verified:
 
 - `spec.md`, `acceptance.feature`, `plan.md`, `tasks.md`, `workflow-routing.md`, `parallel-tracks.md`, `traceability.yaml`, and `verification.md` must agree.
 - Every spec artifact has an `ART-*` ID and appears in `traceability.yaml`.
 - Completed tasks must point to passing tests or documented manual verification.
-- Every production behavior change points to a unit-level `TEST-*` created before production code.
+- Every core production behavior change points to a Domain/Application unit-level `TEST-*` created before production code. Pure infrastructure, delivery-interface, or composition changes point to the closest executable boundary `TEST-*` created before that outer production code.
 - Every task points to a primary `workflow_id`; supporting workflows are explicit when needed.
-- Every completed spec records `WORKFLOW-COMMON_SDD_COVERAGE_GATE_WORKFLOW`; specs with production code record `>= 90%` project-wide coverage and affected-scope non-regression in `verification.md` and `change-summary.md`, while docs-only specs record `coverage_scope: none` and proof that no production files changed.
-- Every completed spec records `WORKFLOW-COMMON_SDD_SECURITY_GATE_WORKFLOW` and a `security-review.md` decision in `verification.md` and `change-summary.md`.
-- Every completed spec records `WORKFLOW-COMMON_SDD_CLEAN_UP_GATE_WORKFLOW` and a `code-quality-review.md` decision in `verification.md` and `change-summary.md`.
+- Every spec entering `verified` records `WORKFLOW-COMMON_SDD_COVERAGE_GATE_WORKFLOW`; specs with production code record `>= 90%` project-wide coverage and affected-scope non-regression in `verification.md` and `change-summary.md`, while documentation-only specs record `coverage_scope: none` and proof that no production files changed.
+- Every spec entering `verified` records `WORKFLOW-COMMON_SDD_SECURITY_GATE_WORKFLOW` and a `security-review.md` decision in `verification.md` and `change-summary.md`.
+- Every spec entering `verified` records `WORKFLOW-COMMON_SDD_CLEAN_UP_GATE_WORKFLOW` and a `code-quality-review.md` decision in `verification.md` and `change-summary.md`.
 - Documentation changes are complete, or the spec records `no_documentation_change_reason`.
 - The documentation gate outcome is recorded in `change-summary.md`, including the inspected surfaces and evidence for any `no_documentation_change_reason`.
-- A completed feature has a completion approval, a folder named `specs/features/<number>-<slug>-completed/`, an AI snapshot, and an index entry.
+- A verified feature has a validation decision and remains discoverable at its stable `specs/features/<number>-<slug>/` path.
 - Any implementation change that alters behavior must update the spec and history.
 - Any refactor that changes structure or boundaries must update plan, architecture notes, repository map, or decisions as needed.
-- Any discovery-driven adjustment has an approved adjustment record, append-only history entry, synchronized artifacts, and the required gate reset; no proposed adjustment remains unresolved at completion.
+- Any discovery-driven adjustment has an approved adjustment record, append-only history entry, synchronized artifacts, and the required gate reset; no proposed adjustment remains unresolved at final validation.
 - If a spec is intentionally not updated, state why the change is purely mechanical and behavior-preserving.

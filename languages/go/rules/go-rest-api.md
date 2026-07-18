@@ -1,20 +1,15 @@
 ---
 rule_id: RULE-GO_REST_API
-trigger: always_on
-description: Go REST API and API Gateway/Lambda rules for resource design, thin boundaries, contracts, and HTTP integration.
-globs: **/*.go,template.yaml
+trigger: model_decision
+description: "Go REST API and API Gateway/Lambda rules for resource design, thin boundaries, contracts, and HTTP integration."
+globs: "**/*.go,template.yaml"
 ---
 
 # Go REST API
 
-## SDD Baseline
+## SDD Integration
 
-- Apply `common/rules/common-sdd-agentic-discipline.md` before this rule.
-- Create or evolve the owning User Story based spec before production code when behavior, contracts, architecture, or risk changes.
-- Apply mandatory Gate 1 before spec writes, Gate 2 before RED, and Gate 3 before Green, even for simple or low-risk changes.
-- Keep artifact, task, track, and test IDs traceable through `traceability.yaml` and `parallel-tracks.md`.
-- Write BDD Given/When/Then acceptance evidence first, then the unit-level ATDD-style focused failing test for the next rule or boundary before production code.
-- Refactor only with tests green and converge spec history, tasks, parallel tracks, traceability, verification notes, and code.
+Apply the primary Go SDD workflow plus `WORKFLOW-COMMON_REST_API_DESIGN_WORKFLOW`. This rule adds Go HTTP adapter details only; common core and Boundary gates remain authoritative.
 
 
 Rules for creating or modifying HTTP endpoints in a Go service.
@@ -32,7 +27,7 @@ Rules for creating or modifying HTTP endpoints in a Go service.
 - Keep business decisions in domain/application code.
 - Keep router, API Gateway, Lambda event, AWS SDK, persistence, and framework types outside domain/application.
 - Reuse one application use case from server and Lambda adapters; deployment style must not duplicate behavior.
-- Register dependencies in one explicit composition root.
+- Register each business module through its module-owned DI initializer/output; keep one executable root that aggregates modules and host-wide concerns only.
 
 ## Resource Modeling
 
@@ -134,7 +129,7 @@ Prefer RFC 9457 Problem Details when the repository already uses it; otherwise p
 
 ## HTTP Integration
 
-- Backend tests are either unit tests or HTTP integration tests.
+- Backend tests are either unit tests or integration tests; REST coverage belongs in `integration/http` and adapter/resource coverage in `integration/infrastructure`.
 - Test REST servers through a real local listener/router.
 - Test Lambda endpoints through `sam local start-api` or the repository's equivalent HTTP emulator.
 - Exercise the real composition root and local databases/resources.

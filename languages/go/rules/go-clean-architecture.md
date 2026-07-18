@@ -1,20 +1,15 @@
 ---
 rule_id: RULE-GO_CLEAN_ARCHITECTURE
-trigger: always_on
-description: Go Clean Architecture rules for DDD, CQRS, and YAGNI
-globs: **/*.go
+trigger: model_decision
+description: "Go Clean Architecture rules for DDD, CQRS, and YAGNI"
+globs: "**/*.go"
 ---
 
 # Go Clean Architecture
 
-## SDD Baseline
+## SDD Integration
 
-- Apply `common/rules/common-sdd-agentic-discipline.md` before this rule.
-- Create or evolve the owning User Story based spec before production code when behavior, contracts, architecture, or risk changes.
-- Apply mandatory Gate 1 before spec writes, Gate 2 before RED, and Gate 3 before Green, even for simple or low-risk changes.
-- Keep artifact, task, track, and test IDs traceable through `traceability.yaml` and `parallel-tracks.md`.
-- Write BDD Given/When/Then acceptance evidence first, then the unit-level ATDD-style focused failing test for the next rule or boundary before production code.
-- Refactor only with tests green and converge spec history, tasks, parallel tracks, traceability, verification notes, and code.
+Apply `RULE-COMMON_SDD_AGENTIC_DISCIPLINE` and `RULE-COMMON_INSIDE_OUT_DEVELOPMENT` before this Go specialization. This file defines Go architecture details only and cannot relax common gates, traceability, layer order, or convergence.
 
 
 Clean Architecture, DDD, CQRS, YAGNI, and Screaming Architecture for Go.
@@ -23,12 +18,17 @@ See `go-advanced-practices.md` for advanced Go techniques and the evidence requi
 
 ## Layer Structure
 
-**Dependency Rule**: Infrastructure → Application → Domain
+**Dependency Rule**: Composition/Interface/Infrastructure → Application → Domain
 
 **Domain**: Pure business logic, entities, value objects, and errors
 **Application**: Use cases, DTOs, consumer-owned command/query/validation ports, and orchestration
 **Infrastructure**: Adapters implementing ports (DB, APIs, messaging)
-**Interface**: HTTP/gRPC handlers, composition root
+**Interface**: HTTP/gRPC/Lambda/message delivery adapters
+**Composition**: DI, router/consumer registration, configuration, and IaC; implemented last
+
+**Development Rule**: Production opens inside-out. Domain and application gates must pass before conditional executable boundary RED and before affected infrastructure/interface/composition production code.
+
+**Module DI Rule**: Each business module owns a `di` package outside its inner layers and exposes one module initializer/output. The executable root aggregates modules only; Domain, Application, Infrastructure, and Interface packages never import the module DI package.
 
 ## YAGNI Principle
 
@@ -85,6 +85,7 @@ type ValidateHandlerNameUniqueness interface { Execute(ctx context.Context, name
 DTOs own the functions that translate their external representation. Keep the functions in the DTO's file/package, not in a global mapper package.
 
 ```go
+// internal/orders/infrastructure/dynamodb/item_record.go
 type ItemDBDTO struct {
     ID       string `dynamodbav:"id"`
     Quantity int    `dynamodbav:"quantity"`
@@ -107,15 +108,15 @@ func (dto ItemDBDTO) ToDomain() (domain.Item, error) {
 
 ## Dependency Injection
 
-**Principles**: Manual wiring, depend on abstractions, define interfaces near consumers, small focused interfaces
-**Setup**: Pure construction, return errors, ≤150 lines, clear naming
+**Principles**: Module-owned manual wiring, depend on abstractions, define interfaces near consumers, small focused interfaces
+**Setup**: `internal/{business-module}/di` performs pure construction, returns errors and cleanup, stays below 150 physical lines/file, and exposes one module entry point
 
 ```go
-func NewEnrollMemberUseCase(
+func NewMemberEnroller(
     createCmd commands.CreateMemberCommand,
     validateName validation.ValidateHandlerNameUniqueness,
-) *EnrollMemberUseCase {
-    return &EnrollMemberUseCase{createCmd: createCmd, validateName: validateName}
+) *MemberEnroller {
+    return &MemberEnroller{createCmd: createCmd, validateName: validateName}
 }
 ```
 
@@ -130,7 +131,7 @@ func LoadConfig() (*Config, error) { /* load from env, validate, return */ }
 
 ## Error Flow
 
-**Mapping**: Domain → Application → Interface
+**Error translation flow**: Domain → Application → Interface
 **Types**: Domain (business rules), Application (use case failures), Infrastructure (technical), Interface (transport)
 
 ```go
@@ -172,16 +173,16 @@ Use a decorator when a current cross-cutting concern must wrap an existing use c
 - Do not add decorators for future use
 
 ```go
-type CreateOrderUseCase interface {
+type OrderCreator interface {
 	Execute(ctx context.Context, request CreateOrderRequest) (*OrderDTO, error)
 }
 
-type CreateOrderMetricsDecorator struct {
-	inner   CreateOrderUseCase
+type OrderCreatorMetricsDecorator struct {
+	inner   OrderCreator
 	metrics Metrics
 }
 
-func (d *CreateOrderMetricsDecorator) Execute(ctx context.Context, request CreateOrderRequest) (*OrderDTO, error) {
+func (d *OrderCreatorMetricsDecorator) Execute(ctx context.Context, request CreateOrderRequest) (*OrderDTO, error) {
 	done := d.metrics.Measure("create_order")
 	defer done()
 
@@ -189,69 +190,18 @@ func (d *CreateOrderMetricsDecorator) Execute(ctx context.Context, request Creat
 }
 ```
 
-## DTO Pattern (DIP Compliance)
+## Boundary DTO Dependency Rule
 
-**Principle**: Interface layer DTOs with translation methods to convert between domain and interface representations
-
-**Structure**:
-- **Application Layer**: Pure domain DTOs (no infrastructure tags like `json`, `dynamodbav`)
-- **Interface Layer**: Transport-specific DTOs with translation methods
-
-```go
-// ✅ Application layer - pure domain DTO
-// internal/catalog/application/category_catalog_retriever/requests/get_categories_catalog_response.go
-package requests
-
-type CategoryDTO struct {
-	CategoryID string
-	Path       string
-}
-
-type GetCategoriesCatalogResponse struct {
-	Categories []CategoryDTO
-}
-
-// ✅ Interface layer - transport DTO with translation methods
-// internal/catalog/interfaces/http/handlers/category_dto.go
-package handlers
-
-type CategoryDTO struct {
-	CategoryID string `json:"categoryID"`
-	Path       string `json:"path"`
-}
-
-func (dto CategoryDTO) ToApplication() map[string]interface{} {
-	return map[string]interface{}{
-		"categoryID": dto.CategoryID,
-		"path":       dto.Path,
-	}
-}
-
-func CategoryDTOFromApplication(categoryID string, path string) CategoryDTO {
-	return CategoryDTO{
-		CategoryID: categoryID,
-		Path:       path,
-	}
-}
-
-// ✅ Handler uses translation method
-appResponse, err := h.catalogRetriever.Execute(ctx, request)
-categories := make([]CategoryDTO, len(appResponse.Categories))
-for i, cat := range appResponse.Categories {
-    categories[i] = CategoryDTOFromApplication(cat.CategoryID, cat.Path)
-}
-```
-
-**Rules**:
-- Application DTOs: No infrastructure tags, pure domain data
-- Interface DTOs: Transport tags (`json`, `dynamodbav`), translation methods
-- Translation: `FromApplication` and `ToApplication` methods in HTTP DTOs; `FromDomain` and `ToDomain` methods in persistence DTOs
-- Separation: Interface layer depends on application, not vice versa
+- Application request/response types contain no transport, storage, framework, or provider tags.
+- Interface DTOs may contain transport tags such as `json` and own typed `ToApplication`/`FromApplication` translation.
+- Infrastructure DTOs may contain storage/provider tags such as `dynamodbav` and own typed `ToDomain`/`FromDomain` translation.
+- Mapping returns named typed contracts, never `map[string]interface{}` as an application boundary.
+- Interface and Infrastructure depend inward on Application/Domain contracts; inner layers never import either outer DTO package.
 
 ## File Organization
 
-**Rules**: One type per file, single responsibility, snake_case.go, ≤150 lines
-**Structure**: `{entity}/{entity.go, value_objects/, errors.go}` and `{use_case}/{usecase.go, requests.go, ports/}`
+**Rules**: One type per file, single responsibility, snake_case.go, <150 physical lines
+**Structure**: `{entity}/{entity.go, value_objects/, errors.go}` and `{capability}/{agent_noun}.go, requests.go, ports/`
 
 ## Advanced Patterns with Guardrails
 

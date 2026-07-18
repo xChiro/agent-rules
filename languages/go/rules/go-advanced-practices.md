@@ -1,20 +1,15 @@
 ---
 rule_id: RULE-GO_ADVANCED_PRACTICES
-trigger: always_on
-description: Idiomatic and advanced Go practices with YAGNI, SOLID, and Clean Architecture guardrails
-globs: **/*.go
+trigger: model_decision
+description: "Idiomatic and advanced Go practices with YAGNI, SOLID, and Clean Architecture guardrails"
+globs: "**/*.go"
 ---
 
 # Go Advanced Practices
 
-## SDD Baseline
+## SDD Integration
 
-- Apply `common/rules/common-sdd-agentic-discipline.md` before this rule.
-- Create or evolve the owning User Story based spec before production code when behavior, contracts, architecture, or risk changes.
-- Apply mandatory Gate 1 before spec writes, Gate 2 before RED, and Gate 3 before Green, even for simple or low-risk changes.
-- Keep artifact, task, track, and test IDs traceable through `traceability.yaml` and `parallel-tracks.md`.
-- Write BDD Given/When/Then acceptance evidence first, then the unit-level ATDD-style focused failing test for the next rule or boundary before production code.
-- Refactor only with tests green and converge spec history, tasks, parallel tracks, traceability, verification notes, and code.
+Apply `RULE-COMMON_SDD_AGENTIC_DISCIPLINE` and the primary workflow before this focused rule. This file adds advanced Go guidance only; it does not redefine common gates, inside-out order, traceability, or convergence.
 
 
 Use Go's simple, explicit style first. Apply advanced patterns only when they solve a current, observable problem and improve the call sites, tests, or operational behavior.

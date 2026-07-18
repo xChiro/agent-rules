@@ -1,22 +1,19 @@
 ---
 rule_id: RULE-CSHARP_USE_CASES
-trigger: always_on
-description: C# application use case rules for business logic testing, Clean Architecture, DDD orchestration, CQRS ports, and actor-based responsibility.
-globs: **/*.cs
+trigger: model_decision
+description: "C# application use case rules for business logic testing, Clean Architecture, DDD orchestration, CQRS ports, and actor-based responsibility."
+globs: "**/*.cs"
 ---
 
 # C# Use Cases
 
-## SDD Baseline
+## SDD Integration
 
-- Apply `common/rules/common-sdd-agentic-discipline.md` before this rule.
-- Create or evolve the owning User Story based spec before production code when behavior, contracts, architecture, or risk changes.
-- Apply mandatory Gate 1 before spec writes, Gate 2 before RED, and Gate 3 before Green, even for simple or low-risk changes.
-- Keep artifact, task, track, and test IDs traceable through `traceability.yaml` and `parallel-tracks.md`.
-- Write BDD Given/When/Then acceptance evidence first, then the unit-level ATDD-style focused failing test for the next rule or boundary before production code.
-- Refactor only with tests green and converge spec history, tasks, parallel tracks, traceability, verification notes, and code.
+Apply `RULE-COMMON_SDD_AGENTIC_DISCIPLINE` and `RULE-COMMON_INSIDE_OUT_DEVELOPMENT`. This rule specializes Application use cases in C#; Gate 3-APPLICATION, traceability, and convergence remain owned by the common lifecycle.
 
 Use cases are application-level actions. They coordinate domain objects and ports to satisfy one actor's business outcome.
+
+Name the use case with an agent noun that expresses the capability it owns, such as `PartyCreator`, `BrandCreator`, `MemberEnroller`, or `OrderCanceller`. Do not name the use case itself `CreatePartyUseCase`, `PartyService`, `UseCase`, or `Handler`; those names hide the actor-facing responsibility. Technical adapters may retain `Controller`, `Handler`, or `Consumer` names at the outer boundary.
 
 ## Sequence
 
@@ -136,4 +133,4 @@ Keep application records framework-free. No JSON attributes, EF attributes, brok
 - All ports are used, focused, and defined in Application.
 - Domain rules are not hidden in adapters or controllers.
 - Tests cover success and meaningful failure.
-- Domain/application unit coverage remains 90%+ or improves toward it in touched projects.
+- Domain/application unit coverage remains at 90% or higher with no touched-scope regression.

@@ -1,7 +1,7 @@
 ---
 rule_id: RULE-COMMON_SECURITY_AND_IDENTITY
-trigger: security_auth_web
-description: Cross-language security, OAuth 2.0, OIDC, session-cookie, secret-handling, and security-review guardrails.
+trigger: model_decision
+description: "Cross-language security, OAuth 2.0, OIDC, session-cookie, secret-handling, and security-review guardrails."
 ---
 
 # Common Security And Identity Rules
@@ -82,7 +82,7 @@ If the application is a pure public client with no backend session boundary, the
 
 The final security review must record:
 
-- `security_review_id: SEC-*`, artifact ID, status, scope, changed trust boundaries, and declared identity role.
+- `security_review_id: SEC-*`, its human-readable title, artifact ID/title, status, scope, changed trust boundaries, and declared identity role.
 - Exact static-analysis, dependency, secret, IaC, container, and security-test commands that were actually run.
 - OAuth/OIDC provider, issuer/audience/scope assumptions, redirect policy, token validation, and key-rotation evidence when applicable.
 - Cookie attributes, CSRF, CORS, security headers, and browser storage evidence when a web session is involved.

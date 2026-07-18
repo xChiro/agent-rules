@@ -23,6 +23,21 @@ Examples:
 
 Do not search for language workflows directly under `common/workflows/`, and do not invent `csharp-rest-api.workflow.md` under the common catalog. If the canonical file cannot be opened, report the exact attempted paths and stop before implementation rather than continuing from IDs alone.
 
+## JetBrains MCP Access
+
+`configure-mcp.sh` merges the shared MCP entry consumed by Cascade in
+Rider, GoLand, and WebStorm. It keeps `~/.codeium/mcp_config.json` and
+`~/.codeium/windsurf/mcp_config.json` synchronized and pins the filesystem
+server to the JetBrains-compatible version. The local proxy handles the
+JetBrains `roots/list` request and returns the HBK projects directory plus this
+repository, while preserving every unrelated top-level option and MCP server.
+Existing files are backed up with a UTC timestamp before the synchronized
+configuration is replaced atomically. Invalid existing JSON blocks the update
+instead of being discarded. Fully restart the IDEs
+after changing the configuration so their language-server processes reload it.
+
+To publish only rules, workflows, skills, templates, and IDE compatibility links without reading or rewriting MCP JSON configuration, run `SKIP_MCP_CONFIG=1 bash tools/windsurf/install-global.sh`.
+
 ## Project-Local Cleanup
 
 Use `sync-project.sh` to remove files previously copied into a project by this repository.

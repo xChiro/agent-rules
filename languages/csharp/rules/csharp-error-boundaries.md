@@ -1,20 +1,15 @@
 ---
 rule_id: RULE-CSHARP_ERROR_BOUNDARIES
-trigger: always_on
-description: C# exception, error propagation, HTTP mapping, worker boundary, and structured logging rules.
-globs: **/*.cs
+trigger: model_decision
+description: "C# exception, error propagation, HTTP mapping, worker boundary, and structured logging rules."
+globs: "**/*.cs"
 ---
 
 # C# Error Boundaries
 
-## SDD Baseline
+## SDD Integration
 
-- Apply `common/rules/common-sdd-agentic-discipline.md` before this rule.
-- Create or evolve the owning User Story based spec before production code when behavior, contracts, architecture, or risk changes.
-- Apply mandatory Gate 1 before spec writes, Gate 2 before RED, and Gate 3 before Green, even for simple or low-risk changes.
-- Keep artifact, task, track, and test IDs traceable through `traceability.yaml` and `parallel-tracks.md`.
-- Write BDD Given/When/Then acceptance evidence first, then the unit-level ATDD-style focused failing test for the next rule or boundary before production code.
-- Refactor only with tests green and converge spec history, tasks, parallel tracks, traceability, verification notes, and code.
+Apply `RULE-COMMON_SDD_AGENTIC_DISCIPLINE` before this focused error rule. Error behavior follows the owning layer's existing RED/GREEN/gate sequence; this file does not restate or alter that lifecycle.
 
 Use exceptions as the normal .NET failure mechanism. Log once at the boundary that decides the operational outcome.
 

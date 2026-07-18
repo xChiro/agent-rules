@@ -1,7 +1,7 @@
 ---
 rule_id: RULE-COMMON_CONTEXT_CONTINUITY
 trigger: always_on
-description: Small-task execution, context-budget checkpoints, and resumable handoffs between AI agents.
+description: "Small-task execution, context-budget checkpoints, and resumable handoffs between AI agents."
 ---
 
 # AI Task Size And Context Continuity
@@ -71,4 +71,4 @@ The next agent must:
 4. Continue only the stated next task unless a new decision is recorded through the appropriate gate.
 5. Update the same spec folder and append a new checkpoint if the 60% threshold is reached again.
 
-An AI snapshot is created only at feature completion. Context checkpoints are interim operational handoffs and never replace the approved spec, traceability, verification, or append-only history.
+AI context summaries are optional. Context checkpoints are interim operational handoffs and never replace the approved spec, traceability, verification, or append-only history.

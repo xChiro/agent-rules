@@ -1,7 +1,7 @@
 ---
 workflow_id: WORKFLOW-COMMON_SDD_UPDATE_DOCUMENTATION_WORKFLOW
 trigger: manual
-description: Create or update project, SDD, architecture, testing, AI-context, and operational documentation after a verified change.
+description: "Converge project, SDD, architecture, testing, AI-context, and operational documentation before final validation."
 ---
 
 # Common SDD Update Documentation Workflow
@@ -26,7 +26,7 @@ Record the actual paths and commands. Do not document files, commands, endpoints
 
 Update only the surfaces affected by the task:
 
-- SDD artifacts: `spec.md`, `change-summary.md`, `plan.md`, `code-quality-review.md`, `security-review.md`, `tasks.md`, `workflow-routing.md`, `traceability.yaml`, `verification.md`, and append-only `history/`. Clean-up evidence must include the <150-line source-file result when code is in scope.
+- SDD artifacts: `spec.md`, `change-summary.md`, `plan.md`, `code-quality-review.md`, `security-review.md`, `tasks.md`, `workflow-routing.md`, `traceability.yaml`, `verification.md`, and append-only `history/`. Clean-up evidence must include the <150-line result when maintained source, test, configuration, CI, or script files are in scope.
 - Architecture: domain model, Clean Architecture boundaries, CQRS commands/queries, dependency direction, repository map, and ADRs.
 - Developer guide: setup, local dependencies, commands, configuration, use cases, REST/Lambda contracts, persistence, messaging, and file organization.
 - AI context: stable project purpose, current architecture, key files, constraints, and known non-goals.
@@ -52,7 +52,7 @@ Update in this order so downstream documents describe the approved source:
 - Every referenced path exists or is explicitly marked as a future artifact.
 - Every command is copied from a project script, build file, or verified workflow.
 - Workflow IDs, artifact IDs, task IDs, test IDs, and links resolve.
-- Documentation describes `unit-tests` and `http-integration-tests` without inventing a third backend runtime suite.
+- Documentation describes `unit-tests` and `integration-tests`, including the `http` and `infrastructure` scopes without inventing a third backend runtime suite.
 - HTTP integration documentation names real local resources, readiness, isolation, cleanup, and diagnostics.
 - Architecture documentation preserves SOLID, Clean Architecture, CQRS, DDD, and dependency direction.
 - No secrets, tokens, private endpoints, or production credentials are documented.

@@ -1,14 +1,15 @@
 ---
 workflow_id: WORKFLOW-COMMON_SDD_COVERAGE_GATE_WORKFLOW
 trigger: manual
-description: Mandatory final project-wide test coverage gate for completed SDD features.
+description: "Mandatory project-wide test coverage gate before an SDD spec enters verified status."
 ---
 
 # Common SDD Coverage Gate Workflow
 
-Run this workflow after Green, Refactor, and the relevant unit/HTTP/component tests pass, and before Gate 4 completion approval. Every completed SDD feature runs this workflow. A spec with no production code records an explicit `coverage_scope: none` and proves that no production files changed; it does not silently skip the gate.
+Run this workflow after Green, Refactor, and the relevant unit or integration scope passes, and before final validation review. Every spec entering verified status runs this workflow. A spec with no production code records an explicit `coverage_scope: none` and proves that no production files changed; it does not silently skip the gate. Frontend component tests remain in their applicable project scope.
 
 Coverage evidence must use tests following `RULE-COMMON_TEST_ASSERTION_STRUCTURE`; do not add assertions to setup/helpers merely to increase coverage.
+Coverage evidence also follows `RULE-COMMON_TEST_LAYER_ISOLATION`: merge reports only after every affected layer passes its standalone clean-state command.
 
 ## Mandatory Threshold
 
@@ -47,10 +48,10 @@ Record the exact command, tool version, coverage scope, exclusions, and output p
 
 If the required coverage result is below 90%:
 
-1. Do not mark the spec complete.
+1. Do not set the spec to `verified`.
 2. Identify uncovered meaningful behavior and missing partitions in the project and affected scope.
 3. Add focused ATDD-style/unit/component tests before changing production code.
-4. If production code must change, return to the SDD RED and Gate 3 flow.
+4. If production code must change, return to the owning inside-out RED and scoped Gate 3 flow; reopen Domain/Application before an affected outer layer.
 5. Re-run coverage until the threshold is met.
 
 Never add shallow tests, constant assertions, getter-only tests, or exclusions solely to increase the percentage.
@@ -70,9 +71,9 @@ Update `change-summary.md` with the coverage change/evidence row and final quali
 
 ## Done
 
-- Coverage was executed for every completed SDD feature.
+- Coverage was executed for every spec entering `verified` status.
 - When production code is in scope, the complete project production scope reached at least 90% coverage.
 - The affected scope did not regress.
 - Meaningful tests, not test-only padding, produced the result.
 - `verification.md` and `change-summary.md` contain reproducible evidence.
-- Gate 4 and `common-sdd-complete-spec.workflow.md` may proceed only after this gate passes.
+- `common-sdd-verify-spec.workflow.md` may proceed only after this gate passes.

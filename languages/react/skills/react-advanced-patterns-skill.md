@@ -1,8 +1,9 @@
 ---
-skill_id: SKILL-REACT_ADVANCED_PATTERNS
+skill_id: SKILL-REACT_ADVANCED_PATTERNS_SKILL
 name: react-advanced-patterns
-description: Senior React and TypeScript pattern selection for composable, testable, accessible feature code.
-globs: **/*.tsx,**/*.ts
+trigger: model_decision
+description: "Senior React and TypeScript pattern selection for composable, testable, accessible feature code."
+globs: "**/*.tsx,**/*.ts"
 ---
 
 # React Advanced Patterns
@@ -47,7 +48,7 @@ Before choosing steps 5–9, record in the feature plan:
 - Use effects only to synchronize with external systems. Derive render values directly or use memoization for expensive calculations.
 - Abort or ignore stale async work and expose retry/refresh behavior when relevant.
 - Test hooks through their observable state transitions and commands, not private effects or implementation calls.
-- Apply `common-test-assertion-structure.md`: keep all `expect`/matcher calls in `Then/Assert`; setup and action helpers return state instead of asserting.
+- Apply `common-test-assertion-structure.md` and `common-test-data-and-double-patterns.md`: use exact `// Arrange`, `// Act`, and `// Assert` comments, one physical-line Act interaction, fresh typed Object Mothers/builders, and helpers that return state instead of asserting.
 
 ## Compound Components
 

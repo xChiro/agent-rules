@@ -1,14 +1,14 @@
 ---
 workflow_id: WORKFLOW-COMMON_SDD_REFACTOR_LIFECYCLE_WORKFLOW
 trigger: manual
-description: Behavior-preserving SDD lifecycle for production code, unit tests, and HTTP integration tests.
+description: "Behavior-preserving SDD lifecycle for production code, unit tests, and integration tests."
 ---
 
 # Common SDD Refactor Lifecycle Workflow
 
 Use this workflow only when observable behavior must remain unchanged. If behavior, a public contract, or a User Story changes, use `common-sdd-evolve-spec.workflow.md` and `common-sdd-change-lifecycle.workflow.md` instead.
 
-When invoked by `common-sdd-clean-up-gate.workflow.md`, return to that gate after the refactor and rerun the complete clean-up analysis before security, coverage, or Gate 4.
+When invoked by `common-sdd-clean-up-gate.workflow.md`, return to that gate after the refactor and rerun the clean-up analysis before security, coverage, or final validation.
 
 ## Phase 1: Anchor The Refactor
 
@@ -29,7 +29,7 @@ When invoked by `common-sdd-clean-up-gate.workflow.md`, return to that gate afte
 ## Phase 2: Protect Existing Behavior
 
 - Start only after Gate 2 approval.
-- Identify existing acceptance, unit, and HTTP integration evidence.
+- Identify existing acceptance, unit, and integration evidence.
 - Add the smallest missing characterization or unit test before production refactoring.
 - Confirm the protection test passes against current behavior.
 - Do not weaken assertions, rewrite scenarios, or change expected HTTP contracts to simplify the refactor.
@@ -38,17 +38,20 @@ When invoked by `common-sdd-clean-up-gate.workflow.md`, return to that gate afte
 Backend refactors use only two test suites:
 
 1. Unit tests for domain/application behavior.
-2. HTTP integration tests for public wiring and local infrastructure.
+2. Boundary integration tests for public wiring and local infrastructure; HTTP is one possible entry mechanism.
 
 ## Phase 3: Refactor In Small Steps
 
+- Before each structural edit, identify the affected actor, named use case, owning module, dependency direction, and the SOLID checks that the edit must preserve or improve. All five principles are mandatory: SRP, OCP, LSP, ISP, and DIP.
 - Make one structural change at a time.
 - When branching is the smell, record the chosen Fowler transformation: `Extract Function`, `Decompose Conditional`, `Replace Nested Conditional with Guard Clauses`, `Consolidate Conditional Expression`, `Replace Conditional with Polymorphism`, `Replace Type Code with State/Strategy`, `Introduce Special Case`, or `Replace Parameter with Explicit Methods`.
 - Prefer a guard clause for preconditions and a clear closed classification for stable finite cases; refactor repeated/nested/policy-heavy branches instead of banning every `if` or `switch`.
-- Preserve Clean Architecture dependency direction and CQRS boundaries.
+- Preserve and, when required, restore both Clean Architecture views: ownership/development progresses Domain policy → Application use case/ports → Infrastructure/Interface → Composition, while compile-time dependencies point inward as Composition/Interface/Infrastructure → Application → Domain.
+- Keep every actor-visible backend behavior behind its Application use case. A refactor must not move business policy into handlers, controllers, adapters, repositories, DTOs, or composition.
 - Keep transport, cloud SDK, persistence, and framework types outside domain/application.
+- Keep Domain/Application names abstract and provider-neutral during renames or moves. Do not introduce or preserve `DynamoDB`, `Cosmos`, `Kafka`, or equivalent provider names in inner-layer files, packages, ports, types, DTOs, events, or errors; name the business capability and leave concrete provider names in outer adapters/configuration.
 - Run the smallest relevant unit test after each inner-layer change.
-- Run the focused HTTP integration test after routing, Lambda/API Gateway mapping, DI, persistence, schema, or infrastructure wiring changes.
+- Run the focused integration/http or integration/infrastructure test after delivery mapping, message/worker wiring, DI, persistence, schema, or infrastructure changes.
 - Update `tasks.md`, `verification.md`, and `change-summary.md` after each structural microtask.
 - Stop and evolve the spec if the refactor reveals a required behavior change.
 - Do not introduce a strategy/interface/registry/HOC only to remove one simple branch. Record the simpler option considered and why the selected design protects a real variation or boundary.
@@ -56,7 +59,7 @@ Backend refactors use only two test suites:
 ## Phase 4: Verify
 
 - Run the affected unit suite.
-- Run the affected HTTP integration suite when an outer boundary or local resource was touched.
+- Run the affected integration scope when an outer boundary or local resource was touched.
 - Run build, format, lint, architecture, coverage, complexity, or mutation gates when the repository defines them.
 - Record commands, results, exceptions, and residual risk in `verification.md`.
 - Record the context checkpoint path and exact resume action when a handoff occurred.
@@ -74,7 +77,9 @@ Backend refactors use only two test suites:
 - Protection tests existed before production refactoring.
 - Gate 3 approved the actual test evidence before production refactoring.
 - Unit tests pass.
-- Relevant HTTP integration tests pass.
+- Relevant integration tests pass.
 - No architecture boundary was weakened.
+- Domain/Application dependencies and names remain abstract and provider-neutral; concrete technology names are confined to outer adapters/configuration.
+- Clean Architecture, named use-case ownership, and all five SOLID checks were reviewed and pass: actor-based SRP, OCP, LSP, ISP, and DIP.
 - Spec artifacts and implementation converge.
 - The documentation gate passed through `WORKFLOW-COMMON_SDD_UPDATE_DOCUMENTATION_WORKFLOW`, including an explicit inspected-surface/no-change record when no project documentation was affected.

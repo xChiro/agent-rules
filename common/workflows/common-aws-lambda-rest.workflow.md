@@ -1,7 +1,7 @@
 ---
 workflow_id: WORKFLOW-COMMON_AWS_LAMBDA_REST_WORKFLOW
 trigger: model_decision
-description: Design an API Gateway to AWS Lambda REST boundary with clean architecture, test-first evidence, and cost-aware defaults.
+description: "Design an API Gateway to AWS Lambda REST boundary with clean architecture, test-first evidence, and cost-aware defaults."
 ---
 
 # Common AWS Lambda REST Workflow
@@ -13,9 +13,10 @@ Use after `WORKFLOW-COMMON_REST_API_DESIGN_WORKFLOW` for a REST endpoint impleme
 1. Invoke `WORKFLOW-COMMON_BDD_SPECIFICATION_WORKFLOW` and `WORKFLOW-COMMON_REST_API_DESIGN_WORKFLOW`.
 2. Record why Lambda fits the workload: request duration, traffic shape, concurrency, latency, state, and operational constraints. Do not assume serverless is automatically cheapest.
 3. Define the API Gateway route, authorizer, payload format, timeout, memory, concurrency, environment, IAM, logging, and local emulation settings in checked-in IaC.
-4. Create acceptance/public HTTP RED, then focused application/domain `TEST-*` RED; obtain Gate 3.
-5. Implement the smallest function adapter and application change; make the local HTTP evidence GREEN.
-6. Refactor with tests green, validate IaC/package/build, and run mandatory security, quality, and coverage gates; mutation and critical-E2E gates remain selected by risk.
+4. Complete affected domain/application `TEST-*` cycles and pass `LAYER-GATE-APPLICATION`.
+5. Create public HTTP RED and obtain Gate 3-BOUNDARY.
+6. Implement infrastructure, the thin Lambda delivery adapter, and composition/IaC in that order; make local HTTP evidence GREEN.
+7. Refactor with tests green, validate IaC/package/build, and run mandatory security, quality, and coverage gates; mutation and critical-E2E gates remain selected by risk.
 
 ## Boundary And Contract Rules
 

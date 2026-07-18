@@ -2,19 +2,15 @@
 skill_id: SKILL-CSHARP_REFACTORING_SKILL
 name: csharp-refactoring
 trigger: model_decision
-description: C# refactoring skill for safe behavior-preserving changes using tests, Clean Code, SOLID, and Clean Architecture boundaries.
-globs: **/*.cs,**/*Test.cs,**/*Tests.cs
+description: "C# refactoring skill for safe behavior-preserving changes using tests, Clean Code, SOLID, and Clean Architecture boundaries."
+globs: "**/*.cs,**/*Test.cs,**/*Tests.cs"
 ---
 
 # C# Refactoring Skill
 
-## SDD Baseline
+## SDD Integration
 
-- Follow `common-sdd-agentic-discipline.md` for every behavior-changing task.
-- Keep specs versioned under `specs/features/<number>-<slug>/` when the project supports SDD artifacts.
-- Apply mandatory Gate 1 before spec writes, Gate 2 before RED, and Gate 3 before Green, even for simple or low-risk changes.
-- Start with BDD Given/When/Then acceptance evidence, then unit-level ATDD-style focused failing test code, then production code.
-- Refactor only with tests green and converge specs, tasks, parallel tracks, traceability, verification notes, and code.
+Load this skill with `WORKFLOW-COMMON_SDD_REFACTOR_LIFECYCLE_WORKFLOW` for C# refactors. It adds refactoring technique; the common workflow owns approvals, behavior protection, traceability, and convergence.
 
 Refactor only with a safety net. If behavior is not covered, add a characterization or focused behavior test before restructuring.
 

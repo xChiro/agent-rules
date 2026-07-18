@@ -1,29 +1,30 @@
 ---
 rule_id: RULE-GO_CLEAN_CODE
-trigger: always_on
-description: Go clean code rules for Clean Architecture projects
-globs: **/*.go
+trigger: model_decision
+description: "Go clean code rules for Clean Architecture projects"
+globs: "**/*.go"
 ---
 
 # Go Clean Code
 
-## SDD Baseline
+## SDD Integration
 
-- Apply `common/rules/common-sdd-agentic-discipline.md` before this rule.
-- Create or evolve the owning User Story based spec before production code when behavior, contracts, architecture, or risk changes.
-- Apply mandatory Gate 1 before spec writes, Gate 2 before RED, and Gate 3 before Green, even for simple or low-risk changes.
-- Keep artifact, task, track, and test IDs traceable through `traceability.yaml` and `parallel-tracks.md`.
-- Write BDD Given/When/Then acceptance evidence first, then the unit-level ATDD-style focused failing test for the next rule or boundary before production code.
-- Refactor only with tests green and converge spec history, tasks, parallel tracks, traceability, verification notes, and code.
+Apply `RULE-COMMON_SDD_AGENTIC_DISCIPLINE`, `go-clean-architecture.md`, and `go-solid-design.md`. This file adds Go quality constraints only; the common lifecycle remains the source of gates, traceability, inside-out order, and convergence.
 
 
 Clean coding rules for writing idiomatic, maintainable Go code following Clean Architecture, YAGNI, and Screaming Architecture principles.
+
+## Mandatory Architecture And Use Cases
+
+- Use Clean Architecture ownership from Domain policy through Application to outer adapters and Composition; compile-time dependencies point inward as Composition/Interface/Infrastructure → Application → Domain.
+- Every actor-visible backend behavior must have one owning Application use case. The use case orchestrates Domain behavior through ports and never imports transport, persistence, cloud SDK, or framework details.
+- Before completing a clean-code change, review all five SOLID principles: actor-based SRP, OCP, LSP, ISP, and DIP. Record the actor and change reasons for SRP and the relevant contract/ownership evidence for the other four.
 
 ## Core Principles
 
 - **Expressive code**: Names and structures clearly describe purpose
 - **Small units**: Functions do one thing, are short, avoid deep nesting
-- **Single Responsibility**: Each method must have exactly ONE functionality/responsibility
+- **Single Responsibility**: A module should be responsible to one, and only one, actor. Methods must be cohesive and must not mix unrelated actors or layer concerns; do not force artificial one-operation methods.
 - **Encapsulation**: Hide data and behavior, expose minimum API needed
 - **Consistency**: Apply same conventions across the project
 - **YAGNI**: Only create what you need now
@@ -36,7 +37,7 @@ Clean coding rules for writing idiomatic, maintainable Go code following Clean A
 - `go-advanced-practices.md` for idiomatic Go, concurrency, context, errors, generics, performance, and observability.
 
 **Summary**:
-- **SRP**: One module, one actor (one reason to change) - **STRICT: Each method has exactly ONE responsibility**
+- **SRP**: One module, one actor (one reason to change), following Robert C. Martin's *Clean Architecture* definition. Method cohesion supports the module's responsibility but does not replace actor-based SRP.
 - **OCP**: Open for extension, closed for modification
 - **LSP**: Subtypes substitutable for base types
 - **ISP**: Small, focused interfaces (CQRS pattern)
@@ -45,11 +46,16 @@ Clean coding rules for writing idiomatic, maintainable Go code following Clean A
 ## Mandatory Requirements
 
 ### File Size Guardrails
-- **Target file size**: ≤150 lines per file when practical
+- **Mandatory file size**: <150 physical lines per in-scope file
 - **Target function size**: ≤20 lines per function when practical
 - **One type per file**: Required for domain entities, value objects, CQRS ports, DTOs, and exported architectural types
 - **Exception**: Small private helper types may stay with their only consumer when splitting would reduce clarity
 - **Senior judgment**: Exceed a size target only when the code remains cohesive, readable, and tested; split when size hides mixed responsibilities
+
+### Go CQRS File And Port Granularity (CRITICAL)
+- Every named `struct` and `interface` declaration used by CQRS has its own `snake_case.go` file; do not place a second named struct or interface in that file. Anonymous structs are not file-level type declarations.
+- Every CQRS command, query, and validation interface exposes exactly one method for exactly one behavior. If a consumer needs two behaviors, define two consumer-owned interfaces and compose them in the use case; never widen a port into a god repository.
+- The file name must match the primary struct or interface, and the interface must remain next to the consumer that owns the required behavior.
 
 ### Method Responsibility Rule (CRITICAL)
 - **Single Cohesive Responsibility**: Each method must have one reason to change and one clear purpose
@@ -64,7 +70,10 @@ Clean coding rules for writing idiomatic, maintainable Go code following Clean A
   - ✅ `saveEntity()` - Does one thing
 
 ### Testing Rules
-- **Assertion library**: MUST use `github.com/stretchr/testify/assert` library instead of `if` statements for all assertions
+- **Approved test toolchain**: Use Go's `testing` package for the runner, `testify/assert` or `testify/require` for assertions, and hand-written doubles. Production APIs under test may be imported; do not add generated mocks or mocking frameworks.
+- **Error assertions**: Do not use `require.NoError(t, err)`. Use an explicit `if err != nil` check with a context-rich `t.Fatalf` when the test cannot continue, or `assert.NoError` only when continuation is safe.
+- **Assertions**: Keep explicit expected/actual checks in `// Assert` (Then); an `if` that immediately calls `t.Error`, `t.Errorf`, `t.Fatal`, or `t.Fatalf` is the idiomatic assertion form.
+- **Test doubles**: Domain tests use real values. Application tests use small hand-written doubles only for outgoing ports.
 - **No unused code**: Every function, variable, import, and type must be used
 - **Remove unused imports**: Use compiler warnings and static analysis tools
 - **Write code only when actually needed**: Avoid "just in case" code or dead code paths
@@ -288,7 +297,7 @@ func (p *Processor) ProcessSingle(ctx context.Context, msg Message) error {
 - **Frame acceptance behavior first**: acceptance behavior approach from actor outcome to executable tests
 - **Write failing test first**: business logic testing approach
 - **Test behavior**: Not implementation
-- **Use descriptive names**: Given-When-Then or project-standard behavior names
+- **Use descriptive names**: Test names must express Given-When-Then behavior; existing non-conforming names are changed when the test is touched or the migration workflow is invoked.
 - **Keep tests simple**: One assertion per concept
 - **Protect coverage**: Maintain 90%+ project-wide production coverage and at least 90% domain/application unit coverage
 

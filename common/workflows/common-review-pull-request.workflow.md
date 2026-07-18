@@ -1,7 +1,7 @@
 ---
 workflow_id: WORKFLOW-COMMON_REVIEW_PULL_REQUEST_WORKFLOW
 trigger: manual
-description: Review a pull request for correctness, business behavior, architecture boundaries, test quality, operations, and security.
+description: "Review a pull request for correctness, business behavior, architecture boundaries, test quality, operations, and security."
 ---
 
 # Common Review Pull Request Workflow
@@ -54,10 +54,10 @@ Checklist:
 - Backend behavior changes should reflect ATDD/TDD intent: actor-visible behavior first, then tests that prove the rule.
 - Business logic tests assert observable rules and outcomes.
 - Unit tests use real domain objects/value objects and small project-local fakes, stubs, or spies for outgoing ports.
-- Integration tests cover real adapters, persistence mappings, messaging, transactions, dependency injection, routing, auth/session, and error mapping when those boundaries changed.
-- Backend test suites are limited to unit tests and HTTP integration tests.
-- HTTP integration tests cover request parsing, routing/API Gateway mapping, authorization/session context, validation, response mapping, DI, persistence, and local-resource wiring when the public boundary changed.
-- Go HTTP integration tests use `//go:build integration` when the repository follows the shared Go test rules.
+- Integration tests cover real use-case execution through adapters, persistence mappings, messaging, transactions, dependency injection, routing, auth/session, and error mapping when those boundaries changed.
+- Backend test suites are limited to `unit` and `integration`; HTTP/public-entry and Infrastructure are scopes of `integration`, not extra suites.
+- Boundary integration tests cover request/message parsing, routing or worker mapping, authorization/session context, validation, response mapping, DI, persistence, and local-resource wiring when the public boundary changed.
+- Go integration tests use `//go:build integration` when the repository follows the shared Go test rules.
 - Flag new direct repository, adapter, handler, infrastructure, API, end-to-end, or Lambda integration suites as taxonomy violations.
 - Missing tests are reported only when a realistic regression would not be caught.
 

@@ -1,22 +1,23 @@
 ---
 rule_id: RULE-CSHARP_CLEAN_CODE
-trigger: always_on
-description: C# clean code, refactoring, naming, file size, and readability rules for backend projects.
-globs: **/*.cs
+trigger: model_decision
+description: "C# clean code, refactoring, naming, file size, and readability rules for backend projects."
+globs: "**/*.cs"
 ---
 
 # C# Clean Code
 
-## SDD Baseline
+## SDD Integration
 
-- Apply `common/rules/common-sdd-agentic-discipline.md` before this rule.
-- Create or evolve the owning User Story based spec before production code when behavior, contracts, architecture, or risk changes.
-- Apply mandatory Gate 1 before spec writes, Gate 2 before RED, and Gate 3 before Green, even for simple or low-risk changes.
-- Keep artifact, task, track, and test IDs traceable through `traceability.yaml` and `parallel-tracks.md`.
-- Write BDD Given/When/Then acceptance evidence first, then the unit-level ATDD-style focused failing test for the next rule or boundary before production code.
-- Refactor only with tests green and converge spec history, tasks, parallel tracks, traceability, verification notes, and code.
+Apply `RULE-COMMON_SDD_AGENTIC_DISCIPLINE`, `csharp-clean-architecture.md`, and `csharp-solid-design.md`. This file adds C# quality constraints only; the common lifecycle remains the source of gates, traceability, inside-out order, and convergence.
 
 Write code that a senior maintainer can scan, test, and change safely.
+
+## Mandatory Architecture And Use Cases
+
+- Use Clean Architecture ownership from Domain policy through Application to outer adapters and Composition; compile-time dependencies point inward as Composition/Interface/Infrastructure → Application → Domain.
+- Every actor-visible backend behavior must have one owning Application use case. The use case orchestrates Domain behavior through ports and never imports transport, persistence, cloud SDK, or framework details.
+- Before completing a clean-code change, review all five SOLID principles: actor-based SRP, OCP, LSP, ISP, and DIP. Record the actor and change reasons for SRP and the relevant contract/ownership evidence for the other four.
 
 ## Core Style
 
@@ -29,7 +30,7 @@ Write code that a senior maintainer can scan, test, and change safely.
 
 ## Size Limits
 
-- Target files at 150 lines or less.
+- Keep in-scope files below 150 physical lines, matching the common clean-up gate.
 - Target methods at 20 lines or less.
 - Split by responsibility, actor, or business concept.
 - Do not split code only to satisfy a line count if the extracted names are vague.

@@ -1,14 +1,16 @@
 ---
 rule_id: RULE-COMMON_HTTP_INTEGRATION_HARNESS
 trigger: model_decision
-description: Shared harness contract for HTTP integration tests that exercise real application wiring and local infrastructure.
+description: "Shared harness contract for HTTP integration tests that exercise real application wiring and local infrastructure."
 ---
 
 # Common HTTP Integration Harness
 
-Apply this rule to backend `http-integration` tasks. It is the common replacement for separate infrastructure, API, adapter, handler, Lambda, and E2E runtime-test workflows.
+Apply this HTTP specialization to backend `integration/http` tasks whose public entry is HTTP. It is one scope of the canonical integration suite; infrastructure-focused tests belong in `integration/infrastructure`.
 
-Apply `common-test-assertion-structure.md`: setup and request execution do not assert; all response and side-effect assertions belong in the `Then/Assert` section.
+Apply `common-test-assertion-structure.md`: use exact `// Arrange`, `// Act`, and `// Assert` sections; the public request is the single one-line Act statement, and all response/side-effect assertions belong in `// Assert`.
+
+Apply `common-test-layer-isolation.md`: the HTTP suite must start, seed, execute, and clean up by itself from a clean process. It must pass when no Domain/Application test command has run.
 
 ## Boundary
 
@@ -29,7 +31,7 @@ For every HTTP integration slice:
 5. Seed only the minimum data required by the scenario.
 6. Start the real HTTP boundary with test-safe configuration.
 7. Send the request using the public contract.
-8. In `Then/Assert`, assert the response and meaningful persistence/resource side effects.
+8. In `// Assert` (Then), assert the response and meaningful persistence/resource side effects.
 9. Clean up created state and capture safe diagnostics on failure.
 
 The setup and cleanup path must be deterministic and safe to run repeatedly.
@@ -39,12 +41,14 @@ The setup and cleanup path must be deterministic and safe to run repeatedly.
 Use the repository's established local resource strategy. Typical resources are PostgreSQL, MySQL, DynamoDB Local, LocalStack, Redis, RabbitMQ, SQS-compatible queues, object storage, and temporary filesystems.
 
 - Use Docker Compose, Testcontainers, SAM local, or the existing repository harness.
-- Do not replace infrastructure wiring with mocks in this suite.
+- Do not replace touched local infrastructure wiring with mocks in this suite. Third-party APIs may be replaced by controlled WireMock-style simulators; the application client, serialization, timeout, retry, and error mapping remain real.
 - Use dummy credentials and localhost endpoints only.
 - Do not require shared developer or production resources.
 - Keep readiness failures bounded and report the dependency, endpoint, and last diagnostic.
 
 ## Isolation
+
+Cross-layer isolation is mandatory: never consume a database row, token, server, queue message, environment mutation, generated identifier, fixture, or cache produced by a unit-test process. The boundary harness owns a fresh namespace and its complete lifecycle.
 
 Choose the least expensive safe strategy for each resource:
 
@@ -62,11 +66,11 @@ Parallel execution is allowed only when isolation is proven. A test that shares 
 
 Each scenario should prove the public behavior, not only a status code. Cover the relevant route and method, authentication or tenant context, request parsing, validation, response headers and contract, error mapping, persistence side effects, idempotency/conflicts, and API Gateway/Lambda translation.
 
-Use small assertion helpers for repeated resource evidence only from `Then/Assert`. Helpers must fail with the resource name, identifier, expected value, and observed value without leaking secrets or full payloads.
+Use small assertion helpers for repeated resource evidence only from `// Assert`. Helpers must fail with the resource name, identifier, expected value, and observed value without leaking secrets or full payloads.
 
 ## Migration From E2E
 
-The old E2E suite is not a third backend test suite. Its public HTTP scenarios, real-resource setup, session helpers, fixtures, cleanup, and CI execution belong in `http-integration`. A post-deploy smoke check may remain an operational check, but it is not a replacement for local HTTP integration evidence.
+The old E2E suite is not a third backend test suite. Its public HTTP scenarios, real-resource setup, session helpers, fixtures, cleanup, and CI execution belong in `integration/http`; adapter/resource checks belong in `integration/infrastructure`. A post-deploy smoke check may remain an operational check, but it is not a replacement for local integration evidence.
 
 ## Done
 
@@ -76,4 +80,5 @@ The old E2E suite is not a third backend test suite. Its public HTTP scenarios, 
 - Isolation and cleanup are deterministic.
 - Response and relevant resource side effects are asserted.
 - The test can run in CI without production credentials or shared state.
+- The documented boundary command passes alone from clean state and does not depend on the unit-test job.
 - `traceability.yaml` and `verification.md` record the test ID, command, resources, and evidence.

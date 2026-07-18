@@ -1,30 +1,33 @@
 ---
 rule_id: RULE-GO_BUSINESS_LOGIC_UNIT_TESTS
 trigger: model_decision
-description: Go business logic unit test rules for domain and application behavior
-globs: **/*_test.go
+description: "Go business logic unit test rules for domain and application behavior"
+globs: "**/*_test.go"
 ---
 
 # Go Business Logic Unit Tests
 
-## SDD Baseline
+## SDD Integration
 
-- Apply `common/rules/common-sdd-agentic-discipline.md` before this rule.
-- Create or evolve the owning User Story based spec before production code when behavior, contracts, architecture, or risk changes.
-- Apply mandatory Gate 1 before spec writes, Gate 2 before RED, and Gate 3 before Green, even for simple or low-risk changes.
-- Keep artifact, task, track, and test IDs traceable through `traceability.yaml` and `parallel-tracks.md`.
-- Write BDD Given/When/Then acceptance evidence first, then the unit-level ATDD-style focused failing test for the next rule or boundary before production code.
-- Refactor only with tests green and converge spec history, tasks, parallel tracks, traceability, verification notes, and code.
-- Apply `common-test-assertion-structure.md`: all `assert`/`require` calls belong only in `// Then / Assert`.
+Apply `RULE-COMMON_SDD_AGENTIC_DISCIPLINE`, `RULE-COMMON_TEST_ASSERTION_STRUCTURE`, `RULE-COMMON_TEST_DATA_AND_DOUBLE_PATTERNS`, and `RULE-COMMON_TEST_LAYER_ISOLATION`. This rule adds Go unit-test mechanics only; the common lifecycle owns BDD, Domain/Application gates, traceability, and convergence.
 
 
 **Principles**: ATDD acceptance behavior-first, TDD Red-Green-Refactor, behavior over implementation, isolation, deterministic, YAGNI testing
 
 See `go-test-suites.md` for test suite tags. Unit tests should run by default without requiring a Go build tag.
 
+## Layer Independence (MANDATORY)
+
+- Document and run separate focused commands for affected Domain and Application packages; each command must pass alone with `-count=1`.
+- Application tests may use Domain production types, but they must not import Domain test packages, execute Domain tests as setup, or consume their fixtures/output/state.
+- Domain tests cannot import Application or any outer-layer production/test package.
+- Instantiate builders, manual doubles, clocks, RNGs, IDs, and call captures per test. Shared helpers must be stateless and live in a neutral test-support package.
+- A full `go test ./...` result is required regression evidence but never replaces the standalone layer results.
+- Use `-shuffle=on`, repeated counts, and `t.Parallel()` only as risk-selected evidence; the layers remain independent even when run sequentially.
+
 ## acceptance behavior Coverage Objective
 
-Use ATDD plus TDD to drive implementation from acceptance behavior into focused domain/application unit tests. Start from the behavior the actor needs, express it as executable tests, then implement the smallest domain/application code that satisfies those tests.
+Use BDD plus TDD to drive implementation from actor-visible behavior into focused domain/application unit tests. Specify acceptance first, implement domain and application from unit RED/GREEN cycles, then prove the complete behavior at the executable boundary.
 
 Coverage target:
 
@@ -37,9 +40,19 @@ Coverage target:
 ## Test Structure
 
 **Naming**: `Test_given_[scenario]_when_[action]_then_[expected]` (snake_case)
-**Template**: Arrange → Act → Then / Assert
+**Template**: `// Arrange` → `// Act` → `// Assert` (Given → When → Then)
 **Organization**: Group test files by domain concern/action, not by test type
-**MANDATORY**: Use comment separators `// Arrange`, `// Act`, `// Then / Assert`; no assertion API may appear before the final section.
+**MANDATORY**: Use comment separators `// Arrange`, `// Act`, `// Assert`; `// Act` must contain exactly one executable statement on one physical line that invokes the SUT/use case, and no assertion API may appear before `// Assert`.
+
+## Approved Go Test Toolchain (MANDATORY)
+
+- Use Go's `testing` package for the unit-test runner, `github.com/stretchr/testify/assert`/`require` for assertions, and hand-written doubles for outgoing ports. Importing a production API under test remains allowed.
+- Do not use `require.NoError(t, err)`. Prefer `if err != nil { t.Fatalf("context: %v", err) }` when later assertions require a valid result; use `assert.NoError` only when the test can continue safely after the error.
+- Do not add GoMock, Mockery, generated mocks, or third-party mocking frameworks. `testify/assert` and `testify/require` are the approved assertion libraries.
+- In `// Assert`, compare expected and actual values explicitly and call `t.Error`, `t.Errorf`, `t.Fatal`, or `t.Fatalf` on mismatch.
+- Domain tests use real entities/value objects and normally no doubles.
+- Application tests use small hand-written stubs, fakes, spies, or mocks only for outgoing application-owned ports.
+- Object Mothers and builders return fresh deterministic values; they do not assert, call production behavior, or share mutable state.
 
 ## Domain-Oriented Test File Organization (MANDATORY)
 
@@ -47,18 +60,18 @@ Test files MUST be organized by **business concern/action** being validated, NOT
 
 **Structure**:
 ```
-tests/{domain}/application/{use_case}/
-  {use_case}_test_setup.go         # Shared setup helpers (setup functions, mock structs)
+tests/unit/{domain}/application/{use_case}/
+  {use_case}_test_setup.go         # Shared setup helpers and explicit doubles
   {use_case}_value_object_helpers.go # Helper functions for creating value objects
   {action_or_concern}_test.go        # Tests for one specific behavior
   {validation_concern}_test.go       # Tests for one validation rule
   fixtures/builders.go               # Test data builders (Builder pattern)
-  mocks/mock_{interface}.go
+  doubles/{stub|fake|spy}_{port}.go
 ```
 
 **Example** (transfer use case):
 ```
-tests/orders/application/order_transfer/
+tests/unit/orders/application/order_transfer/
   order_transfer_test_setup.go    # Setup helpers
   order_transfer_value_object_helpers.go # Value object helpers
   item_existence_test.go                          # Item not found behavior
@@ -66,7 +79,7 @@ tests/orders/application/order_transfer/
   transfer_success_test.go                        # Successful transfer behavior
   transfer_persistence_failure_test.go            # Persistence failure behavior
   fixtures/builders.go                            # Test data builders
-  mocks/mock_{port}.go
+  doubles/{stub|fake|spy}_{port}.go
 ```
 
 **Rules**:
@@ -74,7 +87,7 @@ tests/orders/application/order_transfer/
 - ❌ AVOID: `happy_path_test.go`, `error_cases_test.go`, `edge_cases_test.go`
 - ✅ PREFER: `quantity_validation_test.go`, `item_existence_test.go`, `transfer_success_test.go`
 - One concern per file (single business rule, validation, or workflow path)
-- File ≤150 lines
+- File <150 physical lines
 - Use `snake_case.go` matching the domain concept
 - Use Builder pattern for test data in `fixtures/builders.go`
 - Use setup helpers in `{use_case}_test_setup.go`
@@ -110,7 +123,9 @@ tests/orders/application/order_transfer/
 
 ## Quality Rules
 
-**Requirements**: ≤150 lines/file, ≤20 lines/function, 90%+ project-wide production coverage and domain/application unit coverage, use `testify/assert`, single assertion concept
+**Requirements**: <150 physical lines/file, ≤20 lines/function, 90%+ project-wide production coverage and domain/application unit coverage, standard `testing` runner, approved assertions, hand-written doubles, and one assertion concept
+
+**Isolation**: Domain and Application focused commands each pass from a clean process with `depends_on_test_layer: none`; no mutable fixture, global, environment value, cache, or output crosses the layer boundary.
 **YAGNI**: Test current functionality only, delete unused tests, focus on critical paths, simple setup
 
 ## Test Tags
@@ -120,18 +135,18 @@ tests/orders/application/order_transfer/
 - If a repository intentionally uses build tags for every suite, use `//go:build unit` consistently and document `go test -tags=unit ./...`.
 - Do not put HTTP integration tests in the default unit suite.
 
-## CQRS Mock Strategy
+## CQRS Test Double Strategy
 
-**Guidelines**: One per interface, exported fields for config/verification, mock only outgoing ports
-**Structure**: `tests/{domain}/application/{use_case}/mocks/mock_{interface}.go`
+**Guidelines**: One hand-written double per outgoing port when useful; name it by its role (`Stub`, `Fake`, or `Spy`) and expose only scenario configuration or observable calls.
+**Structure**: `tests/unit/{domain}/application/{use_case}/doubles/{role}_{port}.go`
 
 ```go
-type MockCreateMemberCommand struct {
+type CreateMemberCommandSpy struct {
     Error error
     Calls []CreateMemberCall
 }
 
-func (m *MockCreateMemberCommand) Execute(ctx context.Context, member domain.Member) error {
+func (m *CreateMemberCommandSpy) Execute(ctx context.Context, member domain.Member) error {
     m.Calls = append(m.Calls, CreateMemberCall{Member: member})
     return m.Error
 }
@@ -145,8 +160,8 @@ func Test_given_valid_data_when_enrolling_member_then_success(t *testing.T) {
     t.Parallel()
 
     // Arrange
-    useCase, mocks := setupEnrollMember(t)
-    mocks.UserSession.UserID = testUserID
+    useCase, doubles := setupEnrollMember()
+    doubles.UserSession.UserID = testUserID
 
     request := fixtures.NewEnrollMemberRequestBuilder().
         WithHandlerName("test-handler").
@@ -157,9 +172,15 @@ func Test_given_valid_data_when_enrolling_member_then_success(t *testing.T) {
     response, err := useCase.Execute(context.Background(), request)
 
     // Assert
-    assert.NoError(t, err)
-    assert.NotEmpty(t, response.MemberID)
-    assert.Len(t, mocks.CreateCmd.Calls, 1)
+    if err != nil {
+        t.Fatalf("Execute() error = %v, want nil", err)
+    }
+    if response.MemberID == "" {
+        t.Error("Execute() MemberID is empty, want a generated ID")
+    }
+    if got := len(doubles.CreateCmd.Calls); got != 1 {
+        t.Errorf("CreateCmd calls = %d, want 1", got)
+    }
 }
 
 // Test Data Builder (fixtures/builders.go)
@@ -208,19 +229,19 @@ func mustCreateExternalID(id string, provider string) value_objects.ExternalIden
 }
 
 // Setup Helper ({use_case}_test_setup.go)
-type EnrollMemberTestMocks struct {
-    CreateCmd    *MockCreateMemberCommand
-    ValidateCmd  *MockValidateMemberUniqueness
-    UserSession *MockUserSession
+type EnrollMemberTestDoubles struct {
+    CreateCmd   *CreateMemberCommandSpy
+    ValidateCmd *ValidateMemberUniquenessStub
+    UserSession *UserSessionStub
 }
 
-func setupEnrollMember(t *testing.T) (*EnrollMemberUseCase, *EnrollMemberTestMocks) {
-    createCmd := &MockCreateMemberCommand{}
-    validateCmd := &MockValidateMemberUniqueness{Result: true}
-    userSession := &MockUserSession{UserID: "test-user-id"}
-    useCase := NewEnrollMemberUseCase(createCmd, validateCmd, userSession)
+func setupEnrollMember() (*MemberEnroller, *EnrollMemberTestDoubles) {
+    createCmd := &CreateMemberCommandSpy{}
+    validateCmd := &ValidateMemberUniquenessStub{Result: true}
+    userSession := &UserSessionStub{UserID: "test-user-id"}
+    useCase := NewMemberEnroller(createCmd, validateCmd, userSession)
 
-    return useCase, &EnrollMemberTestMocks{
+    return useCase, &EnrollMemberTestDoubles{
         CreateCmd:    createCmd,
         ValidateCmd:  validateCmd,
         UserSession: userSession,
@@ -236,8 +257,8 @@ All tests pass, 90%+ project-wide production coverage and domain/application uni
 
 **Test Design**: acceptance behavior framing, expected behavior captured in tests, test behavior not implementation, descriptive names, simple tests
 **Suite Quality**: Avoid fragile tests, repeated assertions, trivial coverage-only tests, overspecified mocks, and implementation-detail assertions
-**CQRS Mocks**: One per interface, mock only external dependencies, simple manual mocks, verify interactions
-**Organization**: Group tests by business concern/action (one concern per file), mirror production structure, use test data builders, ≤150 lines
+**CQRS Test Doubles**: One per outgoing interface, hand-written only, verify interactions only when observable
+**Organization**: Group tests by business concern/action (one concern per file), mirror production structure, use test data builders, <150 physical lines
 **File Naming**: Domain-oriented (`quantity_validation_test.go`), NOT type-oriented (`error_cases_test.go`)
 **Test Data Builders**: Use Builder pattern in `fixtures/builders.go` for fluent test data construction
 **Setup Helpers**: Use dedicated setup files (`{use_case}_test_setup.go`) for test initialization

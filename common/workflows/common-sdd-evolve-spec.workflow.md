@@ -1,12 +1,12 @@
 ---
 workflow_id: WORKFLOW-COMMON_SDD_EVOLVE_SPEC_WORKFLOW
 trigger: manual
-description: Evolve an existing SDD spec with append-only history, verification, updated acceptance scenarios, tasks, and convergence.
+description: "Evolve an existing SDD spec with append-only history, verification, updated acceptance scenarios, tasks, and convergence."
 ---
 
 # Common SDD Evolve Spec Workflow
 
-Use this workflow when a feature already has a spec and the requested change alters behavior, contracts, risk, architecture, or verification. Active specs are mutable living baselines; completed specs are audit evidence and are not silently reopened. For a reported defect, use `common-sdd-fix-bug.workflow.md` first; it decides whether this workflow is needed for a `spec-contract` correction or a behavior change discovered during diagnosis.
+Use this workflow when a feature already has a spec and the requested change alters behavior, contracts, risk, architecture, or verification. Specs remain living baselines at stable paths; a verified spec may evolve only through explicit approval and append-only history. For a reported defect, use `common-sdd-fix-bug.workflow.md` first; it decides whether this workflow is needed for a `spec-contract` correction or a behavior change discovered during diagnosis.
 
 ## Phase 1: Find The Owning Spec
 
@@ -31,7 +31,7 @@ Use this rule whenever new evidence appears during diagnosis, RED, Green, Refact
 Before modifying any existing spec artifact, show:
 
 - Files and sections proposed for modification or creation.
-- IDs, User Stories, requirements, and Given/When/Then scenarios affected.
+- IDs and canonical human-readable titles, User Stories, requirements, and Given/When/Then scenarios affected.
 - Proposed history entry.
 - Architecture, contract, data, test, and quality-gate impact.
 - Tasks becoming sequential or parallel, including `track_id`, dependencies, ownership, `can_run_with`, execution waves, merge order, and proposed `max_parallel_agents`.
@@ -76,10 +76,11 @@ Update only the affected spec files:
 - `invariants.md` when domain rules change, with artifact metadata.
 - `contracts/` when public APIs/events/schemas change, each with a stable artifact ID.
 - `plan.md` when architecture, data, boundaries, or verification strategy changes, with artifact metadata.
-- `tasks.md` for small executable tasks, each with one outcome, `done_when`, verification command, canonical backend `work_type`, `track_id`, `parallelizable`, dependencies, ownership, and `TEST-*` dependencies before production tasks.
+- `tasks.md` for small executable tasks, each with a stable ID, action-oriented human title, `development_layer`, `layer_gate`, one outcome, `done_when`, verification command, canonical backend `work_type`, `track_id`, `parallelizable`, dependencies, ownership, and same-layer `TEST-*` evidence before production tasks.
 - `workflow-routing.md` for the primary and supporting workflow IDs selected for each phase and task.
 - `parallel-tracks.md` when task ownership, merge order, or concurrent agent count changes.
 - `traceability.yaml` for artifact/requirement/scenario/task/track/test links.
+- Preserve or deliberately update the canonical title for every affected ID across all defining artifacts; a wording-only title improvement keeps the ID stable and is recorded in history.
 - `verification.md` for expected gates and manual QA.
 
 Mark unresolved behavior as `[NEEDS CLARIFICATION]`.
@@ -95,7 +96,7 @@ Show the user/product owner:
 - Final User Stories, requirements, Given/When/Then scenarios, and out-of-scope.
 - Sequential and parallel task table, execution waves, tracks, ownership, dependencies, merge order, and `max_parallel_agents`.
 - Traceability and history entry.
-- First acceptance/HTTP/component RED test and first focused unit RED test planned.
+- First affected domain/application unit RED, layer gates, and later acceptance/HTTP/message/component boundary evidence planned.
 - Workflow routing table for spec evolution, implementation, RED review, verification, documentation, and convergence.
 - Contract, compatibility, security, privacy, operational, and architecture impact.
 - Discovery adjustment analysis, proposed delta, gate reset, and human decision when applicable.
@@ -104,22 +105,9 @@ Show the user/product owner:
 
 Ask explicitly for approval to continue to RED. Do not create, modify, or execute test code until approval. This gate is mandatory even for low-risk work.
 
-## Phase 6: Acceptance RED
+## Phase 6: Inside-Out Core RED
 
-Create or update the acceptance test/scenario first.
-
-Run it and confirm:
-
-- It fails before implementation.
-- The failure demonstrates the intended missing behavior.
-- It maps to a User Story and BDD Given/When/Then scenario.
-- It uses the public boundary or acceptance harness where available.
-
-If it cannot be automated yet, record manual verification steps and the automation gap in `verification.md`.
-
-## Phase 7: ATDD-Style Test RED
-
-Create or update the smallest unit/component/domain/application test that drives the next rule.
+For backend behavior, create or update the smallest domain test first when domain policy changes, then the smallest application use-case test when orchestration changes. For frontend-only behavior, use the closest component-level test. Do not create new executable HTTP/message production scaffolding to start RED.
 
 The test code should use ATDD style where practical:
 
@@ -129,13 +117,19 @@ The test code should use ATDD style where practical:
 
 Assign or map the test to a stable `TEST-*` ID in `traceability.yaml`.
 
-Run it and confirm it fails for the intended reason. Do not edit production code until this failing unit-level test exists.
+Run the current test and confirm it fails for the intended reason. Do not edit production code for that scope until the failing test exists.
 
-## Phase 8: Gate 3 Before Green
+## Phase 7: Scoped Gate 3 And Core GREEN
 
-After the acceptance/public-boundary and focused unit-level tests are RED, invoke `common-sdd-review-test-evidence.workflow.md`.
+Invoke `common-sdd-review-test-evidence.workflow.md` as Gate 3-DOMAIN or Gate 3-APPLICATION. Show the actual test files, `TEST-*` IDs, commands, failures, assertions, fixtures, isolation strategy, and confirmation that production files are unchanged. Ask explicitly for approval to edit production code and record the decision in `verification.md`.
 
-Show the actual test files, `TEST-*` IDs, commands, failures, assertions, fixtures, isolation strategy, and confirmation that production files are unchanged. Ask explicitly for approval to edit production code. Record the decision in `verification.md`.
+After approval, implement/refactor that core scope and record its layer gate before moving outward.
+
+## Phase 8: Boundary RED And Outer GREEN
+
+After `LAYER-GATE-APPLICATION`, create executable acceptance/public-boundary RED when boundary or wiring behavior changes, invoke Gate 3-BOUNDARY, then implement infrastructure, delivery interfaces, and composition/IaC in that order. If outer behavior is unchanged, record its layer gates as `not_affected` and run existing/new boundary evidence GREEN without inventing outer changes.
+
+If boundary evidence cannot be automated, record manual verification steps and the automation gap in `verification.md`.
 
 ## Phase 9: Implement And Refactor
 
@@ -160,18 +154,18 @@ Run checks that match the changed surface:
 
 - Targeted unit tests.
 - Acceptance/public-boundary test.
-- Backend HTTP integration tests or frontend component/page tests.
+- Backend integration tests or frontend component/page tests.
 - Build/lint/typecheck/format.
 - Architecture/dependency checks.
 - Coverage for touched critical code.
 - CRAP/complexity where available.
 - Mutation testing or mutation review for high-risk rules.
 - Security/performance/observability checks when specified.
-- Mandatory `WORKFLOW-COMMON_SDD_CLEAN_UP_GATE_WORKFLOW` for every created/modified file, with required refactors completed through the refactor lifecycle before security and coverage completion gates.
-- Mandatory `WORKFLOW-COMMON_SDD_SECURITY_GATE_WORKFLOW` with a declared security role, changed-boundary review, and no unresolved findings before completion.
+- Mandatory `WORKFLOW-COMMON_SDD_CLEAN_UP_GATE_WORKFLOW` for every created/modified file, with required refactors executed through the refactor lifecycle before security and coverage validation gates.
+- Mandatory `WORKFLOW-COMMON_SDD_SECURITY_GATE_WORKFLOW` with a declared security role, changed-boundary review, and no unresolved findings before validation.
 - Mandatory `WORKFLOW-COMMON_SDD_COVERAGE_GATE_WORKFLOW` with `>= 90%` project-wide production coverage and no affected-scope regression after quality and security review when production code is in scope.
 - `WORKFLOW-COMMON_SDD_CONTEXT_CHECKPOINT_WORKFLOW` when the context threshold or compaction warning applies.
-- Mandatory `RULE-COMMON_SDD_DOCUMENTATION_GATE`: invoke `WORKFLOW-COMMON_SDD_UPDATE_DOCUMENTATION_WORKFLOW` after the evolved behavior is verified and before final quality/security/coverage/completion approval.
+- Mandatory `RULE-COMMON_SDD_DOCUMENTATION_GATE`: invoke `WORKFLOW-COMMON_SDD_UPDATE_DOCUMENTATION_WORKFLOW` after the evolved behavior and tests are green and before final quality/security/coverage validation.
 
 Record results in `verification.md`.
 
@@ -188,12 +182,12 @@ Before reporting done:
 - `spec.md` and `acceptance.feature` match implemented behavior.
 - Any docs or repository maps affected by structure changes are updated.
 - The documentation gate was executed through `WORKFLOW-COMMON_SDD_UPDATE_DOCUMENTATION_WORKFLOW`; if its surface analysis finds no affected project documentation, record `no_documentation_change_reason` in `spec.md`, `verification.md`, and `change-summary.md`.
-- Clean-up was executed and recorded in `code-quality-review.md`, `verification.md`, and `change-summary.md` before completion.
-- Security review was executed and recorded in `security-review.md`, `verification.md`, and `change-summary.md` before completion.
-- Coverage was executed for every completion and recorded at `>= 90%` when production code is in scope, or `coverage_scope: none` for docs-only specs.
+- Clean-up was executed and recorded in `code-quality-review.md`, `verification.md`, and `change-summary.md` before validation.
+- Security review was executed and recorded in `security-review.md`, `verification.md`, and `change-summary.md` before validation.
+- Coverage was executed before final validation and recorded at `>= 90%` when production code is in scope, or `coverage_scope: none` for documentation-only specs.
 - If a context handoff occurred, its checkpoint path and exact resume action are recorded in the active spec.
 - Any discovery adjustment has an append-only history entry, approved request, synchronized artifacts, and repeated gates required by impact.
-- When the feature is fully verified, invoke `WORKFLOW-COMMON_SDD_COMPLETE_SPEC_WORKFLOW`; do not rename the folder manually.
+- When the feature is fully verified, invoke `WORKFLOW-COMMON_SDD_VERIFY_SPEC_WORKFLOW`; keep the stable folder path.
 
 ## Done
 
@@ -204,8 +198,8 @@ The change is done only when:
 - A history entry records why.
 - User Stories and BDD Given/When/Then scenarios describe the behavior.
 - Every changed spec artifact has a stable `ART-*` ID.
-- Acceptance evidence was red before implementation and green after.
-- Unit-level ATDD-style tests were red before production code and drove implementation.
+- Domain/application evidence was red before its production scope and drove inside-out implementation.
+- Executable acceptance evidence is green; Boundary RED preceded outer production when outer behavior changed.
 - Parallel tracks were defined and respected.
 - Refactor happened only with tests green.
 - Gates pass or unrun gates are explicitly justified with risk.
@@ -213,6 +207,6 @@ The change is done only when:
 - Gate 1 approved the spec modifications before they were written.
 - Every changed task explicitly records sequential/parallel execution and track ownership.
 - Gate 2 approved starting RED before test code was created, modified, or run.
-- Gate 3 approved the actual RED evidence before production code was created or modified.
+- Each applicable scoped Gate 3 approved actual RED evidence before that production scope was created or modified.
 - Discovery-driven changes received the required re-approval and gate reset before continuation.
 - `RULE-COMMON_SDD_DOCUMENTATION_GATE` passed before convergence: the documentation workflow result and changed surfaces are recorded, or the workflow's explicit no-change result is recorded with its inspected surfaces and evidence.

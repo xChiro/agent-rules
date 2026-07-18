@@ -1,20 +1,15 @@
 ---
 rule_id: RULE-CSHARP_CLEAN_ARCHITECTURE
-trigger: always_on
-description: C#/.NET Clean Architecture, DDD, CQRS, ports/adapters, and YAGNI rules for backend services.
-globs: **/*.cs,**/*.csproj,**/*.sln
+trigger: model_decision
+description: "C#/.NET Clean Architecture, DDD, CQRS, ports/adapters, and YAGNI rules for backend services."
+globs: "**/*.cs,**/*.csproj,**/*.sln"
 ---
 
 # C# Clean Architecture
 
-## SDD Baseline
+## SDD Integration
 
-- Apply `common/rules/common-sdd-agentic-discipline.md` before this rule.
-- Create or evolve the owning User Story based spec before production code when behavior, contracts, architecture, or risk changes.
-- Apply mandatory Gate 1 before spec writes, Gate 2 before RED, and Gate 3 before Green, even for simple or low-risk changes.
-- Keep artifact, task, track, and test IDs traceable through `traceability.yaml` and `parallel-tracks.md`.
-- Write BDD Given/When/Then acceptance evidence first, then the unit-level ATDD-style focused failing test for the next rule or boundary before production code.
-- Refactor only with tests green and converge spec history, tasks, parallel tracks, traceability, verification notes, and code.
+Apply `RULE-COMMON_SDD_AGENTIC_DISCIPLINE` and `RULE-COMMON_INSIDE_OUT_DEVELOPMENT` before this C# specialization. This file defines .NET architecture details only and cannot relax common gates, traceability, layer order, or convergence.
 
 
 Use these rules for .NET backend services that follow Clean Architecture, DDD, CQRS, business logic testing, SOLID, Clean Code, and ports/adapters.
@@ -26,16 +21,19 @@ Prefer the existing project shape first. Onnodo projects commonly use a core pro
 Dependencies must point inward:
 
 ```text
-WebApi / MessageBus / DataAccess -> Application / Domain
+Composition / WebApi / MessageBus / DataAccess -> Application -> Domain
 ```
 
 - Domain owns entities, value objects, domain services, domain events, and business exceptions.
 - Application owns use cases, orchestration, request/response models, and all ports consumed by use cases.
 - Domain must not define infrastructure ports; domain stays pure and exposes business behavior through entities, value objects, domain services, events, and exceptions.
 - Infrastructure owns EF Core, persistence DTOs, migrations, message broker clients, external SDKs, and adapter mapping.
-- WebApi or worker host owns composition, middleware, route registration, hosted services, configuration, and top-level error handling.
+- WebApi or worker host owns final module aggregation, host-wide middleware, configuration bootstrap, and top-level error handling. Each module owns its internal composition, routes/consumers, and layer registrations.
+- Each business module owns layer-specific DI extensions and a single module composition entry point. The executable host aggregates modules; it does not own their internal registrations.
 
 Never let domain/application depend on ASP.NET Core, EF Core, RabbitMQ, HTTP clients, SDK models, `ILogger`, `IConfiguration`, `IOptions`, or transport DTOs.
+
+`IServiceCollection` extensions for Domain and Application registration live in the module's outer composition assembly, not either inner assembly. This preserves the dependency rule while still providing `Add<Module>Domain`, `Add<Module>Application`, `Add<Module>Infrastructure`, and `Add<Module>Interface` contracts. Infrastructure and Interface extensions may live in their outer projects or in Composition.
 
 ## Screaming Architecture
 

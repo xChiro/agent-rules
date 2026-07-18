@@ -1,8 +1,14 @@
+---
 adjustment_id: ADJ-<FEAT>-<NNN>
+adjustment_title: <human-readable proposed adjustment>
 artifact_id: ART-<FEAT>-SPEC-ADJUSTMENT-<NNN>
+artifact_title: Spec adjustment request for <proposed adjustment>
 feature_id: FEAT-<NNNN>
+feature_title: <human-readable feature title>
 spec_id: SPEC-<NNNN>
+spec_title: <human-readable spec title>
 trigger_task_id: T-<NNNN>-<NNN>
+trigger_task_title: <human-readable triggering task title>
 status: proposed | approved | rejected | superseded
 ---
 

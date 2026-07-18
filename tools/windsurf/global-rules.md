@@ -1,56 +1,57 @@
 # Global SDD Engineering Rules
 
-Canonical assets: `~/.codeium/windsurf/common`. Do not copy managed assets into project-local agent folders. Specs stay in `specs/`.
+Canonical: `~/.codeium/windsurf/common`. No managed project copies. Specs: `specs/`.
 
 ## Required Lifecycle
 
-- Start behavior changes from a traceable User Story and BDD Given/When/Then acceptance scenario.
-- BDD scenarios use business language, concrete examples, and observable outcomes; keep delivery and implementation details outside them.
-- Route reported defects through `common-sdd-fix-bug.workflow.md` before implementation: reproduce, classify, preserve the approved contract, and record `BUG-*`/`REG-*` evidence. Never weaken an acceptance scenario to make a bug pass.
-- Create/evolve owning spec before code; active specs mutate. If discovery changes intent, plan, architecture, risk, or tests, pause, analyze, seek approval via `common-sdd-evolve-spec.workflow.md`, then update artifacts/gates.
+- Start from a traceable User Story and abstract BDD scenario using business language, examples, and observable outcomes.
+- Route defects through `common-sdd-fix-bug.workflow.md`: reproduce, classify, preserve the contract, and record `BUG-*`/`REG-*`; never weaken acceptance to make a bug pass.
+- Create/evolve the owning spec before code. If discovery changes intent, plan, architecture, risk, or tests, pause and seek approval through `common-sdd-evolve-spec.workflow.md`.
 - Create `workflow-routing.md` in every feature spec with primary/supporting workflow IDs for each phase and task.
+- Give every SDD ID one concise title. Display `<ID> — <title>`; store `*_id`/`*_title` separately. Task/change titles start with an action verb.
 - Before writing `specs/**`, show the complete plan and ask for approval; after writing it, show traceability, tasks, waves, ownership, and planned tests before RED.
-- Do not write specs before Gate 1, test code before Gate 2, or production code before Gate 3 reviews actual RED evidence. No gate may be skipped for simple or low-risk work.
-- Work one small `T-*` microtask at a time; record its outcome, verification, and next step before starting another.
-- At 60% consumed context, run `common-sdd-context-checkpoint.workflow.md`, update the active spec, and ask the user to change context before new work.
-- After Gate 2, confirm acceptance or backend HTTP integration RED first.
-- Write the smallest focused test; confirm RED before production code.
-- Put all assertions in `Then/Assert`; setup, action, and helpers never assert.
+- Do not write specs before Gate 1, tests before Gate 2, or scoped production before its Gate 3 RED review. Never skip gates for low risk.
+- Work one small `T-* — <action and outcome>` microtask at a time; record its outcome, verification, and next step before starting another.
+- At 60% context, run `common-sdd-context-checkpoint.workflow.md`, update the spec, and request a new context.
+- Follow `RULE-COMMON_INSIDE_OUT_DEVELOPMENT`: domain model → Domain RED/GREEN/gate → Application RED/GREEN/core gate → conditional boundary RED. Domain uses real values; Application uses hand-written outgoing-port doubles.
+- Tests: fresh Mothers/builders in Arrange; one-line Act; assertions only in Assert.
 - Invoke `common-sdd-review-test-evidence.workflow.md` after RED and record the decision in `verification.md` before Green.
 - Implement minimally; refactor only with tests green.
-- Run `tools/validate-sdd-change.sh` as the read-only `sdd-policy` check on every pull request and before final completion; record its risk classification and result.
-- Before completion, run `common-sdd-code-quality-gate.workflow.md`: review files, names, limits, Clean Code, SOLID/Clean Architecture/CQRS, and required refactors.
-- Before completion, invoke `common-sdd-coverage-gate.workflow.md` for every spec; when production code is in scope, the complete project production scope must reach `>= 90%`, the affected scope must not regress, and the result must be recorded.
-- For L2 non-trivial logic and all L3 changes, invoke `common-sdd-mutation-gate.workflow.md`; for L3 critical journeys, invoke `common-sdd-critical-e2e.workflow.md`.
-- Before completion, invoke `common-sdd-security-gate.workflow.md`; record `security_role`, trust-boundary evidence, and no unresolved Critical/High findings.
-- Run gates; converge spec, code, tests, contracts, docs.
-- After final verification and human completion approval, invoke `common-sdd-complete-spec.workflow.md`; move the folder to `specs/features/completed/<number>-<slug>/` and create/update the AI context snapshot/index.
+- Run `tools/validate-sdd-change.sh` in every PR and before final validation; record risk and result.
+- For L2 non-trivial logic and all L3 changes, run the mutation gate; every L3 change, including any journey marked critical, also runs the critical-E2E gate.
+- Run the SDD documentation gate before the final evidence review; record changed surfaces/evidence or `no_documentation_change_reason` in the spec artifacts.
+- Run clean-up before final validation; apply Fowler refactorings and keep in-scope maintained source, tests, configuration, CI, and scripts below 150 physical lines.
+- Then run the security gate; record role, trust-boundary evidence, and no Critical/High findings.
+- Run the coverage gate for every spec; production scope requires `>= 90%` and no affected-scope regression.
+- After required gates converge, run `common-sdd-verify-spec.workflow.md`; only its approved final evidence review may record `status: verified`. Keep the stable spec folder and create no external lifecycle artifact.
 - Each task declares ownership, dependencies, wave, outcome, verification, and next step; default to one agent.
 
 ## Architecture
 
 - Preserve the repository's existing architecture and stricter local product constraints.
-- Load `common-security-and-identity.md` for identity, OAuth/OIDC, REST auth, browser sessions, cookies, secrets, public exposure, or CI credentials.
-- Apply SOLID, Clean Architecture, CQRS, YAGNI, and dependency inversion pragmatically.
+- Load `common-security-and-identity.md` for identity, OAuth/OIDC, auth, sessions, secrets, exposure, or CI credentials.
+- Apply SOLID (SRP/OCP/LSP/ISP/DIP), Clean Architecture, CQRS, and YAGNI; no speculative abstractions.
 - Keep domain/application independent from transport, persistence, frameworks, cloud SDKs, UI, logging implementations, and deployment details.
-- Keep controllers, REST/Lambda handlers, adapters, and composition roots thin. Business decisions belong to domain/application behavior.
+- Keep Domain/Application names provider-neutral; technology names such as DynamoDB, Cosmos, or Kafka belong only in outer adapters/configuration.
+- Keep delivery, adapters, and composition thin; behavior stays in named use cases/domain policy.
+- Open production layers in order: domain, application, infrastructure, delivery interface, composition/IaC. Outer tasks wait for `LAYER-GATE-APPLICATION`.
 - Avoid speculative abstractions and nested/repeated if/switch; use Fowler refactoring with green tests.
 
 ## Backend Tests
 
-- Use exactly two runtime suites: unit tests and HTTP integration tests.
-- Unit tests cover domain/application behavior without external infrastructure.
-- HTTP integration tests enter through a real local server or API Gateway/Lambda HTTP endpoint and exercise routing, auth/session, validation, use cases, DI, persistence, schema, and local resources.
-- Do not create separate repository, adapter, handler, infrastructure, API, end-to-end, Lambda, or contract runtime suites.
-- Canonical CI test jobs are `unit-tests` and `http-integration-tests`.
+- Use exactly two folders/suites: `tests/unit/` and `tests/integration/`.
+- Integration uses `tests/integration/http/` as the compatible public-entry scope and `tests/integration/infrastructure/` for real adapter/resource wiring.
+- Use Docker, Testcontainers, or faithful emulators for local databases, queues, caches, and storage. Simulate third-party APIs with WireMock or equivalent; keep the application client and integration wiring real.
+- Run every affected scope independently from clean state. Do not create a third runtime suite.
+- Canonical CI jobs are `unit-tests` and `integration-tests`.
 
 ## Loading
 
+- Use this file as bootstrap. Load one primary workflow, one language baseline, and only rules for the active phase/boundary; never load the whole catalog.
+- Common mandatory rules are the policy floor. Local rules may be more specific or stricter; report equal-level conflicts instead of inventing a merged rule.
 - Resolve common IDs in `common/workflows/`; language IDs in `common/languages/<language>/workflows/`; then global/system assets. Use exact `.md`; never project `.windsurf/workflows/`.
-- C#: `csharp-sdd-implement-change` -> `common/languages/csharp/workflows/`; common REST -> `common/workflows/common-rest-api-design.workflow.md`; C# REST -> `common/languages/csharp/workflows/csharp-rest-api.workflow.md`.
-- Rules/skills: `common/rules/` and `common/languages/<language>/`; load focused boundary assets and record routes.
-- Load common SDD/context continuity, active language, and focused REST/Lambda/SNS/SQS boundary workflows/rules; record routes in the spec.
-- When a project has `specs/context/ai-snapshots/index.md`, read the latest relevant snapshot as bounded context before planning; verify current active specs before relying on it.
+- Load common SDD/context continuity, the active language, and focused REST/Lambda/SNS/SQS assets only when applicable; record routes in the spec.
+- Optional AI context summaries are hints; verify the latest relevant one against the stable spec and repository.
 - Use `go-sdd-implement-change` or `csharp-sdd-implement-change` for backend changes and the matching refactor workflow for behavior-preserving cleanup.
 - Preserve `react-create-hbk-webapp-template` for HBK React foundations and use `hbk-identity-webapp` as reference.
 

@@ -1,12 +1,12 @@
 ---
 workflow_id: WORKFLOW-COMMON_SDD_VALIDATE_CHANGE_WORKFLOW
 trigger: automatic
-description: Deterministic CI/PR validation of SDD artifacts, risk classification, required evidence, and change scope.
+description: "Deterministic CI/PR validation of SDD artifacts, risk classification, required evidence, and change scope."
 ---
 
 # Common SDD Validate Change Workflow
 
-Run `tools/validate-sdd-change.sh` on every pull request and before requesting the final human completion gate. The validator is a policy check, not a replacement for tests, code review, coverage, mutation testing, or E2E execution.
+Run `tools/validate-sdd-change.sh` on every pull request and before requesting final validation review. The validator is a policy check, not a replacement for tests, code review, coverage, mutation testing, or E2E execution.
 
 ## CI/PR Invocation
 
@@ -30,6 +30,13 @@ When the validator itself changes, run its contract suite as part of `sdd-policy
 
 ```bash
 bash tools/tests/validate-sdd-change.test.sh
+```
+
+When rules, workflows, skills, or their catalog documentation change, also run:
+
+```bash
+bash tools/validate-agent-catalog.sh
+bash tools/tests/validate-agent-catalog.test.sh
 ```
 
 ## Required Checks

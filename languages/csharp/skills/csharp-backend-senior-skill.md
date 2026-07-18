@@ -2,19 +2,15 @@
 skill_id: SKILL-CSHARP_BACKEND_SENIOR_SKILL
 name: csharp-backend-senior
 trigger: always_on
-description: Senior C#/.NET backend skill for Clean Architecture, DDD, CQRS, ATDD/TDD business behavior, EF Core adapters, APIs, messaging, and disciplined refactoring.
-globs: **/*.cs,**/*.csproj,**/*.sln
+description: "Senior C#/.NET backend skill for Clean Architecture, DDD, CQRS, ATDD/TDD business behavior, EF Core adapters, APIs, messaging, and disciplined refactoring."
+globs: "**/*.cs,**/*.csproj,**/*.sln"
 ---
 
 # C# Backend Senior Skill
 
-## SDD Baseline
+## SDD Integration
 
-- Follow `common-sdd-agentic-discipline.md` for every behavior-changing task.
-- Keep specs versioned under `specs/features/<number>-<slug>/` when the project supports SDD artifacts.
-- Apply mandatory Gate 1 before spec writes, Gate 2 before RED, and Gate 3 before Green, even for simple or low-risk changes.
-- Start with BDD Given/When/Then acceptance evidence, then unit-level ATDD-style focused failing test code, then production code.
-- Refactor only with tests green and converge specs, tasks, parallel tracks, traceability, verification notes, and code.
+Follow `RULE-COMMON_SDD_AGENTIC_DISCIPLINE` and the selected primary workflow. This skill supplies the compact C# baseline; it does not duplicate or relax common gates, traceability, inside-out order, or convergence.
 
 
 Act as a senior .NET backend engineer. Optimize for maintainability, testability, explicit boundaries, and small safe changes.
@@ -24,7 +20,7 @@ Act as a senior .NET backend engineer. Optimize for maintainability, testability
 Before changing code:
 
 - Read the local project shape.
-- Identify core, DataAccess, WebApi/Lambda, message bus, unit test, and HTTP integration test projects.
+- Identify core, DataAccess, WebApi/Lambda, message bus, unit test, and one integration test project with HTTP and Infrastructure scopes.
 - Follow existing naming and test conventions unless the task explicitly asks to improve them.
 - Prefer a narrow vertical slice over broad refactors.
 - Do not introduce new frameworks or abstractions without current evidence.
@@ -36,7 +32,7 @@ Before changing code:
 - Infrastructure implements Application ports.
 - Domain does not define persistence, messaging, clock, session, ID-generation, or external API ports.
 - CQRS uses explicit Application interfaces and DI registrations, not MediatR or mediator handlers.
-- WebApi and hosted services are boundaries and composition roots.
+- Each business module owns layer-specific DI extensions and one `Add<Module>Module` entry point; WebApi and hosted services are boundaries and final module aggregators.
 - DTOs stay at their external boundary.
 - Mapping functions live inside the DTO that owns the external shape: persistence DTOs expose `FromDomain`/`ToDomain`, HTTP DTOs expose request/response conversion, and message DTOs expose message conversion. Use a boundary-local companion only for generated DTOs or deliberate multi-source projections.
 
@@ -46,7 +42,7 @@ Before changing code:
 - Use constructor injection and primary constructors when concise.
 - Use typed exceptions for business failure.
 - Use `CancellationToken` on new async I/O boundaries.
-- Keep files near 150 lines and methods near 20 lines when practical.
+- Keep every in-scope file below 150 physical lines; keep methods near 20 lines when practical.
 - Delete unused code instead of carrying it.
 
 ## Testing Defaults
@@ -55,9 +51,10 @@ Before changing code:
 - Use ATDD to frame actor-visible acceptance behavior before implementation.
 - Unit test domain/application without infrastructure.
 - Use real domain objects and project-local manual fakes/stubs/spies for outgoing ports.
+- Use fresh Object Mothers/Test Data Builders for scenario data, focused SUT factories for explicit wiring, and scoped fixtures for lifecycle; helpers do not assert or contain business policy.
 - Do not add mocking frameworks such as Moq, NSubstitute, FakeItEasy, or JustMock.
 - Maintain 90%+ aggregate project-wide production coverage; domain/application unit coverage must also remain at least 90%.
-- Add HTTP integration tests for public routing, EF Core mappings/migrations, DI, and local-resource wiring when touched. Do not create separate adapter or messaging integration suites.
+- Add integration tests for public routing or message delivery, EF Core mappings/migrations, DI, and local-resource wiring when touched. HTTP/public-entry tests enter through the public boundary; Infrastructure-scope tests invoke the use case with real adapters and local resources. Keep both scopes in the same integration project.
 - Use the assertion style already present in the module.
 
 ## Review Lens

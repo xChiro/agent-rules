@@ -1,20 +1,15 @@
 ---
 rule_id: RULE-GO_PROJECT_STRUCTURE
-trigger: always_on
-description: Go project structure rules for Clean Architecture, CQRS, and Screaming Architecture
-globs: **/*.go
+trigger: model_decision
+description: "Go project structure rules for Clean Architecture, CQRS, and Screaming Architecture"
+globs: "**/*.go"
 ---
 
 # Go Project Structure
 
-## SDD Baseline
+## SDD Integration
 
-- Apply `common/rules/common-sdd-agentic-discipline.md` before this rule.
-- Create or evolve the owning User Story based spec before production code when behavior, contracts, architecture, or risk changes.
-- Apply mandatory Gate 1 before spec writes, Gate 2 before RED, and Gate 3 before Green, even for simple or low-risk changes.
-- Keep artifact, task, track, and test IDs traceable through `traceability.yaml` and `parallel-tracks.md`.
-- Write BDD Given/When/Then acceptance evidence first, then the unit-level ATDD-style focused failing test for the next rule or boundary before production code.
-- Refactor only with tests green and converge spec history, tasks, parallel tracks, traceability, verification notes, and code.
+Apply `RULE-COMMON_SDD_AGENTIC_DISCIPLINE` and `RULE-COMMON_INSIDE_OUT_DEVELOPMENT`. This file specializes repository layout for Go and does not redefine lifecycle gates, test taxonomy, or convergence.
 
 
 **Core Principles**: Tests mirror production, structure screams business purpose, YAGNI compliance
@@ -27,23 +22,26 @@ cmd/{api|worker}/main.go
 internal/{domain}/
   ├── domain/{entity}/{entity.go, value_objects/, errors.go}
   ├── application/{use_case}/ports/{commands|queries|validation}/
-  ├── application/{use_case}/{usecase.go, requests.go}
+  ├── application/{capability}/{agent_noun}.go
+  │   └── requests.go
   ├── infrastructure/{persistence|messaging|external}/
   └── interfaces/{http|grpc}/{entity}/
 pkg/util/
-tests/{domain}/  # Mirrors production
+tests/unit/{domain}/  # Mirrors domain/application production
   ├── domain/{entity}/
-  ├── application/{use_case}/{usecase_test.go, mocks/}
-  ├── infrastructure/{entity}/
-  └── interfaces/{http|grpc}/
+  └── application/{capability}/{agent_noun}_test.go
+      └── doubles/
+tests/integration/
+  ├── http/{domain}/
+  └── infrastructure/{domain}/
 ```
 
 ## Mirror Rules
 
 Tests mirror production structure exactly:
-- `internal/{domain}/domain/{entity}/entity.go` → `tests/{domain}/domain/{entity}/entity_test.go`
-- `internal/{domain}/application/{use_case}/usecase.go` → `tests/{domain}/application/{use_case}/usecase_test.go`
-- HTTP/persistence wiring → `tests/http/{domain}/`
+- `internal/{domain}/domain/{entity}/entity.go` → `tests/unit/{domain}/domain/{entity}/entity_test.go`
+- `internal/{domain}/application/{capability}/{agent_noun}.go` → `tests/unit/{domain}/application/{capability}/{agent_noun}_test.go`
+- HTTP integration → `tests/integration/http/{domain}/`; infrastructure integration → `tests/integration/infrastructure/{domain}/`
 
 ## Benefits
 
@@ -52,8 +50,8 @@ Immediate business understanding, navigation by concept, clear boundaries, stake
 ## One Type Per File
 
 **Domain**: `{entity}.go`, `value_objects/{type}.go`, `errors.go`
-**Application**: `{use_case}.go`, `requests.go`, `ports/{commands|queries|validation}/`
-**Rule**: One interface per file, ≤150 lines per file
+**Application**: `{agent_noun}.go`, `requests.go`, `ports/{commands|queries|validation}/`
+**Rule**: One interface per file, <150 physical lines per file
 
 ## CQRS Ports
 
@@ -71,9 +69,9 @@ ports/
 
 ## Test Suites
 
-**Unit** (`tests/{domain}/domain/`, `tests/{domain}/application/{use_case}/`): Pure domain/application behavior with focused outgoing-port fakes and no infrastructure.
+**Unit** (`tests/unit/{domain}/domain/`, `tests/unit/{domain}/application/{use_case}/`): Pure domain/application behavior with focused outgoing-port fakes and no infrastructure.
 
-**HTTP integration** (`tests/http/{domain}/`): Real HTTP through router or API Gateway/Lambda, real composition, and local databases/resources. Do not create separate infrastructure or API test folders.
+**Integration tests**: `tests/integration/http/{domain}/` enters through the real HTTP/public boundary; `tests/integration/infrastructure/{domain}/` invokes the use case and exercises adapters against real local databases, brokers, caches, storage, or emulators. Do not create a third integration folder; third-party APIs use WireMock or small hand-written HTTP stubs.
 
 ## Naming
 
@@ -87,9 +85,9 @@ ports/
 
 ## Architectural Rules
 
-**Dependency Flow**: Infrastructure → Application → Domain
+**Dependency Flow**: Composition/Interface/Infrastructure → Application → Domain
 **Domain**: No infrastructure/interfaces/frameworks imports, pure business only
-**Application**: Depend on domain interfaces, DI, CQRS pattern
+**Application**: Depends on Domain, owns consumer-focused outgoing ports, and contains no DI/framework wiring
 **Infrastructure**: Implements interfaces, external dependencies, no business logic
 **Interface**: Transport-specific, organized by business concept, no business logic
 
@@ -101,22 +99,22 @@ ports/
 
 ## Size Rules
 
-**Files**: ≤150 lines
+**Files**: <150 physical lines
 **Functions**: ≤20 lines
 **Split**: When approaching limits
 
 ## CQRS Organization
 
 **Ports**: `ports/{commands|queries|validation}/{action}_{entity}_{type}.go`
-**Mocks**: `tests/{domain}/application/{use_case}/mocks/mock_{port}.go`
+**Doubles**: hand-written fakes/spies under `tests/unit/{domain}/application/{use_case}/doubles/`
 
 ## File Organization Best Practices
 
 ### One Type Per File
 - **One interface per file**: Each CQRS port in its own file
-- **One mock per file**: Each mock implementation in its own file
+- **One double per file**: Each hand-written fake or spy in its own file
 - **File naming**: `snake_case.go` matching the interface name
-- **Group related types**: Value objects can be grouped if tightly coupled
+- **Closely coupled private types**: May stay beside the one primary type when splitting would reduce clarity
 
 ### Interface Layer DTO Organization (CRITICAL)
 **One Type Per File**: Each DTO struct must be in its own file
@@ -131,8 +129,8 @@ ports/
 - ✅ `create_order_response_dto.go` containing only `CreateOrderResponseDTO`
 
 ### Maximum File Sizes
-- **Production files**: ≤150 lines
-- **Test files**: ≤150 lines
+- **Production files**: <150 physical lines
+- **Test files**: <150 physical lines
 - **Functions**: ≤20 lines preferred
 
 ## YAGNI Management

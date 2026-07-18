@@ -1,8 +1,8 @@
 ---
 rule_id: RULE-REACT_VITE_API_CLIENT
 trigger: model_decision
-description: React, TypeScript, and Vite rules for safe REST client boundaries and typed asynchronous behavior.
-globs: **/*.ts,**/*.tsx,**/vite.config.*,**/.env*
+description: "React, TypeScript, and Vite rules for safe REST client boundaries and typed asynchronous behavior."
+globs: "**/*.ts,**/*.tsx,**/vite.config.*,**/.env*"
 ---
 
 # React + TypeScript + Vite API Client
@@ -22,6 +22,7 @@ globs: **/*.ts,**/*.tsx,**/vite.config.*,**/.env*
 - Protect against stale responses when requests overlap.
 - Retry only safe/idempotent operations, or commands with an explicit idempotency key.
 - Keep request/response DTOs separate from UI models; never expose persistence or backend internals to components.
+- Test API/client boundaries with fresh typed Object Mothers or builders, a focused client/hook SUT factory, and a controlled HTTP simulator; helpers never assert or hide transport policy.
 
 ## Vite Safety
 
@@ -36,4 +37,4 @@ globs: **/*.ts,**/*.tsx,**/vite.config.*,**/.env*
 - Components render; hooks coordinate; services communicate; DTO modules map.
 - Model async state as a discriminated union when states are mutually exclusive.
 - Prefer composition and typed hooks before HOCs/providers; use advanced patterns only for a repeated, protected boundary.
-- Test observable behavior, keyboard/accessibility behavior, mapping, validation, cancellation, stale-response protection, and retry policy without asserting private effect order. Keep every `expect`/`assert`/matcher call in `Then/Assert`.
+- Test observable behavior, keyboard/accessibility behavior, mapping, validation, cancellation, stale-response protection, and retry policy without asserting private effect order. Use exact `// Arrange`, `// Act`, and `// Assert` sections; `// Act` has exactly one physical-line SUT/user interaction or public command, and every `expect`/`assert`/matcher call is in `// Assert`.

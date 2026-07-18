@@ -1,20 +1,15 @@
 ---
 rule_id: RULE-CSHARP_DOMAIN_MODELING
-trigger: always_on
-description: C# DDD entity, value object, domain event, invariant, and domain service rules.
-globs: **/*.cs
+trigger: model_decision
+description: "C# DDD entity, value object, domain event, invariant, and domain service rules."
+globs: "**/*.cs"
 ---
 
 # C# Domain Modeling
 
-## SDD Baseline
+## SDD Integration
 
-- Apply `common/rules/common-sdd-agentic-discipline.md` before this rule.
-- Create or evolve the owning User Story based spec before production code when behavior, contracts, architecture, or risk changes.
-- Apply mandatory Gate 1 before spec writes, Gate 2 before RED, and Gate 3 before Green, even for simple or low-risk changes.
-- Keep artifact, task, track, and test IDs traceable through `traceability.yaml` and `parallel-tracks.md`.
-- Write BDD Given/When/Then acceptance evidence first, then the unit-level ATDD-style focused failing test for the next rule or boundary before production code.
-- Refactor only with tests green and converge spec history, tasks, parallel tracks, traceability, verification notes, and code.
+Apply `RULE-COMMON_SDD_AGENTIC_DISCIPLINE` and the Domain phase of `RULE-COMMON_INSIDE_OUT_DEVELOPMENT`. This rule adds C# modeling details only; common gates, traceability, and convergence remain authoritative.
 
 Use DDD tactically where it protects business meaning. Do not add DDD vocabulary when a simple model is enough.
 

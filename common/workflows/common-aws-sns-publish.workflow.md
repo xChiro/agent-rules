@@ -1,7 +1,7 @@
 ---
 workflow_id: WORKFLOW-COMMON_AWS_SNS_PUBLISH_WORKFLOW
 trigger: model_decision
-description: Add or evolve an AWS SNS publisher with stable event contracts, clean ports, reliability, and test-first evidence.
+description: "Add or evolve an AWS SNS publisher with stable event contracts, clean ports, reliability, and test-first evidence."
 ---
 
 # Common AWS SNS Publish Workflow
@@ -12,10 +12,13 @@ Use for `domain-event` or application publication through Amazon SNS. Use SNS fo
 
 1. Invoke `WORKFLOW-COMMON_BDD_SPECIFICATION_WORKFLOW` and describe the business outcome enabled by the event, not the broker operation.
 2. Define the event contract, producer/consumer ownership, delivery guarantee, ordering need, retry/DLQ path, and compatibility policy in the spec.
-3. Obtain Gate 1 and Gate 2; create the acceptance/public-boundary or application RED and focused publisher `TEST-*` RED.
-4. Invoke `WORKFLOW-COMMON_SDD_REVIEW_TEST_EVIDENCE_WORKFLOW`; obtain Gate 3.
-5. Add the application publisher port and the infrastructure SNS adapter; make the current test GREEN.
-6. Create or update the SNS topic, subscriptions, filter policies, encryption, and least-privilege IAM only through checked-in IaC; validate it with the existing integration/quality suite and refactor only while green.
+3. Obtain Gate 1 and Gate 2; create Application RED for the publication policy/port and focused publisher `TEST-*` using a hand-written outgoing-port double when the language requires it.
+4. Obtain Gate 3-APPLICATION, implement the application publisher port/policy, and pass `LAYER-GATE-APPLICATION`.
+5. Create executable message-boundary RED and obtain Gate 3-BOUNDARY.
+6. Add the infrastructure SNS adapter, then composition/IaC; make boundary evidence GREEN.
+7. Create or update the SNS topic, subscriptions, filter policies, encryption, and least-privilege IAM only through checked-in IaC; validate it with the existing integration/quality suite and refactor only while green.
+
+Every Application and message-boundary command follows `RULE-COMMON_TEST_LAYER_ISOLATION`. The message boundary provisions its own topic/queue namespace, seed/messages, readiness, and cleanup; it never consumes state produced by Application tests.
 
 ## Architecture And Contract
 

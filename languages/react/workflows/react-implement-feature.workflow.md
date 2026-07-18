@@ -1,30 +1,14 @@
 ---
 workflow_id: WORKFLOW-REACT_IMPLEMENT_FEATURE_WORKFLOW
-description: Standard workflow for implementing React features using feature-based architecture
+trigger: manual
+description: "Standard workflow for implementing React features using feature-based architecture"
 ---
 
 # React Implement Feature Workflow
 
 ## SDD Baseline
 
-This workflow inherits `common-sdd-agentic-discipline.md`, `common-sdd-spec-structure.md`, and `common-sdd-change-lifecycle.workflow.md`.
-
-Before production code:
-
-1. Create or evolve the owning User Story based spec, append a history entry, and update `parallel-tracks.md` for conceptual changes.
-2. Obtain Gate 1 approval for the proposed spec writes, including sequential/parallel tasks and execution waves.
-3. Create or update the approved spec artifacts.
-4. Obtain Gate 2 approval before creating, modifying, or running tests.
-5. Add or update BDD Given/When/Then acceptance evidence and confirm it fails for the intended reason.
-6. Add the smallest unit-level ATDD-style focused failing test for the next rule, component, or boundary before production code.
-7. Invoke `common-sdd-review-test-evidence.workflow.md` and obtain Gate 3 before production code.
-8. Implement only enough code to pass, then refactor with tests green.
-9. Run `common-sdd-coverage-gate.workflow.md` before completion and record `>= 90%` project-wide production coverage with no affected-feature regression when production code is in scope.
-10. Pass `RULE-COMMON_SDD_DOCUMENTATION_GATE` through `WORKFLOW-COMMON_SDD_UPDATE_DOCUMENTATION_WORKFLOW`; record changed surfaces or its explicit no-change result.
-11. Obtain Gate 4 approval before completion, snapshot creation, and renaming the feature to `specs/features/<number>-<slug>-completed/`.
-12. Run relevant gates and converge spec, tasks, parallel tracks, traceability, verification notes, documentation, and code.
-
-Apply `RULE-COMMON_TEST_ASSERTION_STRUCTURE`: arrange/fixtures and user actions do not assert; all `expect`/`assert`/matcher calls belong in the final `Then/Assert` section.
+This workflow specializes `WORKFLOW-COMMON_SDD_CHANGE_LIFECYCLE_WORKFLOW`; the parent owns Gates 1–3, the final evidence review, spec artifacts, routing, documentation, clean-up, security, coverage, and convergence. After Gate 2, create the smallest BDD-linked component/route RED, apply the common test assertion/data rules, obtain Gate 3, implement minimally, and refactor only while tests stay green. Do not duplicate or reorder the parent lifecycle here.
 
 
 This workflow defines how an AI coding agent should implement or modify React frontend features.
