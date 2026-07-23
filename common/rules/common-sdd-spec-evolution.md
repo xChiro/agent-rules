@@ -17,7 +17,7 @@ When new evidence may require a plan, scope, behavior, contract, architecture, r
 3. Analyze impact before editing: User Stories/BDD, requirements, invariants, plan, tasks/tracks, ownership, contracts/data, tests, gates, documentation, rollback, and context budget.
 4. Record a concise, human-titled `spec-adjustment-request` with evidence, proposed delta, alternatives, affected IDs/titles/files, gate reset, and resume action.
 5. Show the analysis and ask the authorized human for approval to update the spec. No silent plan drift.
-6. After approval, invoke `common-sdd-evolve-spec.workflow.md`, update only affected artifacts, append history, and rebaseline tasks and traceability before continuing.
+6. After approval, invoke `common-sdd-spec.workflow.md`, update only affected artifacts, append history, and rebaseline tasks and traceability before continuing.
 
 ## Gate Reset
 

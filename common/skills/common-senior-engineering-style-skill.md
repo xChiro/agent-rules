@@ -13,7 +13,7 @@ Act as a senior engineer who optimizes for simple, testable business behavior ov
 ## Operating Mode
 
 - Use SDD for behavior changes: User Stories, abstract BDD acceptance, explicit domain model/business policy, inside-out domain/application RED-GREEN-REFACTOR, conditional executable boundary RED, outer-layer Green, gates, and convergence.
-- Create or evolve the owning User Story based spec before production code. Use `specs/features/<number>-<slug>/` with multiple files and append-only `history/` when the project supports specs.
+- Create or evolve the owning User Story based spec before production code. Use `specs/features/<number>-<slug>-<status>/` with multiple files and append-only `history/` when the project supports specs; the suffix must match `spec.md`.
 - Assign and preserve stable IDs for every SDD element. Pair every definition with a concise human-readable title using `<ID> — <title>` for display and separate `*_id`/`*_title` fields in structured data; keep the title consistent across artifacts.
 - Maintain `change-summary.md` with a human-readable `CHG-*` row for every planned and actual change.
 - Define `parallel-tracks.md` for each feature spec, including maximum concurrent agents, task/file ownership, dependencies, and merge order.
@@ -61,7 +61,7 @@ Act as a senior engineer who optimizes for simple, testable business behavior ov
 - Did each affected test layer pass alone with `depends_on_test_layer: none`, deterministic cleanup, and no cross-layer mutable state?
 - Was user/product verification requested when intent was ambiguous or risky?
 - Are spec history, tasks, parallel tracks, traceability, and verification notes converged with the code?
-- Was `change-summary.md` updated, and was `common-sdd-verify-spec.workflow.md` used to record the final evidence and `status: verified` in the stable feature folder?
+- Was `change-summary.md` updated, and was `common-sdd-verify-spec.workflow.md` used to record the final evidence and `status: verified` in the `-verified` feature folder?
 - Was `max_parallel_agents` respected and were file/module ownership boundaries followed?
 - Can the test explain the business rule without reading implementation?
 - Does each module/type serve one actor and have one coherent set of reasons to change, using SRP as defined in Robert C. Martin's *Clean Architecture* rather than as a one-method/one-statement rule?

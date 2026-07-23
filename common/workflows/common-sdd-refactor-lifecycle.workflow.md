@@ -6,7 +6,7 @@ description: "Behavior-preserving SDD lifecycle for production code, unit tests,
 
 # Common SDD Refactor Lifecycle Workflow
 
-Use this workflow only when observable behavior must remain unchanged. If behavior, a public contract, or a User Story changes, use `common-sdd-evolve-spec.workflow.md` and `common-sdd-change-lifecycle.workflow.md` instead.
+Use this workflow only when observable behavior must remain unchanged. If behavior, a public contract, or a User Story changes, use `common-sdd-spec.workflow.md` and `common-sdd-change-lifecycle.workflow.md` instead.
 
 When invoked by `common-sdd-clean-up-gate.workflow.md`, return to that gate after the refactor and rerun the clean-up analysis before security, coverage, or final validation.
 

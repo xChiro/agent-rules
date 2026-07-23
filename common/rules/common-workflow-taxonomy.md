@@ -33,9 +33,8 @@ Names are part of the agent interface. Keep the SDD lifecycle in `common`; langu
 Common lifecycle:
 
 ```text
-common-sdd-create-spec.workflow.md
+common-sdd-spec.workflow.md
 common-bdd-specification.workflow.md
-common-sdd-evolve-spec.workflow.md
 common-sdd-change-lifecycle.workflow.md
 common-sdd-fix-bug.workflow.md
 common-sdd-refactor-lifecycle.workflow.md

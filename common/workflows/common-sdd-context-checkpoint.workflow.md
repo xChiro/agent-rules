@@ -19,7 +19,7 @@ If the host exposes a context meter, pass it to `tools/create-sdd-context-checkp
 
 ## Preconditions
 
-- An active spec folder exists under `specs/features/<number>-<slug>/`.
+- An active spec folder exists under `specs/features/<number>-<slug>-active/`.
 - The current task has a stable `T-*` ID, an action-oriented human title, and a single concrete outcome.
 - The agent knows the exact next task ID and title or can record a blocker title and the user decision required.
 - No new production scope is started after the threshold is reached.

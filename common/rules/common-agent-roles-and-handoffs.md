@@ -18,7 +18,7 @@ Every handoff identifies:
 - decisions, assumptions, blockers, commands, test evidence, and next action;
 - spec/traceability links and the receiving agent's acceptance status.
 
-Handoffs are append-only under `specs/features/<number>-<slug>/handoffs/` or in the feature's `red-green-refactor.md` when the repository uses a single evidence artifact.
+Handoffs are append-only under `specs/features/<number>-<slug>-<status>/handoffs/` or in the feature's `red-green-refactor.md` when the repository uses a single evidence artifact.
 
 When context usage reaches 60%, create a context continuation handoff under `handoffs/context-checkpoints/` using `common/templates/context-handoff.md`. It must name the current and next `T-*` task, exact first action, completed evidence, blockers, gates, owned/must-not-touch files, and the user decision needed to resume. The next AI reads the latest checkpoint before opening unrelated files.
 

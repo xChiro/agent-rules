@@ -6,7 +6,7 @@ description: "Implement any small Go backend change through the common SDD/ATDD 
 
 # Go SDD Implement Change Workflow
 
-This is the only Go backend implementation workflow. It is a global workflow. Do not search for it under the current project's `.windsurf/workflows/`; invoke it as `/go-sdd-implement-change`. Its common parent workflows are sibling global workflows: `common-sdd-create-spec.workflow.md`, `common-sdd-evolve-spec.workflow.md`, and `common-sdd-change-lifecycle.workflow.md`.
+This is the only Go backend implementation workflow. It is a global workflow. Do not search for it under the current project's `.windsurf/workflows/`; invoke it as `/go-sdd-implement-change`. Its common parent workflows are sibling global workflows: `common-sdd-spec.workflow.md` and `common-sdd-change-lifecycle.workflow.md`.
 
 ## Select The Work Type
 

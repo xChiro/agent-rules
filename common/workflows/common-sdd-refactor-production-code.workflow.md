@@ -8,7 +8,7 @@ description: "Refactor backend production code while preserving behavior, Clean 
 
 Use this tool for behavior-preserving refactors of production code in Domain, Application, Infrastructure, Interface, or Composition. Load `common-sdd-refactor-lifecycle.workflow.md` as the governing parent and use the language-specific refactor adapter when one exists.
 
-This workflow may improve structure, ownership, duplication, complexity, naming, or boundaries. It must not change acceptance behavior, public contracts, authorization, security, data semantics, event meaning, or CQRS responsibilities. If any of those must change, stop and route through `common-sdd-evolve-spec.workflow.md`.
+This workflow may improve structure, ownership, duplication, complexity, naming, or boundaries. It must not change acceptance behavior, public contracts, authorization, security, data semantics, event meaning, or CQRS responsibilities. If any of those must change, stop and route through `common-sdd-spec.workflow.md`.
 
 ## Mandatory Design Contract
 

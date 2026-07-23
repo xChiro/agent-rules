@@ -82,7 +82,7 @@ Una tarea tiene un solo workflow principal y puede invocar workflows de apoyo. L
 Ejemplo para una funcionalidad REST en C#:
 
 ```text
-WORKFLOW-COMMON_SDD_CREATE_SPEC_WORKFLOW
+WORKFLOW-COMMON_SDD_SPEC_WORKFLOW
   -> WORKFLOW-COMMON_BDD_SPECIFICATION_WORKFLOW
   -> WORKFLOW-CSHARP_SDD_IMPLEMENT_CHANGE_WORKFLOW       # principal
        -> WORKFLOW-COMMON_REST_API_DESIGN_WORKFLOW      # apoyo
@@ -116,10 +116,9 @@ No se crea un workflow nuevo por endpoint, use case, repositorio, evento o regis
 
 | Necesidad | Workflow principal |
 |---|---|
-| Crear una spec | [`WORKFLOW-COMMON_SDD_CREATE_SPEC_WORKFLOW`](./common/workflows/common-sdd-create-spec.workflow.md) |
+| Crear o modificar una spec | [`WORKFLOW-COMMON_SDD_SPEC_WORKFLOW`](./common/workflows/common-sdd-spec.workflow.md) |
 | Ejecutar el ciclo completo | [`WORKFLOW-COMMON_SDD_CHANGE_LIFECYCLE_WORKFLOW`](./common/workflows/common-sdd-change-lifecycle.workflow.md) |
 | Corregir un defecto | [`WORKFLOW-COMMON_SDD_FIX_BUG_WORKFLOW`](./common/workflows/common-sdd-fix-bug.workflow.md) |
-| Evolucionar una spec activa | [`WORKFLOW-COMMON_SDD_EVOLVE_SPEC_WORKFLOW`](./common/workflows/common-sdd-evolve-spec.workflow.md) |
 | Refactorizar sin cambiar comportamiento | [`WORKFLOW-COMMON_SDD_REFACTOR_LIFECYCLE_WORKFLOW`](./common/workflows/common-sdd-refactor-lifecycle.workflow.md) |
 | Refactorizar production code | [`WORKFLOW-COMMON_SDD_REFACTOR_PRODUCTION_CODE_WORKFLOW`](./common/workflows/common-sdd-refactor-production-code.workflow.md) |
 | Refactorizar unit tests | [`WORKFLOW-COMMON_SDD_REFACTOR_UNIT_TESTS_WORKFLOW`](./common/workflows/common-sdd-refactor-unit-tests.workflow.md) |

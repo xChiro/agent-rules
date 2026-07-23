@@ -84,8 +84,8 @@ Approval to diagnose is not approval to write spec files, tests, or production c
 
 After Gate 1 approval:
 
-1. For an active owner, use `common-sdd-evolve-spec.workflow.md` semantics and append a history entry. Do not rewrite prior history.
-2. For a verified, superseded, or retired owner that no longer owns the change, create a new defect folder using the next feature number, for example `specs/features/0017-fix-notification-summary-502/`, and link the source feature/spec. Never rewrite source history to conceal the regression.
+1. For an active owner, use `common-sdd-spec.workflow.md` semantics and append a history entry. Do not rewrite prior history.
+2. For a verified, superseded, or retired owner that no longer owns the change, create a new defect folder using the next feature number, for example `specs/features/0017-fix-notification-summary-502-proposed/`, and link the source feature/spec. Never rewrite source history to conceal the regression.
 3. For a test/harness-only defect, keep the intended behavior explicit and record why production code must remain unchanged.
 4. Create or update `bug-report.md` with:
 

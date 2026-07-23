@@ -31,7 +31,7 @@ Read:
 Create or update the human-readable artifact:
 
 ```text
-specs/features/<number>-<slug>/security-review.md
+specs/features/<number>-<slug>-<status>/security-review.md
 ```
 
 Use stable metadata:

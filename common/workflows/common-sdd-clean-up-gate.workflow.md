@@ -31,7 +31,7 @@ Read:
 Create or update the human-readable artifact:
 
 ```text
-specs/features/<number>-<slug>/code-quality-review.md
+specs/features/<number>-<slug>-<status>/code-quality-review.md
 ```
 
 Use stable metadata:
@@ -138,7 +138,7 @@ One or more findings require a structural improvement that preserves behavior, o
 
 ### Spec Or Behavior Change Required
 
-Stop the clean-up gate and return to `common-sdd-evolve-spec.workflow.md` and the normal SDD lifecycle if the proposed change would alter:
+Stop the clean-up gate and return to `common-sdd-spec.workflow.md` and the normal SDD lifecycle if the proposed change would alter:
 
 - User-visible behavior, an acceptance scenario, a public REST/Lambda/UI contract, authorization, security, data semantics, migration behavior, event semantics, or CQRS command/query responsibilities.
 - A test expectation rather than the structure that implements the existing expectation.

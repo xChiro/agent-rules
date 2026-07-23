@@ -6,7 +6,7 @@ Canonical: `~/.codeium/windsurf/common`. No managed project copies. Specs: `spec
 
 - Start from a traceable User Story and abstract BDD scenario using business language, examples, and observable outcomes.
 - Route defects through `common-sdd-fix-bug.workflow.md`: reproduce, classify, preserve the contract, and record `BUG-*`/`REG-*`; never weaken acceptance to make a bug pass.
-- Create/evolve the owning spec before code. If discovery changes intent, plan, architecture, risk, or tests, pause and seek approval through `common-sdd-evolve-spec.workflow.md`.
+- Create/evolve the owning spec before code. If discovery changes intent, plan, architecture, risk, or tests, pause and seek approval through `common-sdd-spec.workflow.md`.
 - Create `workflow-routing.md` in every feature spec with primary/supporting workflow IDs for each phase and task.
 - Give every SDD ID one concise title. Display `<ID> — <title>`; store `*_id`/`*_title` separately. Task/change titles start with an action verb.
 - Before writing `specs/**`, show the complete plan and ask for approval; after writing it, show traceability, tasks, waves, ownership, and planned tests before RED.
@@ -23,7 +23,7 @@ Canonical: `~/.codeium/windsurf/common`. No managed project copies. Specs: `spec
 - Run clean-up before final validation; apply Fowler refactorings and keep in-scope maintained source, tests, configuration, CI, and scripts below 150 physical lines.
 - Then run the security gate; record role, trust-boundary evidence, and no Critical/High findings.
 - Run the coverage gate for every spec; production scope requires `>= 90%` and no affected-scope regression.
-- After required gates converge, run `common-sdd-verify-spec.workflow.md`; only its approved final evidence review may record `status: verified`. Keep the stable spec folder and create no external lifecycle artifact.
+- After required gates converge, run `common-sdd-verify-spec.workflow.md`; only its approved final evidence review may record `status: verified` and rename the folder to its `-verified` suffix. Create no external lifecycle artifact.
 - Each task declares ownership, dependencies, wave, outcome, verification, and next step; default to one agent.
 
 ## Architecture

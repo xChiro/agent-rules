@@ -34,7 +34,7 @@ Read the active feature folder and confirm:
 
 1. Run `WORKFLOW-COMMON_SDD_VALIDATE_CHANGE_WORKFLOW` and record the exact command, risk, scope, and result.
 2. Run the unit suite, the applicable `integration/http` and `integration/infrastructure` scopes of the integration suite, and the E2E, mutation, architecture, security, and documentation checks selected by the spec. Do not invent a third backend runtime suite.
-3. Compare the final diff with the approved intent. If behavior, architecture, contract, risk, or scope changed, stop and route the change through `WORKFLOW-COMMON_SDD_EVOLVE_SPEC_WORKFLOW`.
+3. Compare the final diff with the approved intent. If behavior, architecture, contract, risk, or scope changed, stop and route the change through `WORKFLOW-COMMON_SDD_SPEC_WORKFLOW`.
 4. Confirm that every in-scope task is `done`. Move deferred scope to a named follow-up spec with explicit ownership; do not silently delete unfinished work or mark a blocked task as verified.
 
 ## Phase 2: Human Verification Review
@@ -63,8 +63,8 @@ After approval:
 - Set `verification.md` to `validation_status: passed` and record the exact evidence, date, reviewer, and residual risk.
 - Mark every in-scope task as `[x]` or `status: done`; link separately owned follow-up work explicitly.
 - Append a history entry for the validation decision. Never rewrite earlier history.
-- Keep the spec at `specs/features/<number>-<slug>/`.
-- Do not move the feature folder or create a lifecycle artifact outside the stable spec path.
+- Keep the spec at `specs/features/<number>-<slug>-verified/`; the folder suffix must match the final `status: verified`.
+- Rename the feature folder to its final `-verified` suffix as part of the approved status transition; do not create a lifecycle artifact outside the spec.
 
 An AI context checkpoint remains an operational handoff. A project may keep an optional context summary for onboarding, but it is never a lifecycle marker or a substitute for the active spec and verification evidence.
 
@@ -77,7 +77,7 @@ An AI context checkpoint remains an operational handoff. A project may keep an o
 
 ## Done
 
-- The stable spec path remains discoverable.
+- The `-verified` spec path remains discoverable and all references resolve to it.
 - The implementation, tests, architecture, documentation, and verification evidence agree.
 - The lifecycle status is explicit and supported by recorded evidence.
 - No unresolved in-scope work remains; residual risk and follow-up ownership are visible.

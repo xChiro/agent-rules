@@ -6,7 +6,7 @@ description: "Folder structure, traceability, and history rules for SDD specs."
 
 # Common SDD Spec Structure
 
-Every project that uses SDD should keep specs as versioned engineering artifacts. The spec directory is not scratchpad context; it is the source of intent, behavior, constraints, and verification evidence. An active spec is mutable through the controlled `common-sdd-evolve-spec.workflow.md` protocol; its history remains append-only and plan drift requires approval.
+Every project that uses SDD should keep specs as versioned engineering artifacts. The spec directory is not scratchpad context; it is the source of intent, behavior, constraints, and verification evidence. An active spec is mutable through the controlled `common-sdd-spec.workflow.md` protocol; its history remains append-only and plan drift requires approval.
 
 Defect changes use the same folder shape as feature changes with `change_type: bug-fix`. They additionally include `bug-report.md` when the defect needs reproduction, classification, impact, or root-cause evidence. Use `BUG-*` for the defect, `REG-*` for regression evidence, and link the defect to its owning or source `FEAT-*`/`SPEC-*`. A verified, superseded, or retired source spec is never rewritten to erase a defect; create a new active defect spec when the source no longer owns the change.
 
@@ -55,7 +55,19 @@ specs/
     └── 0000-retired-feature/
 ```
 
-Use `specs/features/<number>-<slug>/` for every living feature spec. Keep the path stable across drafting, implementation, validation, evolution, and maintenance. Use `archive/` only when a feature is retired, obsolete, or no longer drives implementation. Existing legacy paths may remain for historical compatibility; do not create status-specific folder names.
+Use `specs/features/<number>-<slug>-<CURRENT_SPEC-STATUS>/` for every feature spec. The final suffix must equal the canonical lifecycle `status` in `spec.md`; for example, `0017-contracts-dashboard-icons-filter-spacing-verified/`. Keep the path stable while the status is unchanged. When the status changes, rename the folder and update every path reference in the same change. Use `archive/` only when a feature is retired, obsolete, or no longer drives implementation.
+
+## Current Spec Status Suffix
+
+The top-level status in `spec.md` is the single source of truth for the global lifecycle state. It must be one of:
+
+```text
+draft | proposed | approved | active | implemented | verified | superseded | retired
+```
+
+The feature folder must end in `-<status>` using lowercase ASCII text. The literal notation `-[CURRENT_SPEC-STATUS]` describes the required slot; it is not copied verbatim. Examples are `0001-radio-client-proposed`, `0005-authentication-active`, and `0013-blueprint-details-verified`.
+
+Status changes are lifecycle changes, not cosmetic edits: update `spec.md`, append the relevant history/evidence, rename the feature folder, and update links, traceability paths, snapshots, and handoffs atomically. Never infer a global status from a filename that disagrees with `spec.md`.
 
 ## Spec And Artifact IDs
 
@@ -302,12 +314,13 @@ The spec is a living source of truth. Use these lifecycle states in `spec.md` an
 - `draft`: the intent is being shaped and has not been proposed for implementation.
 - `proposed`: the requirements, scenarios, constraints, and open questions are ready for review.
 - `approved`: the intent and plan are approved for implementation.
+- `active`: implementation or validation work is currently in progress.
 - `implemented`: the approved behavior is implemented, but validation evidence is still open.
 - `verified`: the implementation, tests, architecture, documentation, and risk-selected gates agree with the spec, and the final evidence review explicitly approved recording that state.
 - `superseded`: another spec replaces this intent; link both specs and preserve history.
 - `retired`: the behavior is intentionally removed or no longer maintained; record the decision and impact.
 
-Use `WORKFLOW-COMMON_SDD_VERIFY_SPEC_WORKFLOW` for the final evidence review. It records `verified` in the stable spec path; it does not move directories or derive folder names from lifecycle status. Context checkpoints under `handoffs/context-checkpoints/` remain operational handoffs and never replace the active spec, traceability, verification, or append-only history. A repository may maintain an optional context summary for onboarding, but it is not lifecycle evidence.
+Use `WORKFLOW-COMMON_SDD_VERIFY_SPEC_WORKFLOW` for the final evidence review. It records `verified` in `spec.md` and synchronizes the feature folder to its `-verified` suffix after approval. Context checkpoints under `handoffs/context-checkpoints/` remain operational handoffs and never replace the active spec, traceability, verification, or append-only history. A repository may maintain an optional context summary for onboarding, but it is not lifecycle evidence.
 
 ## User Story Format
 
@@ -431,7 +444,7 @@ spec_id: SPEC-0001
 artifact_id: ART-0001-WORKFLOW-ROUTING
 phases:
   - phase: spec-create
-    workflow_id: WORKFLOW-COMMON_SDD_CREATE_SPEC_WORKFLOW
+    workflow_id: WORKFLOW-COMMON_SDD_SPEC_WORKFLOW
     reason: Create the folder, artifacts, IDs, and approval record.
   - phase: implementation
     workflow_id: WORKFLOW-GO_SDD_IMPLEMENT_CHANGE_WORKFLOW
@@ -468,7 +481,7 @@ phases:
     reason: Reconcile project and SDD documentation.
   - phase: final-validation
     workflow_id: WORKFLOW-COMMON_SDD_VERIFY_SPEC_WORKFLOW
-    reason: Validate convergence and record the spec status without moving the feature folder.
+    reason: Validate convergence and record the spec status, renaming the feature folder when the global status changes.
 tasks:
   - task_id: T-0001-001
     workflow_id: WORKFLOW-GO_SDD_IMPLEMENT_CHANGE_WORKFLOW
@@ -481,9 +494,9 @@ tasks:
 
 Use these routing rules:
 
-- New spec: `WORKFLOW-COMMON_SDD_CREATE_SPEC_WORKFLOW`.
+- New or modified spec: `WORKFLOW-COMMON_SDD_SPEC_WORKFLOW`.
 - BDD specification: `WORKFLOW-COMMON_BDD_SPECIFICATION_WORKFLOW`; keep scenarios business-readable and implementation-independent.
-- Existing spec: `WORKFLOW-COMMON_SDD_EVOLVE_SPEC_WORKFLOW`.
+- Existing spec: `WORKFLOW-COMMON_SDD_SPEC_WORKFLOW`.
 - Defect diagnosis and fix: `WORKFLOW-COMMON_SDD_FIX_BUG_WORKFLOW`; language implementation workflows are supporting adapters, not replacements for the common defect lifecycle.
 - Feature, integration, or pipeline implementation: the language `*-sdd-implement-change` workflow.
 - Behavior-preserving refactor: the language `*-sdd-refactor-code` workflow.
@@ -499,7 +512,7 @@ Use these routing rules:
 - GitHub Actions: `WORKFLOW-COMMON_SDD_CREATE_GITHUB_ACTIONS_PIPELINE_WORKFLOW` plus the applicable language/service profile.
 - Documentation: `WORKFLOW-COMMON_SDD_UPDATE_DOCUMENTATION_WORKFLOW`.
 - Documentation gate: `RULE-COMMON_SDD_DOCUMENTATION_GATE` requires the documentation workflow before final quality, security, coverage, or validation review.
-- Final evidence review: `WORKFLOW-COMMON_SDD_VERIFY_SPEC_WORKFLOW` records `verified` in the stable feature folder.
+- Final evidence review: `WORKFLOW-COMMON_SDD_VERIFY_SPEC_WORKFLOW` records `verified` and synchronizes the feature folder to its `-verified` suffix.
 
 Do not infer a workflow from a file path. Use the stable `workflow_id` and record why it is the most specific applicable procedure.
 
@@ -563,7 +576,7 @@ merge_policy: sequential
 - Agent slot: agent-1
 - Tasks: T-0001-001, T-0001-002
 - Owns:
-  - specs/features/0001-feature-slug/acceptance.feature
+  - specs/features/0001-feature-slug-active/acceptance.feature
   - tests/integration/http/squad_radio/
 - Must not touch:
   - src/infrastructure/
@@ -648,41 +661,41 @@ Minimal shape:
 feature:
   id: FEAT-0001
   spec_id: SPEC-0001
-  folder: specs/features/0001-squad-radio
+  folder: specs/features/0001-squad-radio-active
 artifacts:
   ART-0001-SPEC:
-    path: specs/features/0001-squad-radio/spec.md
+    path: specs/features/0001-squad-radio-active/spec.md
     contains:
       - US-0001-001
       - REQ-0001-001
   ART-0001-CHANGE-SUMMARY:
-    path: specs/features/0001-squad-radio/change-summary.md
+    path: specs/features/0001-squad-radio-active/change-summary.md
     contains:
       - CHG-0001-001
   ART-0001-ACCEPTANCE:
-    path: specs/features/0001-squad-radio/acceptance.feature
+    path: specs/features/0001-squad-radio-active/acceptance.feature
     contains:
       - SCN-0001-001
   ART-0001-TASKS:
-    path: specs/features/0001-squad-radio/tasks.md
+    path: specs/features/0001-squad-radio-active/tasks.md
     contains:
       - T-0001-001
   ART-0001-TRACKS:
-    path: specs/features/0001-squad-radio/parallel-tracks.md
+    path: specs/features/0001-squad-radio-active/parallel-tracks.md
     contains:
       - TRK-0001-001
   ART-0001-SECURITY-REVIEW:
-    path: specs/features/0001-squad-radio/security-review.md
+    path: specs/features/0001-squad-radio-active/security-review.md
     contains:
       - SEC-0001-001
   ART-0001-CODE-QUALITY-REVIEW:
-    path: specs/features/0001-squad-radio/code-quality-review.md
+    path: specs/features/0001-squad-radio-active/code-quality-review.md
     contains:
       - QUAL-0001-001
   ART-0001-WORKFLOW-ROUTING:
-    path: specs/features/0001-squad-radio/workflow-routing.md
+    path: specs/features/0001-squad-radio-active/workflow-routing.md
     contains:
-      - WORKFLOW-COMMON_SDD_CREATE_SPEC_WORKFLOW
+      - WORKFLOW-COMMON_SDD_SPEC_WORKFLOW
       - WORKFLOW-GO_SDD_IMPLEMENT_CHANGE_WORKFLOW
 requirements:
   REQ-0001-001:
@@ -707,7 +720,7 @@ parallel_tracks:
       - tests/integration/http/squad_radio/access_test.go
 workflows:
   spec-create:
-    workflow_id: WORKFLOW-COMMON_SDD_CREATE_SPEC_WORKFLOW
+    workflow_id: WORKFLOW-COMMON_SDD_SPEC_WORKFLOW
   implementation:
     workflow_id: WORKFLOW-GO_SDD_IMPLEMENT_CHANGE_WORKFLOW
   test-evidence-review:
@@ -738,7 +751,7 @@ Before reporting the spec as verified:
 - Every spec entering `verified` records `WORKFLOW-COMMON_SDD_CLEAN_UP_GATE_WORKFLOW` and a `code-quality-review.md` decision in `verification.md` and `change-summary.md`.
 - Documentation changes are complete, or the spec records `no_documentation_change_reason`.
 - The documentation gate outcome is recorded in `change-summary.md`, including the inspected surfaces and evidence for any `no_documentation_change_reason`.
-- A verified feature has a validation decision and remains discoverable at its stable `specs/features/<number>-<slug>/` path.
+- A verified feature has a validation decision and remains discoverable at its `specs/features/<number>-<slug>-verified/` path.
 - Any implementation change that alters behavior must update the spec and history.
 - Any refactor that changes structure or boundaries must update plan, architecture notes, repository map, or decisions as needed.
 - Any discovery-driven adjustment has an approved adjustment record, append-only history entry, synchronized artifacts, and the required gate reset; no proposed adjustment remains unresolved at final validation.

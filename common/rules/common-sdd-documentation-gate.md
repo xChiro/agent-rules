@@ -36,8 +36,7 @@ The gate is not passed by merely adding a documentation task or mentioning the w
 
 ## Validation Rules
 
-- `common-sdd-create-spec.workflow.md` must route the final documentation task before RED is started.
-- `common-sdd-evolve-spec.workflow.md` must rerun the gate when the approved spec, behavior, contract, architecture, risk, test strategy, or repository structure changes.
+- `common-sdd-spec.workflow.md` must route the final documentation task before RED is started and rerun the gate when the approved spec, behavior, contract, architecture, risk, test strategy, or repository structure changes.
 - `common-sdd-fix-bug.workflow.md` must run the gate for the defect record, regression evidence, affected docs, and append-only history.
 - `common-sdd-refactor-lifecycle.workflow.md` must run the gate when structure, ownership, boundaries, repository maps, or developer guidance changes.
 - `common-sdd-change-lifecycle.workflow.md` and language implementation/refactor adapters must preserve the documentation task and route it to this workflow.

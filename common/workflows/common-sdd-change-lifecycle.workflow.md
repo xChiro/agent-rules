@@ -86,7 +86,7 @@ Select supporting boundary workflows from the task routing matrix before writing
 
 The language implementation workflow remains primary. Supporting workflows are invoked at the phase that owns the boundary decision; record every invocation and result in `workflow-routing.md`, `tasks.md`, and `verification.md`.
 
-The active spec is a mutable baseline. If repository evidence changes the approved behavior, plan, architecture, contract, risk, test strategy, scope, ordering, ownership, or gates, pause the current task. Invoke `common-sdd-evolve-spec.workflow.md`, use `common/templates/spec-adjustment-request.md`, obtain approval, update affected artifacts and append-only history, and reset impacted gates before continuing. Never absorb discovery as an unrecorded deviation.
+The active spec is a mutable baseline. If repository evidence changes the approved behavior, plan, architecture, contract, risk, test strategy, scope, ordering, ownership, or gates, pause the current task. Invoke `common-sdd-spec.workflow.md`, use `common/templates/spec-adjustment-request.md`, obtain approval, update affected artifacts and append-only history, and reset impacted gates before continuing. Never absorb discovery as an unrecorded deviation.
 
 ## Phase 4: Create Sequential And Parallel Tasks
 
@@ -239,7 +239,7 @@ If context reaches 60% before convergence, stop starting new tasks and invoke `c
 
 Invoke `common-sdd-update-documentation.workflow.md` through the traceable `documentation` task for every change. If its surface analysis finds no affected project documentation, record `no_documentation_change_reason` in `spec.md`, `verification.md`, and `change-summary.md`; this explicit workflow result is the only allowed no-change exception.
 
-When all implementation and documentation tasks are done, invoke `common-sdd-verify-spec.workflow.md` to review final evidence and record `status: verified` in the stable feature folder.
+When all implementation and documentation tasks are done, invoke `common-sdd-verify-spec.workflow.md` to review final evidence, record `status: verified`, and rename the feature folder to its `-verified` suffix.
 
 Validation is blocked until the clean-up workflow passes for every created/modified file, every in-scope maintained source, test, configuration, CI, and script file is below 150 physical lines, the security workflow records no unresolved findings, and the coverage workflow records its command, scope, result, threshold, and exclusions in `verification.md` and `change-summary.md`; production scopes must reach `>= 90%`.
 
@@ -261,4 +261,4 @@ Final report should include:
 - Residual risk or manual verification still needed.
 - Any spec-adjustment request, approved delta, repeated gates, and exact resume action.
 - Documentation gate outcome: changed surfaces and verification evidence, or the workflow's inspected-surface `no_documentation_change_reason`.
-- Final validation decision, stable spec path, and any optional context-summary evidence.
+- Final validation decision, `-verified` spec path, and any optional context-summary evidence.
